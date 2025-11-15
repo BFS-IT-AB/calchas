@@ -45,6 +45,10 @@ class AppState {
       this.favorites.push(favorite);
       try {
         localStorage.setItem('wetter_favorites', JSON.stringify(this.favorites));
+        // Log analytics
+        if (window.logAnalyticsEvent) {
+          window.logAnalyticsEvent('favorite_action', { action: 'add', city, timestamp: Date.now() });
+        }
       } catch (e) {
         console.warn('Fehler beim Speichern von Favoriten:', e);
       }
@@ -55,6 +59,10 @@ class AppState {
     this.favorites = this.favorites.filter(f => f.city.toLowerCase() !== city.toLowerCase());
     try {
       localStorage.setItem('wetter_favorites', JSON.stringify(this.favorites));
+      // Log analytics
+      if (window.logAnalyticsEvent) {
+        window.logAnalyticsEvent('favorite_action', { action: 'remove', city, timestamp: Date.now() });
+      }
     } catch (e) {
       console.warn('Fehler beim Löschen von Favoriten:', e);
     }
@@ -466,6 +474,11 @@ function displayWeatherResults(location, weatherData) {
  */
 async function loadWeather(city) {
   try {
+    // Log analytics
+    if (window.logAnalyticsEvent) {
+      window.logAnalyticsEvent('search', { city, timestamp: Date.now() });
+    }
+
     // Zeige Loading-State
     weatherDisplay.showLoading();
     searchComponent.setLoading(true);
@@ -478,6 +491,11 @@ async function loadWeather(city) {
 
     // Lade Wetterdaten
     const weatherData = await fetchWeatherData(location.lat, location.lon);
+    
+    // Log API call
+    if (window.logAnalyticsEvent) {
+      window.logAnalyticsEvent('api_call', { city: location.city, timestamp: Date.now() });
+    }
 
     // Speichere WeatherData im globalen State und bereite renderbare Daten vor
     try {
@@ -600,6 +618,15 @@ function initApp() {
     });
   }
 
+  // Initialize Feature Modules (Maps, Alerts, Historical, Analytics)
+  const weatherMap = new WeatherMap('weather-map');
+  const weatherAlerts = new WeatherAlerts('weather-alerts');
+  const historicalChart = new HistoricalChart('historical-chart');
+  const analytics = new Analytics();
+  
+  // Log analytics events
+  window.logAnalyticsEvent = (type, data) => analytics.logEvent(type, data);
+
   // Tab Switching for Extra Features
   const tabButtons = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
@@ -621,6 +648,29 @@ function initApp() {
       if (targetContent) {
         targetContent.classList.add('active');
         targetContent.style.display = 'block';
+
+        // Initialize features on first tab switch
+        if (tabName === 'maps' && appState.currentCoordinates) {
+          weatherMap.init(
+            appState.currentCoordinates.lat, 
+            appState.currentCoordinates.lng, 
+            appState.currentCity || 'Standort'
+          );
+        } else if (tabName === 'alerts' && appState.currentCoordinates) {
+          weatherAlerts.fetchAlerts(
+            appState.currentCoordinates.lat,
+            appState.currentCoordinates.lng,
+            appState.currentCity || 'Standort'
+          );
+        } else if (tabName === 'historical' && appState.currentCoordinates) {
+          historicalChart.fetchAndRender(
+            appState.currentCoordinates.lat,
+            appState.currentCoordinates.lng,
+            appState.currentCity || 'Standort'
+          );
+        } else if (tabName === 'analytics') {
+          analytics.renderDashboard('analytics-dashboard');
+        }
       }
     });
   });
