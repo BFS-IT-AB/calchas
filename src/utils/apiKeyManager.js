@@ -1,0 +1,124 @@
+/**
+ * API Key Manager - Zentralisierte Verwaltung aller API-Keys
+ */
+
+class APIKeyManager {
+  constructor() {
+    this.keys = {
+      openweathermap: null,
+      visualcrossing: null,
+      meteostat: null
+    };
+    this.loadKeys();
+  }
+
+  /**
+   * Lädt alle gespeicherten API-Keys aus localStorage
+   */
+  loadKeys() {
+    try {
+      this.keys.openweathermap = localStorage.getItem('wetter_api_openweathermap') || null;
+      this.keys.visualcrossing = localStorage.getItem('wetter_api_visualcrossing') || null;
+      this.keys.meteostat = localStorage.getItem('wetter_api_meteostat') || null;
+      console.log('✅ API Keys geladen:', {
+        openweathermap: !!this.keys.openweathermap,
+        visualcrossing: !!this.keys.visualcrossing,
+        meteostat: !!this.keys.meteostat
+      });
+    } catch (e) {
+      console.warn('Fehler beim Laden der API-Keys:', e);
+    }
+  }
+
+  /**
+   * Speichert einen API-Key
+   * @param {string} provider - API Provider (openweathermap, visualcrossing, meteostat)
+   * @param {string} key - API Key
+   */
+  setKey(provider, key) {
+    if (!['openweathermap', 'visualcrossing', 'meteostat'].includes(provider)) {
+      console.error('Unbekannter API Provider:', provider);
+      return false;
+    }
+
+    try {
+      const trimmedKey = key ? key.trim() : '';
+      if (trimmedKey) {
+        localStorage.setItem(`wetter_api_${provider}`, trimmedKey);
+        this.keys[provider] = trimmedKey;
+        console.log(`✅ ${provider} API-Key gespeichert`);
+        return true;
+      } else {
+        // Leerer Key = Löschen
+        localStorage.removeItem(`wetter_api_${provider}`);
+        this.keys[provider] = null;
+        console.log(`🗑️ ${provider} API-Key entfernt`);
+        return true;
+      }
+    } catch (e) {
+      console.error(`Fehler beim Speichern des ${provider} API-Keys:`, e);
+      return false;
+    }
+  }
+
+  /**
+   * Gibt einen API-Key zurück
+   * @param {string} provider - API Provider
+   * @returns {string|null} - API Key oder null
+   */
+  getKey(provider) {
+    return this.keys[provider] || null;
+  }
+
+  /**
+   * Prüft ob ein API-Key vorhanden ist
+   * @param {string} provider - API Provider
+   * @returns {boolean}
+   */
+  hasKey(provider) {
+    return !!this.keys[provider];
+  }
+
+  /**
+   * Gibt alle verfügbaren APIs zurück
+   * @returns {string[]} - Array von Provider-Namen mit Keys
+   */
+  getAvailableAPIs() {
+    return Object.keys(this.keys).filter(provider => this.hasKey(provider));
+  }
+
+  /**
+   * Setzt Default-Keys (z.B. beim ersten Start)
+   * @param {object} defaults - { provider: key, ... }
+   */
+  setDefaults(defaults) {
+    Object.keys(defaults).forEach(provider => {
+      if (!this.hasKey(provider) && defaults[provider]) {
+        this.setKey(provider, defaults[provider]);
+      }
+    });
+  }
+
+  /**
+   * Exportiert alle Keys (für Backup)
+   * @returns {object} - { provider: key, ... }
+   */
+  exportKeys() {
+    return { ...this.keys };
+  }
+
+  /**
+   * Importiert Keys (für Restore)
+   * @param {object} keys - { provider: key, ... }
+   */
+  importKeys(keys) {
+    Object.keys(keys).forEach(provider => {
+      if (keys[provider]) {
+        this.setKey(provider, keys[provider]);
+      }
+    });
+  }
+}
+
+// Global verfügbar machen
+window.APIKeyManager = APIKeyManager;

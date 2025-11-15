@@ -368,7 +368,7 @@ async function fetchWeatherData(lat, lon) {
   
   console.log(`🌡️ Lade Wetterdaten für ${lat}, ${lon}`);
 
-  // Versuche Open-Meteo
+  // Versuche Open-Meteo (Hauptquelle)
   const openMeteoResult = await openMeteoAPI.fetchWeather(lat, lon);
   
   if (!openMeteoResult.error) {
@@ -387,7 +387,7 @@ async function fetchWeatherData(lat, lon) {
     showWarning(`Open-Meteo: ${openMeteoResult.error}`);
   }
 
-  // Versuche BrightSky
+  // Versuche BrightSky (Zusatzquelle)
   const brightSkyResult = await brightSkyAPI.fetchWeather(lat, lon);
   
   if (!brightSkyResult.error) {
@@ -406,15 +406,75 @@ async function fetchWeatherData(lat, lon) {
     showWarning(`BrightSky: ${brightSkyResult.error}`);
   }
 
-  // Prüfe ob mindestens eine Quelle erfolgreich war
-  const hasData = sources.some(s => s.success);
-  if (!hasData) {
-    throw new Error('Keine Wetterdaten verfügbar - beide APIs fehlgeschlagen');
+  // OPTIONALE APIs - Nur wenn API-Keys vorhanden
+  let openWeatherMapResult = null;
+  let visualCrossingResult = null;
+
+  // OpenWeatherMap (optional)
+  if (window.apiKeyManager && window.apiKeyManager.hasKey('openweathermap')) {
+    try {
+      const owmAPI = new OpenWeatherMapAPI();
+      const owmKey = window.apiKeyManager.getKey('openweathermap');
+      openWeatherMapResult = await owmAPI.fetchWeather(lat, lon, owmKey);
+      
+      if (!openWeatherMapResult.error) {
+        sources.push({
+          name: 'OpenWeatherMap',
+          success: true,
+          duration: openWeatherMapResult.duration || 0,
+          fromCache: false
+        });
+        console.log('✅ OpenWeatherMap Daten geladen');
+      } else {
+        sources.push({
+          name: 'OpenWeatherMap',
+          success: false,
+          error: openWeatherMapResult.error
+        });
+      }
+    } catch (e) {
+      console.warn('OpenWeatherMap Fehler:', e.message);
+    }
+  }
+
+  // VisualCrossing (optional)
+  if (window.apiKeyManager && window.apiKeyManager.hasKey('visualcrossing')) {
+    try {
+      const vcAPI = new VisualCrossingAPI();
+      const vcKey = window.apiKeyManager.getKey('visualcrossing');
+      visualCrossingResult = await vcAPI.fetchWeather(lat, lon, vcKey);
+      
+      if (!visualCrossingResult.error) {
+        sources.push({
+          name: 'VisualCrossing',
+          success: true,
+          duration: visualCrossingResult.duration || 0,
+          fromCache: false
+        });
+        console.log('✅ VisualCrossing Daten geladen');
+      } else {
+        sources.push({
+          name: 'VisualCrossing',
+          success: false,
+          error: visualCrossingResult.error
+        });
+      }
+    } catch (e) {
+      console.warn('VisualCrossing Fehler:', e.message);
+    }
+  }
+
+  // Prüfe ob mindestens eine Hauptquelle erfolgreich war
+  const hasMainData = [openMeteoResult, brightSkyResult].some(r => !r.error);
+  if (!hasMainData) {
+    throw new Error('Keine Wetterdaten verfügbar - Hauptquellen fehlgeschlagen');
   }
 
   return {
     openMeteo: openMeteoResult.error ? null : openMeteoResult.data,
     brightSky: brightSkyResult.error ? null : brightSkyResult.data,
+    openWeatherMap: openWeatherMapResult && !openWeatherMapResult.error ? openWeatherMapResult.data : null,
+    visualCrossing: visualCrossingResult && !visualCrossingResult.error ? visualCrossingResult.data : null,
     sources
   };
 }
@@ -553,6 +613,16 @@ function toggleDarkMode() {
  */
 function initApp() {
   console.log('🚀 Initialisiere Wetter-App...');
+
+  // Initialisiere API Key Manager
+  window.apiKeyManager = new APIKeyManager();
+  
+  // Setze Default API-Keys (falls noch nicht vorhanden)
+  window.apiKeyManager.setDefaults({
+    openweathermap: '22889ea71f66faab6196bde649dd04a9',
+    visualcrossing: 'JVCZ3WAHB5XBT7GXQC7RQBGBE',
+    meteostat: 'edda72c60bmsh4a38c4687147239p14e8d5jsn6f578346b68a'
+  });
 
   // Initialisiere Components
   initErrorHandler('#error-container');
@@ -770,6 +840,26 @@ function initApp() {
         console.warn('Push toggle error', e);
         showWarning('Push konnte nicht umgeschaltet werden: '+(e && e.message));
       }
+    });
+  }
+
+  // API Keys - Load existing keys into inputs
+  const owmKeyInput = document.getElementById('openweathermap-key');
+  const vcKeyInput = document.getElementById('visualcrossing-key');
+  if (owmKeyInput) owmKeyInput.value = window.apiKeyManager.getKey('openweathermap') || '';
+  if (vcKeyInput) vcKeyInput.value = window.apiKeyManager.getKey('visualcrossing') || '';
+
+  // API Keys - Save handlers
+  if (owmKeyInput) {
+    owmKeyInput.addEventListener('change', (e) => {
+      const success = window.apiKeyManager.setKey('openweathermap', e.target.value);
+      if (success) showSuccess('OpenWeatherMap API-Key gespeichert');
+    });
+  }
+  if (vcKeyInput) {
+    vcKeyInput.addEventListener('change', (e) => {
+      const success = window.apiKeyManager.setKey('visualcrossing', e.target.value);
+      if (success) showSuccess('VisualCrossing API-Key gespeichert');
     });
   }
 
