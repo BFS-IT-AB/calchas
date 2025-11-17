@@ -254,35 +254,62 @@
         style="display: none"
       >
         <h2>🗺️ Wetterkarte</h2>
-        <div class="map-toolbar" role="toolbar" aria-label="Karten-Layer">
-          <div id="map-layer-toolbar" class="map-layer-toolbar"></div>
+        <div class="map-card">
+          <div class="map-card-header">
+            <div>
+              <p class="map-card-eyebrow">Radar · Temperatur · Wind</p>
+              <h3>Interaktive Wetterkarte</h3>
+              <p class="map-card-subtitle">
+                Wähle oben einen Layer, erkunde Details per Maus und nutze den
+                Radar-Timeline-Regler für Animationen.
+              </p>
+            </div>
+            <div class="map-card-status">
+              <span class="map-card-chip" aria-live="polite">Live</span>
+              <span class="map-card-chip chip-accent">RainViewer</span>
+            </div>
+          </div>
+
           <div
-            id="map-inspector"
-            class="map-inspector"
+            class="map-card-toolbar"
+            role="toolbar"
+            aria-label="Karten-Layer"
+          >
+            <div id="map-layer-toolbar" class="map-layer-toolbar"></div>
+            <div class="map-toolbar-hint">
+              <span
+                >Tippe auf ein Icon, um zwischen Temperatur, Radar, Wind und
+                weiteren Kartenebenen zu wechseln.</span
+              >
+            </div>
+          </div>
+
+          <div class="map-layout">
+            <div class="map-canvas-shell">
+              <div id="weather-map" class="weather-map"></div>
+              <div class="map-floating-panels" aria-live="polite">
+                <div
+                  id="map-overlay-legend"
+                  class="map-overlay-legend"
+                  aria-live="polite"
+                  aria-label="Status der Kartenlayer"
+                ></div>
+              </div>
+            </div>
+            <div
+              id="map-inspector"
+              class="map-inspector"
+              aria-live="polite"
+            ></div>
+          </div>
+
+          <div
+            id="map-radar-controls"
+            class="map-radar-controls"
             aria-live="polite"
+            aria-label="RainViewer Steuerung"
           ></div>
         </div>
-        <div
-          id="map-overlay-legend"
-          class="map-overlay-legend"
-          aria-live="polite"
-          aria-label="Status der Kartenlayer"
-        ></div>
-        <div
-          id="map-radar-controls"
-          class="map-radar-controls"
-          aria-live="polite"
-          aria-label="RainViewer Steuerung"
-        ></div>
-        <div
-          id="weather-map"
-          style="
-            height: 500px;
-            width: 100%;
-            border-radius: 8px;
-            overflow: hidden;
-          "
-        ></div>
       </section>
 
       <!-- Alerts Section -->

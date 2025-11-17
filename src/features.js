@@ -215,6 +215,7 @@ class WeatherMap {
       {
         key: "temp",
         label: "Temperatur-Layer",
+        shortLabel: "Temp",
         icon: "🌡️",
         overlayKey: "owm-temp",
         inspectorMode: "temperature",
@@ -222,6 +223,7 @@ class WeatherMap {
       {
         key: "radar",
         label: "Radar + Regen",
+        shortLabel: "Radar",
         icon: "🌧️",
         overlayKey: "radar",
         inspectorMode: "precipitation",
@@ -229,6 +231,7 @@ class WeatherMap {
       {
         key: "precip",
         label: "Niederschlag",
+        shortLabel: "Regen",
         icon: "💧",
         overlayKey: "owm-precip",
         inspectorMode: "precipitation",
@@ -236,6 +239,7 @@ class WeatherMap {
       {
         key: "wind",
         label: "Wind",
+        shortLabel: "Wind",
         icon: "🌬️",
         overlayKey: "owm-wind",
         inspectorMode: "wind",
@@ -243,6 +247,7 @@ class WeatherMap {
       {
         key: "clouds",
         label: "Wolken",
+        shortLabel: "Wolken",
         icon: "☁️",
         overlayKey: "owm-clouds",
         inspectorMode: "clouds",
@@ -250,12 +255,14 @@ class WeatherMap {
       {
         key: "pressure",
         label: "Druck",
+        shortLabel: "Druck",
         icon: "🧭",
         overlayKey: "owm-pressure",
       },
       {
         key: "snow",
         label: "Winter",
+        shortLabel: "Winter",
         icon: "❄️",
         overlayKey: "owm-snow",
         inspectorMode: "winter",
@@ -263,24 +270,28 @@ class WeatherMap {
       {
         key: "humidity",
         label: "Luftfeuchte",
+        shortLabel: "Feuchte",
         icon: "💦",
         inspectorMode: "humidity",
       },
       {
         key: "visibility",
         label: "Sichtweite",
+        shortLabel: "Sicht",
         icon: "🛰️",
         inspectorMode: "visibility",
       },
       {
         key: "dewpoint",
         label: "Taupunkt",
+        shortLabel: "Tau",
         icon: "🧊",
         inspectorMode: "dewpoint",
       },
       {
         key: "air",
         label: "Luftqualität",
+        shortLabel: "Air",
         icon: "🫧",
         inspectorMode: "air-quality",
       },
@@ -456,8 +467,11 @@ class WeatherMap {
         (config) => `
           <button type="button" class="map-layer-btn" data-layer="${
             config.key
-          }" title="${config.label}">
-            ${config.icon || "•"}
+          }" title="${config.label}" aria-label="${config.label}">
+            <span class="map-layer-btn-icon">${config.icon || "•"}</span>
+            <span class="map-layer-btn-label">${
+              config.shortLabel || config.label
+            }</span>
           </button>
         `
       )
