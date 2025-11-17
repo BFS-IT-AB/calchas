@@ -12,6 +12,7 @@ Alle 3 API-Keys wurden vollständig in Calchas integriert.
 
 - **API-Key:** BFS-Demo-Key ab Werk hinterlegt (`src/app.js` → `bakedInDefaults`), für Produktion bitte ersetzen
 - **Status:** Wird beim ersten App-Start automatisch gespeichert, kann jederzeit über den Einstellungsdialog oder `window.__APP_DEFAULT_API_KEYS` überschrieben werden
+- **Hinweis:** Falls dein Account keinen Zugriff auf One Call 3.0 hat, fällt die App automatisch auf One Call 2.5 (Legacy) zurück – deine Abdeckung bleibt somit bestehen, nur die API-Version wechselt.
 - **Features:** Current Weather, Hourly Forecast, Daily Forecast
 - **Integration:** Wird als optionale Zusatzquelle geladen wenn Hauptquellen (Open-Meteo, BrightSky) vorhanden
 

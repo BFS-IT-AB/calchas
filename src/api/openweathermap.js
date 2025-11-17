@@ -11,9 +11,20 @@
 
 class OpenWeatherMapAPI {
   constructor() {
-    this.baseUrl = "https://api.openweathermap.org/data/3.0/onecall";
     this.timeout = 5000;
     this.name = "OpenWeatherMap";
+    this.endpoints = [
+      {
+        version: "3.0",
+        url: "https://api.openweathermap.org/data/3.0/onecall",
+        label: "One Call 3.0",
+      },
+      {
+        version: "2.5",
+        url: "https://api.openweathermap.org/data/2.5/onecall",
+        label: "One Call 2.5 (Legacy)",
+      },
+    ];
   }
 
   /**
@@ -45,76 +56,58 @@ class OpenWeatherMapAPI {
         throw new Error(coordCheck.error);
       }
 
-      // Build URL with parameters
-      const params = new URLSearchParams({
-        lat: latitude.toFixed(4),
-        lon: longitude.toFixed(4),
-        appid: sanitizedKey,
-        units: units,
-        exclude: "minutely", // Exclude minutely data to reduce payload
-      });
+      let lastError = null;
 
-      const url = `${this.baseUrl}?${params.toString()}`;
-      const startTime = Date.now();
-
-      // Fetch with retry logic for transient errors
-      const maxAttempts = 3;
-      let attempt = 0;
-      let response = null;
-      let data = null;
-
-      while (attempt < maxAttempts) {
+      for (const endpoint of this.endpoints) {
         try {
-          response = await safeApiFetch(url, {}, this.timeout);
-          data = await response.json();
+          const { data, duration } = await this._requestFromEndpoint({
+            endpoint,
+            latitude,
+            longitude,
+            apiKey: sanitizedKey,
+            units,
+          });
 
-          // Validate response structure
-          const validation = this._validateResponse(data);
-          if (!validation.valid) {
-            throw new Error(validation.error);
-          }
-
-          break; // Success
-        } catch (err) {
-          attempt += 1;
-          const isLast = attempt >= maxAttempts;
-          const msg = err && err.message ? err.message : "";
-
-          // Don't retry on client errors (401, 403, 404, 429)
-          const isClientError =
-            /HTTP Fehler 4\d\d|401|403|404|429|API key|Invalid API|403 Forbidden/.test(
-              msg
-            );
-          if (isClientError || isLast) {
-            throw err;
-          }
-
-          // Exponential backoff for retries
-          const waitMs = 200 * Math.pow(2, attempt - 1);
-          await new Promise((r) => setTimeout(r, waitMs));
-          console.warn(
-            `OpenWeatherMap Versuch ${attempt} fehlgeschlagen, erneut in ${waitMs}ms...`
+          const formatted = this._formatWeatherData(data);
+          console.log(
+            `✅ OpenWeatherMap ${endpoint.label} erfolgreich (${duration}ms)`
           );
+
+          return {
+            data: formatted,
+            current: formatted.current,
+            hourly: formatted.hourly,
+            daily: formatted.daily,
+            fromCache: false,
+            duration,
+            state: "online",
+            statusMessage: `Live · ${duration}ms (${endpoint.version})`,
+            detail:
+              endpoint.version === "2.5"
+                ? "Fallback auf One Call 2.5, weil 3.0 nicht freigeschaltet ist"
+                : undefined,
+            source: "openweathermap",
+          };
+        } catch (err) {
+          lastError = err;
+          if (this._shouldFallbackToLegacy(endpoint.version, err)) {
+            console.warn(
+              "OpenWeatherMap One Call 3.0 nicht verfügbar – wechsle auf Legacy 2.5.",
+              err.message
+            );
+            continue;
+          }
+          break;
         }
       }
 
-      const duration = Date.now() - startTime;
-      console.log(`✅ OpenWeatherMap erfolgreich (${duration}ms)`);
+      if (lastError) {
+        throw lastError;
+      }
 
-      // Format response data
-      const formatted = this._formatWeatherData(data);
-
-      return {
-        data: formatted,
-        current: formatted.current,
-        hourly: formatted.hourly,
-        daily: formatted.daily,
-        fromCache: false,
-        duration,
-        state: "online",
-        statusMessage: `Live · ${duration}ms`,
-        source: "openweathermap",
-      };
+      throw new Error(
+        "OpenWeatherMap One Call konnte nicht geladen werden (keine gültige API-Version verfügbar)"
+      );
     } catch (error) {
       const classified = this._classifyError(error);
       console.error(`❌ OpenWeatherMap Fehler: ${classified.message}`);
@@ -127,6 +120,70 @@ class OpenWeatherMapAPI {
         source: "openweathermap",
       };
     }
+  }
+
+  async _requestFromEndpoint({ endpoint, latitude, longitude, apiKey, units }) {
+    const params = new URLSearchParams({
+      lat: latitude.toFixed(4),
+      lon: longitude.toFixed(4),
+      appid: apiKey,
+      units,
+      exclude: "minutely",
+    });
+
+    const url = `${endpoint.url}?${params.toString()}`;
+    const startTime = Date.now();
+
+    const maxAttempts = 3;
+    let attempt = 0;
+
+    while (attempt < maxAttempts) {
+      try {
+        const response = await safeApiFetch(url, {}, this.timeout);
+        const data = await response.json();
+        const validation = this._validateResponse(data);
+        if (!validation.valid) {
+          throw new Error(validation.error);
+        }
+        const duration = Date.now() - startTime;
+        return { data, duration };
+      } catch (err) {
+        attempt += 1;
+        const isLast = attempt >= maxAttempts;
+        const msg = err && err.message ? err.message : "";
+        const isClientError =
+          /HTTP Fehler 4\d\d|401|403|404|429|API key|Invalid API|403 Forbidden/.test(
+            msg
+          );
+        if (isClientError || isLast) {
+          throw err;
+        }
+        const waitMs = 200 * Math.pow(2, attempt - 1);
+        await new Promise((r) => setTimeout(r, waitMs));
+        console.warn(
+          `OpenWeatherMap ${endpoint.label} Versuch ${attempt} fehlgeschlagen, erneut in ${waitMs}ms...`
+        );
+      }
+    }
+    throw new Error(`OpenWeatherMap ${endpoint.label} fehlgeschlagen`);
+  }
+
+  _shouldFallbackToLegacy(version, error) {
+    if (version !== "3.0") return false;
+    const message = (error?.message || "").toLowerCase();
+    if (!message.includes("401")) return false;
+    const subscriptionHints = [
+      "subscription",
+      "subscribe",
+      "plan",
+      "paid",
+      "billing",
+      "credit",
+      "one call 3",
+      "onecall 3",
+      "3.0",
+    ];
+    return subscriptionHints.some((hint) => message.includes(hint));
   }
 
   /**

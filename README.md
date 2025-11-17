@@ -101,6 +101,8 @@ Dokumentation: https://docs/api-documentation.md
 | **Meteostat**      | Historische Stationsdaten             | https://meteostat.net/                     | ✓                |
 | **VisualCrossing** | Historische & Alternative Vorhersagen | https://www.visualcrossing.com/weather-api | ✓ (Trial)        |
 
+> ℹ️ Falls dein OpenWeatherMap-Key (z. B. Free-Tier) keinen Zugriff auf **One Call 3.0** hat, fällt Calchas automatisch auf den Legacy-Endpunkt **One Call 2.5** zurück. Damit funktionieren auch Keys ohne kostenpflichtiges Upgrade – du kannst aber jederzeit manuell auf 3.0 wechseln, sobald dein Account freigeschaltet ist.
+
 > ℹ️ Die BFS-IT Demo-Builds enthalten wieder eingebackene Default-Keys für **OpenWeatherMap**, **VisualCrossing** und **Meteostat** (siehe `src/app.js` → `bakedInDefaults`). Sie dienen ausschließlich Testzwecken und werden beim ersten Start automatisch gespeichert, sofern der Nutzer noch keine eigenen Keys hat. Für Produktivbetrieb solltest du die Werte im Code ersetzen oder eigene Keys via Runtime-Injektion setzen.
 
 #### Keys Konfigurieren
