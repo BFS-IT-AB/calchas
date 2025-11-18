@@ -68,8 +68,12 @@ class WeatherMap {
     this.rainViewerFrames = { past: [], nowcast: [] };
     this.rainViewerFrameIndex = 0;
     this.rainViewerMode = "nowcast";
+    this.rainViewerHost = "https://tilecache.rainviewer.com";
+    this.rainViewerSatelliteFrames = [];
+    this.rainViewerFallbackActive = false;
     this.radarControlsEl = null;
     this.rainViewerLoading = false;
+    this.rainViewerError = null;
     this.rainViewerPlaybackHandle = null;
     this.rainViewerIsPlaying = false;
     this._radarControlHandler = null;
@@ -86,6 +90,8 @@ class WeatherMap {
     this._viewportHandlers = null;
     this.legendEl = null;
     this.layerContextEl = null;
+    this.quickActionsEl = null;
+    this._quickActionHandler = null;
   }
 
   init(lat, lon, city) {
@@ -103,6 +109,7 @@ class WeatherMap {
 
     this._observeContainer(container);
     this._ensureLegendTarget();
+    this._bindQuickActions();
 
     if (!this.map) {
       this._createMap(lat, lon);
@@ -618,6 +625,7 @@ class WeatherMap {
       loading: "Lädt",
       locked: "API-Key nötig",
       error: "Fehler",
+      warning: "Warnung",
       inspector: "Inspector",
     };
     const description =
@@ -697,29 +705,75 @@ class WeatherMap {
     }
 
     this.rainViewerLoading = true;
+    this.rainViewerError = null;
     this._renderRadarControls();
 
-    const endpoint = "https://tilecache.rainviewer.com/api/maps.json";
-    this.rainViewerPromise = fetch(endpoint)
-      .then((response) => {
+    const requestInit = {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+      mode: "cors",
+    };
+
+    const fetchJson = (url, label) =>
+      fetch(`${url}?ts=${Date.now()}`, requestInit).then((response) => {
         if (!response.ok) {
-          throw new Error(`RainViewer ${response.status}`);
+          throw new Error(`${label} (${response.status})`);
         }
         return response.json();
+      });
+
+    const primaryUrl = "https://api.rainviewer.com/public/weather-maps.json";
+    const legacyUrl = "https://tilecache.rainviewer.com/api/maps.json";
+
+    const processPayload = (payload, mode) => {
+      if (mode === "legacy") {
+        payload = this._coerceLegacyRainViewerPayload(payload);
+      }
+      if (!payload?.radar) {
+        throw new Error(`RainViewer ${mode} ohne Radar-Daten`);
+      }
+      this._ingestRainViewerPayload(payload);
+      this.rainViewerError =
+        mode === "legacy"
+          ? "RainViewer liefert nur Rückblick-Frames (Legacy-API)."
+          : null;
+      if (mode === "legacy" && this.noticeEl) {
+        this.noticeEl.textContent =
+          "RainViewer Legacy-Modus: Nur Rückblick-Frames verfügbar.";
+      }
+      this.rainViewerLoading = false;
+      this._renderRadarControls();
+      return true;
+    };
+
+    this.rainViewerPromise = fetchJson(primaryUrl, "RainViewer v2")
+      .then((payload) => processPayload(payload, "primary"))
+      .catch((primaryError) => {
+        console.warn("RainViewer v2 Endpoint fehlgeschlagen", primaryError);
+        return fetchJson(legacyUrl, "RainViewer legacy")
+          .then((payload) => processPayload(payload, "legacy"))
+          .catch((legacyError) => {
+            throw legacyError || primaryError;
+          });
       })
-      .then((data) => {
-        this._ingestRainViewerPayload(data);
-        this.rainViewerLoading = false;
-        this._renderRadarControls();
-        return true;
+      .then((success) => {
+        if (success) {
+          this.refreshOverlays();
+        }
+        return success;
       })
       .catch((err) => {
         console.warn("RainViewer Frames nicht verfügbar", err);
         this.rainViewerTileUrl = null;
         this.rainViewerFrames = { past: [], nowcast: [] };
         this.rainViewerLoading = false;
+        this.rainViewerError =
+          "RainViewer konnte keine Radar-Daten liefern. Bitte später erneut versuchen.";
         this._stopRainViewerPlayback({ silent: true });
         this._renderRadarControls();
+        this._handleRadarUnavailable(this.rainViewerError);
         return false;
       })
       .finally(() => {
@@ -781,6 +835,74 @@ class WeatherMap {
     this._bindRadarControlEvents();
   }
 
+  _bindQuickActions() {
+    if (this._quickActionHandler) return;
+    const target = document.getElementById("map-quick-actions");
+    if (!target) return;
+    this.quickActionsEl = target;
+    this._quickActionHandler = (event) => {
+      const btn = event.target.closest("[data-map-action]");
+      if (!btn) return;
+      event.preventDefault();
+      const action = btn.getAttribute("data-map-action");
+      this._handleQuickAction(action);
+    };
+    target.addEventListener("click", this._quickActionHandler);
+  }
+
+  _handleQuickAction(action) {
+    if (!action || !this.map) return;
+    switch (action) {
+      case "locate": {
+        if (this.marker) {
+          const latLng = this.marker.getLatLng();
+          const zoom = Math.max(this.map.getZoom() || 0, 10);
+          this.map.flyTo(latLng, zoom, { duration: 0.65 });
+          this.marker.openPopup();
+        }
+        break;
+      }
+      case "radar": {
+        this._handleToolbarSelection("radar");
+        if (!this._getActiveRainViewerFrames().length) {
+          this._ensureRainViewerTiles();
+        }
+        break;
+      }
+      case "refresh": {
+        if (this.noticeEl) {
+          this.noticeEl.textContent = "Overlays werden aktualisiert…";
+        }
+        this.refreshOverlays();
+        break;
+      }
+      case "inspector": {
+        this._focusInspectorPanel();
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  _focusInspectorPanel() {
+    const inspector = document.getElementById("map-inspector");
+    if (!inspector) return;
+    if (!inspector.hasAttribute("tabindex")) {
+      inspector.setAttribute("tabindex", "-1");
+    }
+    inspector.focus({ preventScroll: false });
+    inspector.addEventListener(
+      "blur",
+      () => {
+        if (inspector.getAttribute("tabindex") === "-1") {
+          inspector.removeAttribute("tabindex");
+        }
+      },
+      { once: true }
+    );
+  }
+
   _bindRadarControlEvents() {
     if (!this.radarControlsEl || this._radarControlHandler) return;
     this._radarControlHandler = (event) => this._handleRadarControlClick(event);
@@ -817,8 +939,12 @@ class WeatherMap {
 
     if (!activeFrames.length) {
       this._stopRainViewerPlayback({ silent: true });
+      const reason = this.rainViewerError
+        ? `<p class="map-radar-hint">${this.rainViewerError}</p>`
+        : "";
       this.radarControlsEl.innerHTML =
-        '<div class="map-radar-empty">Keine Radar-Daten verfügbar.</div>';
+        '<div class="map-radar-empty">Keine Radar-Daten verfügbar.</div>' +
+        reason;
       return;
     }
 
@@ -890,6 +1016,49 @@ class WeatherMap {
           : '<p class="map-radar-hint">Radar-Overlay in der Toolbar aktivieren, um es auf der Karte einzublenden.</p>'
       }
     `;
+  }
+
+  _handleRadarUnavailable(message) {
+    if (this.noticeEl) {
+      this.noticeEl.textContent = message || "RainViewer nicht verfügbar.";
+    }
+    const radarConfig = this.overlayConfigs.find(
+      (entry) => entry.key === "radar"
+    );
+    if (radarConfig) {
+      this._updateLegendEntry(radarConfig, "warning", message);
+      this._renderOverlayLegend();
+      this._syncToolbarAvailability();
+    }
+    this._useRainViewerFallback(message);
+  }
+
+  _useRainViewerFallback(message) {
+    const fallbackUrl =
+      "https://tilecache.rainviewer.com/v2/radar/nowcast_0/512/{z}/{x}/{y}/2/1_1.png";
+    this.rainViewerFallbackActive = true;
+    this.rainViewerTileUrl = fallbackUrl;
+    this.rainViewerError =
+      message || "RainViewer liefert derzeit nur statische Radar-Kacheln.";
+    if (this.currentOverlay?.key === "radar" && this.currentOverlay.layer) {
+      this.currentOverlay.layer.setUrl(fallbackUrl);
+    }
+    if (!this.overlayLayerByKey.has("radar")) {
+      this.refreshOverlays();
+    }
+    const radarConfig = this.overlayConfigs.find(
+      (entry) => entry.key === "radar"
+    );
+    if (radarConfig) {
+      this._updateLegendEntry(
+        radarConfig,
+        "warning",
+        message || "RainViewer Fallback (statische Tiles)"
+      );
+      this._renderOverlayLegend();
+      this._syncToolbarAvailability();
+    }
+    this._renderRadarControls();
   }
 
   _handleRadarControlClick(event) {
@@ -1043,13 +1212,34 @@ class WeatherMap {
 
   _getActiveRainViewerTileUrl() {
     const frame = this._getActiveRainViewerFrame();
-    if (!frame) return null;
-    return this._buildRainViewerTileUrl(frame);
+    if (frame) {
+      return this._buildRainViewerTileUrl(frame);
+    }
+    if (this.rainViewerFallbackActive && this.rainViewerTileUrl) {
+      return this.rainViewerTileUrl;
+    }
+    return null;
   }
 
   _buildRainViewerTileUrl(frame) {
     if (!frame?.path) return null;
-    return `https://tilecache.rainviewer.com/v2/radar/${frame.path}/512/{z}/{x}/{y}/2/1_1.png`;
+    const host = this.rainViewerHost || "https://tilecache.rainviewer.com";
+    if (frame.path.startsWith("http")) {
+      if (frame.path.includes("{z}")) {
+        return frame.path;
+      }
+      const suffix = frame.type === "infrared" ? "256" : "512";
+      return `${frame.path}/${suffix}/{z}/{x}/{y}/2/1_1.png`;
+    }
+    const normalized = frame.path.startsWith("/")
+      ? frame.path
+      : `/${frame.path}`;
+    const base = `${host}${normalized}`;
+    if (base.includes("{z}")) {
+      return base;
+    }
+    const tileSize = frame.type === "infrared" ? "256" : "512";
+    return `${base}/${tileSize}/{z}/{x}/{y}/2/1_1.png`;
   }
 
   _formatRadarFrameLabel(frame) {
@@ -1092,10 +1282,17 @@ class WeatherMap {
       payload?.radar?.nowcast,
       "nowcast"
     );
+    const satellite = this._normalizeRainViewerFrames(
+      payload?.satellite?.infrared,
+      "infrared"
+    );
     if (!past.length && !nowcast.length) {
       throw new Error("Kein Radar-Frame verfügbar");
     }
+    this.rainViewerHost = payload?.host || this.rainViewerHost;
     this.rainViewerFrames = { past, nowcast };
+    this.rainViewerSatelliteFrames = satellite;
+    this.rainViewerFallbackActive = false;
     if (
       !this.rainViewerMode ||
       !this.rainViewerFrames[this.rainViewerMode]?.length
@@ -1108,6 +1305,37 @@ class WeatherMap {
       : 0;
     this.rainViewerTileUrl = this._getActiveRainViewerTileUrl();
     this.rainViewerFetchedAt = Date.now();
+    this.rainViewerError = null;
+    if (this.noticeEl) {
+      const latest = this._getActiveRainViewerFrame();
+      const label = latest ? this._formatRadarFrameLabel(latest) : "";
+      this.noticeEl.textContent = label
+        ? `RainViewer aktualisiert ${label}`
+        : "RainViewer aktiv";
+    }
+  }
+
+  _coerceLegacyRainViewerPayload(raw) {
+    if (!Array.isArray(raw) || !raw.length) {
+      return null;
+    }
+    const frames = raw
+      .map((value) => Number(value))
+      .filter((time) => Number.isFinite(time))
+      .map((time) => ({
+        time,
+        path: `/v2/radar/${time}`,
+      }));
+    if (!frames.length) {
+      return null;
+    }
+    return {
+      host: "https://tilecache.rainviewer.com",
+      radar: {
+        past: frames,
+        nowcast: [],
+      },
+    };
   }
 
   _ensureLegendTarget() {
@@ -1141,6 +1369,7 @@ class WeatherMap {
         loading: "Lädt",
         locked: "Gesperrt",
         error: "Fehler",
+        warning: "Warnung",
       }[badgeState];
 
       chunks.push(`
@@ -1198,7 +1427,15 @@ class WeatherMap {
     if (this.currentOverlay) {
       const label = this.currentOverlay.label;
       const provider = this.currentOverlay.provider;
-      this.statusEl.textContent = `Overlay: ${label} - Quelle: ${provider}`;
+      let statusText = `Overlay: ${label} - Quelle: ${provider}`;
+      if (this.currentOverlay.key === "radar") {
+        const frame = this._getActiveRainViewerFrame();
+        const timestamp = frame ? this._formatRadarFrameLabel(frame) : null;
+        if (timestamp) {
+          statusText += ` · ${timestamp}`;
+        }
+      }
+      this.statusEl.textContent = statusText;
       this.statusEl.classList.remove("pill-neutral");
     } else {
       this.statusEl.textContent = "Karte: Standard (OSM)";
@@ -1299,6 +1536,13 @@ class WeatherMap {
         this._radarTimelineHandler
       );
       this._radarTimelineHandler = null;
+    }
+    if (this.quickActionsEl && this._quickActionHandler) {
+      this.quickActionsEl.removeEventListener(
+        "click",
+        this._quickActionHandler
+      );
+      this._quickActionHandler = null;
     }
   }
 

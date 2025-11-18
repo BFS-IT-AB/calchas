@@ -334,31 +334,70 @@
             </div>
           </div>
 
+          <div
+            id="map-quick-actions"
+            class="map-quick-actions"
+            role="group"
+            aria-label="Karten Schnellaktionen"
+          >
+            <button
+              type="button"
+              class="map-quick-action-btn"
+              data-map-action="locate"
+            >
+              <span class="map-quick-action-icon">🎯</span>
+              <span class="map-quick-action-text">Standort zentrieren</span>
+            </button>
+            <button
+              type="button"
+              class="map-quick-action-btn"
+              data-map-action="radar"
+            >
+              <span class="map-quick-action-icon">🌧️</span>
+              <span class="map-quick-action-text">Radar aktivieren</span>
+            </button>
+            <button
+              type="button"
+              class="map-quick-action-btn"
+              data-map-action="refresh"
+            >
+              <span class="map-quick-action-icon">🔄</span>
+              <span class="map-quick-action-text">Layer neu laden</span>
+            </button>
+            <button
+              type="button"
+              class="map-quick-action-btn"
+              data-map-action="inspector"
+            >
+              <span class="map-quick-action-icon">📊</span>
+              <span class="map-quick-action-text">Inspector fokussieren</span>
+            </button>
+          </div>
+
           <div class="map-layout">
             <div class="map-canvas-shell">
               <div id="weather-map" class="weather-map"></div>
-              <div class="map-floating-panels" aria-live="polite">
-                <div
-                  id="map-overlay-legend"
-                  class="map-overlay-legend"
-                  aria-live="polite"
-                  aria-label="Status der Kartenlayer"
-                ></div>
-              </div>
             </div>
-            <div
-              id="map-inspector"
-              class="map-inspector"
-              aria-live="polite"
-            ></div>
+            <aside class="map-side-panel" aria-label="Karteninformationen">
+              <div
+                id="map-inspector"
+                class="map-inspector"
+                aria-live="polite"
+              ></div>
+              <div
+                id="map-overlay-legend"
+                class="map-overlay-legend"
+                aria-live="polite"
+                aria-label="Status der Kartenlayer"
+              ></div>
+              <div
+                id="map-radar-controls"
+                class="map-radar-controls"
+                aria-live="polite"
+                aria-label="RainViewer Steuerung"
+              ></div>
+            </aside>
           </div>
-
-          <div
-            id="map-radar-controls"
-            class="map-radar-controls"
-            aria-live="polite"
-            aria-label="RainViewer Steuerung"
-          ></div>
         </div>
       </section>
 

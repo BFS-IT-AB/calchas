@@ -184,6 +184,7 @@
 - `src/utils/apiKeyManager.js`: Entfernt bekannte, abgelaufene Demo-Keys automatisch aus localStorage und hält neue Keys selbst dann bereit, wenn localStorage blockiert ist.
 - `src/api/openweathermap.js`: Erkennt 401/403-Antworten aufgrund fehlender One-Call-Subskription und fällt zuerst auf 2.5 und – falls nötig – auf den kostenlosen Current/Forecast-Stack zurück.
 - `src/features.js`: Map-Overlays werden automatisch aktiviert (RainViewer zuerst) und melden Tile-Fehler sofort im UI + API-Status, damit ungültige Keys sichtbar werden.
+- `src/features.js`, `src/index.html`, `src/style.css`: RainViewer-Radar wurde auf den neuen `api.rainviewer.com/public/weather-maps.json` Endpunkt migriert (inkl. Legacy-Fallback), die Karte bekam Schnellaktionen (zentrieren, Radar aktivieren, Overlays neu laden, Inspector fokussieren) sowie klarere Status-Anzeigen für Radar-Zeitstempel.
 - `README.md` & `docs/api/API_INTEGRATION.md`: Dokumentieren klar, dass Demo-Keys nur für BFS-Tests gedacht sind und wie eigene Keys injiziert werden.
 
 **Resultat:** Regenradar lädt sofort, OWM-Layer erscheinen reproduzierbar und invalid Keys werden klar gekennzeichnet, während Produktiv-Deployments weiterhin eigene Schlüssel setzen können.
