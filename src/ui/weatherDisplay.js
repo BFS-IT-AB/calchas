@@ -186,9 +186,9 @@ class WeatherDisplayComponent {
               <div class="detail-item">
                 <span class="detail-label">☔ Regen</span>
                 <span class="detail-value">${
-                  typeof currentHour.precipitation === "number"
-                    ? `${currentHour.precipitation.toFixed(1)} mm`
-                    : "--"
+                  typeof precipitationSum === "number"
+                   ? `${precipitationSum.toFixed(1)} mm`
+                   : this._formatMetricValue(currentHour.precipitation, " mm", 1)
                 }</span>
               </div>
             </div>
@@ -622,12 +622,12 @@ class WeatherDisplayComponent {
 
     const scrollByPage = (direction) => {
       if (!cards.length) return;
-      
+
       // Finde die aktuell angezeigte Karte (die in der Mitte ist)
       const viewportCenter = track.scrollLeft + track.clientWidth / 2;
       let currentIndex = 0;
       let minDelta = Number.POSITIVE_INFINITY;
-      
+
       cards.forEach((card, idx) => {
         const cardCenter = card.offsetLeft + card.offsetWidth / 2;
         const delta = Math.abs(cardCenter - viewportCenter);
@@ -636,10 +636,10 @@ class WeatherDisplayComponent {
           currentIndex = idx;
         }
       });
-      
+
       // Berechne nächste Karte basierend auf Richtung
       const nextIndex = currentIndex + direction;
-      
+
       if (nextIndex >= 0 && nextIndex < cards.length) {
         const nextCard = cards[nextIndex];
         const cardStart = nextCard.offsetLeft;
@@ -648,7 +648,7 @@ class WeatherDisplayComponent {
         const viewportWidth = track.clientWidth;
         const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
         const gapSize = 24; // var(--spacing-lg) in pixels
-        
+
         // Für die letzte Karte: Stelle sicher, dass sie vollständig mit Padding sichtbar ist
         if (nextIndex === cards.length - 1) {
           // Scrolle so, dass die letzte Karte mit etwas Padding von links sichtbar ist
