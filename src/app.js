@@ -219,6 +219,61 @@ const API_PROVIDERS = [
 
 const DEMO_CITY_FALLBACK = "Berlin (Demo)";
 
+let activeSettingsSubview = null;
+
+const SETTINGS_NAV_MAP = {
+  appearance: {
+    label: "Aussehen",
+    focusSelector: "#darkModeToggle",
+  },
+  home: {
+    label: "Heimatort",
+    focusSelector: "#set-home-btn",
+  },
+  units: {
+    label: "Einheiten",
+    focusSelector: "#temp-unit-select",
+  },
+  background: {
+    label: "Hintergrundaktualisierungen",
+    focusSelector: "#background-refresh-select",
+  },
+  models: {
+    label: "Wettermodelle",
+  },
+  locale: {
+    label: "Sprache & Speicher",
+    focusSelector: "#lang-select",
+  },
+  export: {
+    label: "Daten exportieren",
+    focusSelector: "#settings-export-data",
+  },
+  import: {
+    label: "Daten importieren",
+    focusSelector: "#settings-import-data",
+  },
+  push: {
+    label: "Push-Benachrichtigungen",
+    focusSelector: "#pushToggle",
+  },
+  "api-keys": {
+    label: "API Keys",
+    focusSelector: "#openweathermap-key",
+  },
+  status: {
+    label: "Status & Quellen",
+    focusSelector: "#api-status",
+  },
+  comparison: {
+    label: "API Vergleiche",
+    focusSelector: "#settings-source-comparison",
+  },
+  docs: {
+    label: "Technische Dokumentation",
+  },
+};
+
 function setupMobileViewportWatcher() {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return;
@@ -454,7 +509,6 @@ function renderDemoExperience(reason = "") {
       "Demo"
     );
     weatherDisplay.displayForecast(demoData.openMeteo.daily);
-    weatherDisplay.updateSourceInfo(demoData.sources || []);
     try {
       weatherDisplay.showSourcesComparison(
         demoData.openMeteo,
@@ -466,6 +520,13 @@ function renderDemoExperience(reason = "") {
     }
 
     updateTopbarStatus(DEMO_CITY_FALLBACK);
+    syncExtendedPanels(
+      demoData.locationDetails || {
+        city: DEMO_CITY_FALLBACK,
+        latitude: 52.52,
+        longitude: 13.405,
+      }
+    );
 
     if (reason && typeof window.showInfo === "function") {
       window.showInfo(reason);
@@ -1633,10 +1694,14 @@ function tryRestoreLastSnapshot() {
         snapshot.renderData.brightSky || null,
         snapshot.sources || []
       );
-      weatherDisplay.updateSourceInfo(snapshot.sources || []);
     } catch (e) {
       console.warn("Snapshot Quellenanzeige fehlgeschlagen", e);
     }
+
+    syncExtendedPanels({
+      city: snapshot.city,
+      locationDetails: snapshot.renderData?.locationDetails,
+    });
 
     return true;
   } catch (e) {
@@ -2110,9 +2175,6 @@ async function fetchWeatherData(lat, lon) {
 function displayWeatherResults(location, weatherData) {
   const { openMeteo, brightSky, sources } = weatherData;
 
-  // Update Source Info
-  weatherDisplay.updateSourceInfo(sources);
-
   // Update detailed comparison view (if available)
   try {
     // Pass converted renderData if available (appState.renderData set by caller)
@@ -2227,6 +2289,14 @@ async function loadWeather(city, options = {}) {
       document.title = `Calchas – ${location.city}`;
     }
 
+    syncExtendedPanels({
+      city: location.city,
+      lat: location.lat,
+      lon: location.lon,
+      locationDetails: weatherData?.locationDetails,
+      coords: location,
+    });
+
     // Speichere im Cache
     weatherCache.setGeo(city, {
       city: location.city,
@@ -2273,6 +2343,250 @@ if (typeof window !== "undefined") {
   window.loadWeather = loadWeather;
 }
 
+function initializeFeatureModules() {
+  setupAnalyticsBridge();
+
+  if (
+    typeof WeatherMap === "function" &&
+    typeof MapDataInspector === "function"
+  ) {
+    try {
+      mapInspector = new MapDataInspector("map-inspector");
+      weatherMapFeature = new WeatherMap("weather-map");
+      weatherMapFeature.attachInspector(mapInspector);
+      weatherMapFeature.bindToolbar("#map-layer-toolbar");
+      window.weatherMap = weatherMapFeature;
+    } catch (error) {
+      console.warn("Kartenmodul konnte nicht initialisiert werden:", error);
+    }
+  } else {
+    console.warn(
+      "WeatherMap oder MapDataInspector nicht verfügbar – Kartenansicht deaktiviert."
+    );
+  }
+
+  if (typeof WeatherAlerts === "function") {
+    weatherAlerts = new WeatherAlerts("weather-alerts");
+  }
+
+  if (typeof HistoricalChart === "function") {
+    historicalChart = new HistoricalChart("historical-chart");
+  }
+
+  const initialSeed =
+    appState?.renderData?.locationDetails ||
+    appState?.currentCoordinates ||
+    appState?.weatherData?.locationDetails ||
+    appState?.homeLocation?.coords ||
+    null;
+
+  if (initialSeed) {
+    syncExtendedPanels({
+      city: appState?.currentCity || initialSeed.city,
+      locationDetails:
+        appState?.renderData?.locationDetails ||
+        appState?.weatherData?.locationDetails ||
+        initialSeed,
+      coords: initialSeed,
+    });
+  } else if (weatherMapFeature) {
+    const defaultSeed = {
+      city: "Berlin (Demo)",
+      coords: {
+        lat: 52.52,
+        lon: 13.405,
+      },
+    };
+    const fallbackSource = appState?.homeLocation || defaultSeed;
+    const resolvedFallback =
+      resolveLocationInput(fallbackSource) || resolveLocationInput(defaultSeed);
+    if (resolvedFallback) {
+      weatherMapFeature.init(
+        resolvedFallback.lat,
+        resolvedFallback.lon,
+        resolvedFallback.label || fallbackSource?.city || defaultSeed.city
+      );
+    }
+  }
+}
+
+function setupAnalyticsBridge() {
+  if (analyticsDashboard) {
+    return;
+  }
+  if (typeof Analytics !== "function") {
+    if (!window.logAnalyticsEvent) {
+      window.logAnalyticsEvent = () => {};
+    }
+    return;
+  }
+  try {
+    analyticsDashboard = new Analytics();
+    window.analytics = analyticsDashboard;
+    window.logAnalyticsEvent = (type, payload = {}) => {
+      try {
+        analyticsDashboard.logEvent(type, payload);
+      } catch (err) {
+        console.warn("Analytics konnte nicht protokollieren:", err);
+      } finally {
+        refreshAnalyticsPanel();
+      }
+    };
+    refreshAnalyticsPanel();
+  } catch (error) {
+    console.warn("Analytics-Modul konnte nicht initialisiert werden:", error);
+    if (!window.logAnalyticsEvent) {
+      window.logAnalyticsEvent = () => {};
+    }
+  }
+  wireSettingsDataButtons();
+}
+
+function refreshAnalyticsPanel() {
+  if (analyticsDashboard) {
+    analyticsDashboard.renderDashboard("analytics-panel");
+  }
+}
+
+function wireSettingsDataButtons() {
+  const exportBtn = document.getElementById("settings-export-data");
+  if (exportBtn && !exportBtn.dataset.bound) {
+    exportBtn.addEventListener("click", () => {
+      if (!analyticsDashboard) {
+        if (typeof showWarning === "function") {
+          showWarning(
+            "Analytics noch nicht bereit – bitte später erneut versuchen."
+          );
+        }
+        return;
+      }
+      try {
+        const blob = new Blob([analyticsDashboard.exportData()], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `calchas-analytics-${Date.now()}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        if (typeof showSuccess === "function") {
+          showSuccess("Export abgeschlossen – Datei gespeichert.");
+        }
+      } catch (error) {
+        console.warn("Analytics Export fehlgeschlagen", error);
+        if (typeof showError === "function") {
+          showError("Export fehlgeschlagen – bitte erneut versuchen.");
+        }
+      }
+    });
+    exportBtn.dataset.bound = "true";
+  }
+
+  const importBtn = document.getElementById("settings-import-data");
+  const importInput = document.getElementById("settings-import-file");
+  if (importBtn && importInput && !importBtn.dataset.bound) {
+    importBtn.addEventListener("click", () => importInput.click());
+    importBtn.dataset.bound = "true";
+  }
+
+  if (importInput && !importInput.dataset.bound) {
+    importInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        const raw = await file.text();
+        const payload = JSON.parse(raw);
+        if (!payload?.events || !Array.isArray(payload.events)) {
+          throw new Error("Ungültiges Exportformat");
+        }
+        if (!analyticsDashboard) {
+          setupAnalyticsBridge();
+        }
+        if (!analyticsDashboard) {
+          throw new Error("Analytics nicht verfügbar");
+        }
+        analyticsDashboard.events = payload.events;
+        analyticsDashboard.saveEvents();
+        refreshAnalyticsPanel();
+        if (typeof showSuccess === "function") {
+          showSuccess("Analytics-Daten importiert.");
+        }
+      } catch (error) {
+        console.warn("Analytics Import fehlgeschlagen", error);
+        if (typeof showError === "function") {
+          showError(error.message || "Import fehlgeschlagen");
+        }
+      } finally {
+        event.target.value = "";
+      }
+    });
+    importInput.dataset.bound = "true";
+  }
+}
+
+function syncExtendedPanels(locationLike) {
+  const resolved = resolveLocationInput(locationLike);
+  if (!resolved) {
+    refreshAnalyticsPanel();
+    return;
+  }
+  const { lat, lon, label } = resolved;
+  if (weatherMapFeature) {
+    weatherMapFeature.init(lat, lon, label);
+  }
+  if (weatherAlerts) {
+    weatherAlerts.fetchAlerts(lat, lon, label);
+  }
+  if (historicalChart) {
+    historicalChart.fetchAndRender(lat, lon, label);
+  }
+  refreshAnalyticsPanel();
+}
+
+function resolveLocationInput(locationLike) {
+  const sources = [
+    locationLike,
+    locationLike?.coords,
+    locationLike?.locationDetails,
+    appState?.currentCoordinates,
+  ].filter(Boolean);
+
+  for (const source of sources) {
+    const latCandidate =
+      source.lat ??
+      source.latitude ??
+      (Array.isArray(source) ? source[0] : undefined);
+    const lonCandidate =
+      source.lon ??
+      source.lng ??
+      source.longitude ??
+      (Array.isArray(source) ? source[1] : undefined);
+    const lat =
+      typeof latCandidate === "string"
+        ? parseFloat(latCandidate)
+        : latCandidate;
+    const lon =
+      typeof lonCandidate === "string"
+        ? parseFloat(lonCandidate)
+        : lonCandidate;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      const label =
+        [
+          locationLike?.city,
+          locationLike?.label,
+          locationLike?.name,
+          locationLike?.locationDetails?.city,
+          source.city,
+          appState?.currentCity,
+        ].find((entry) => typeof entry === "string" && entry.trim().length) ||
+        DEMO_CITY_FALLBACK;
+      return { lat, lon, label };
+    }
+  }
+  return null;
+}
+
 /**
  * Initialisierung
  */
@@ -2280,6 +2594,7 @@ function initApp() {
   console.log("🚀 Initialisiere Calchas...");
 
   setupMobileViewportWatcher();
+  setupSettingsNavigation();
 
   // Initialisiere API Key Manager
   window.apiKeyManager = new APIKeyManager();
@@ -2338,6 +2653,7 @@ function initApp() {
   // Globale State
   appState = new AppState();
   window.appState = appState;
+  initializeFeatureModules();
   if (!window.logAnalyticsEvent) {
     window.logAnalyticsEvent = () => {};
   }
@@ -2379,6 +2695,20 @@ function initApp() {
       );
       updateHomeLocationLabel();
       showSuccess(`${appState.currentCity} als Heimatort gespeichert.`);
+    });
+  }
+
+  const comparisonRefreshBtn = document.getElementById(
+    "force-comparison-refresh"
+  );
+  if (comparisonRefreshBtn) {
+    comparisonRefreshBtn.addEventListener("click", () => {
+      if (appState?.currentCity) {
+        showInfo("Vergleich wird aktualisiert...");
+        loadWeather(appState.currentCity);
+      } else {
+        showWarning("Bitte lade zunächst einen Ort für den Vergleich.");
+      }
     });
   }
 
@@ -2817,6 +3147,11 @@ function initApp() {
 let appState;
 let searchComponent;
 let weatherDisplay;
+let weatherMapFeature;
+let mapInspector;
+let weatherAlerts;
+let historicalChart;
+let analyticsDashboard;
 
 // Starte App wenn DOM bereit
 if (document.readyState === "loading") {
@@ -3209,6 +3544,9 @@ function closeModal(modalId) {
   modal.setAttribute("aria-hidden", "true");
   modalOverlay?.classList.remove("active");
   document.body.style.overflow = "";
+  if (modalId === "settings-modal") {
+    closeSettingsSubview();
+  }
 }
 
 function closeAllModals() {
@@ -3219,6 +3557,109 @@ function closeAllModals() {
   const modalOverlay = document.getElementById("modal-overlay");
   modalOverlay?.classList.remove("active");
   document.body.style.overflow = "";
+  closeSettingsSubview();
+}
+
+function openSettingsSubview(targetView) {
+  if (!targetView) return;
+  if (!SETTINGS_NAV_MAP[targetView]) {
+    console.warn(`Kein Settings-View für "${targetView}" definiert.`);
+  }
+  const overlay = document.getElementById("settings-subview-overlay");
+  if (!overlay) return;
+  const view = overlay.querySelector(
+    `.settings-subview[data-view="${targetView}"]`
+  );
+  if (!view) return;
+
+  overlay.classList.add("active");
+  overlay.setAttribute("aria-hidden", "false");
+
+  overlay.querySelectorAll(".settings-subview").forEach((section) => {
+    if (section === view) {
+      section.setAttribute("aria-hidden", "false");
+      section.removeAttribute("hidden");
+    } else {
+      section.setAttribute("aria-hidden", "true");
+      section.setAttribute("hidden", "hidden");
+    }
+  });
+
+  activeSettingsSubview = targetView;
+
+  setTimeout(() => {
+    const config = SETTINGS_NAV_MAP[targetView];
+    const preferredFocus = config?.focusSelector
+      ? view.querySelector(config.focusSelector)
+      : null;
+    const focusTarget =
+      preferredFocus ||
+      view.querySelector("[data-settings-initial-focus]") ||
+      view.querySelector(
+        "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea, [tabindex]:not([tabindex='-1'])"
+      );
+    focusTarget?.focus({ preventScroll: false });
+  }, 60);
+}
+
+function closeSettingsSubview() {
+  const overlay = document.getElementById("settings-subview-overlay");
+  if (!overlay) return;
+  overlay.classList.remove("active");
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.querySelectorAll(".settings-subview").forEach((section) => {
+    section.setAttribute("aria-hidden", "true");
+    section.setAttribute("hidden", "hidden");
+  });
+  activeSettingsSubview = null;
+}
+
+function setupSettingsNavigation() {
+  const panel = document.querySelector(".settings-panel");
+  const overlay = document.getElementById("settings-subview-overlay");
+  if (!panel || !overlay) return;
+
+  const triggers = panel.querySelectorAll(
+    ".settings-link[data-settings-target]"
+  );
+  triggers.forEach((trigger) => {
+    const target = trigger.getAttribute("data-settings-target");
+    if (!target) return;
+    if (!SETTINGS_NAV_MAP[target]) {
+      console.warn(`Unbekannter settings target: ${target}`);
+    }
+    trigger.addEventListener("click", () => openSettingsSubview(target));
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openSettingsSubview(target);
+      }
+    });
+  });
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) {
+      closeSettingsSubview();
+    }
+  });
+
+  overlay
+    .querySelectorAll("[data-settings-back]")
+    .forEach((btn) =>
+      btn.addEventListener("click", () => closeSettingsSubview())
+    );
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && activeSettingsSubview) {
+      const isOverlayActive = overlay.classList.contains("active");
+      if (isOverlayActive) {
+        event.stopPropagation();
+        closeSettingsSubview();
+      }
+    }
+  });
+
+  closeSettingsSubview();
 }
 
 function focusAndHighlight(elementId, delay = 150) {
@@ -3226,6 +3667,11 @@ function focusAndHighlight(elementId, delay = 150) {
   setTimeout(() => {
     const element = document.getElementById(elementId);
     if (!element) return;
+    const parentView = element.closest(".settings-subview");
+    const targetView = parentView?.getAttribute("data-view");
+    if (targetView && parentView?.getAttribute("aria-hidden") === "true") {
+      openSettingsSubview(targetView);
+    }
     try {
       element.focus({ preventScroll: false });
     } catch (e) {

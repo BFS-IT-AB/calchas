@@ -11,13 +11,13 @@
   "categories": ["weather", "utilities"],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23007BFF' width='540' height='720'/><text x='270' y='360' font-size='100' text-anchor='middle' fill='white'>🌦️</text></svg>",
+      "src": "/src/assets/screenshots/screenshot-narrow.svg",
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect fill='%23007BFF' width='1280' height='720'/><text x='640' y='360' font-size='150' text-anchor='middle' fill='white'>🌦️</text></svg>",
+      "src": "/src/assets/screenshots/screenshot-wide.svg",
       "sizes": "1280x720",
       "type": "image/svg+xml",
       "form_factor": "wide"

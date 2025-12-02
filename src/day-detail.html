@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calchas – Tagesdetails</title>
+    <meta
+      name="description"
+      content="Vertiefte Wetterdetails für den gewählten Tag in Calchas."
+    />
+    <link rel="stylesheet" href="day-detail.css" />
+  </head>
+  <body class="detail-theme">
+    <main id="detail-root" class="detail-shell" data-state="loading">
+      <p class="detail-loading">Lade Tagesdetails …</p>
+    </main>
+    <script src="./utils/iconMapper.js" defer></script>
+    <script src="./ui/dayDetailTemplate.js" defer></script>
+    <script src="./day-detail.js" defer></script>
+  </body>
+</html>

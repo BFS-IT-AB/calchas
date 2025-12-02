@@ -1,0 +1,277 @@
+.detail-theme {
+  color-scheme: dark;
+  --detail-bg: #130d09;
+  --detail-panel: #1c120e;
+  --detail-pill: #26170f;
+  --detail-card: #1f140f;
+  --detail-border: rgba(255, 255, 255, 0.08);
+  --detail-accent: #f7b267;
+  --detail-muted: rgba(255, 255, 255, 0.7);
+  --detail-font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+.detail-theme,
+.detail-theme * {
+  box-sizing: border-box;
+}
+
+.detail-theme {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--detail-font);
+  background: radial-gradient(
+      circle at top,
+      rgba(247, 178, 103, 0.08),
+      transparent 45%
+    ),
+    var(--detail-bg);
+  color: #f8f0e3;
+}
+
+.detail-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  transition: opacity 0.25s ease;
+}
+
+.detail-shell[data-state="loading"] {
+  opacity: 0.7;
+}
+
+.detail-loading,
+.detail-error {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--detail-muted);
+}
+
+.detail-hero {
+  background: linear-gradient(
+    135deg,
+    rgba(39, 24, 15, 0.95),
+    rgba(18, 11, 7, 0.92)
+  );
+  border: 1px solid var(--detail-border);
+  border-radius: 32px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.detail-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 20% 0%,
+    rgba(247, 178, 103, 0.18),
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+.detail-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.detail-day-chip {
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(247, 178, 103, 0.2);
+  color: var(--detail-accent);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.detail-back-btn {
+  background: transparent;
+  border: none;
+  color: var(--detail-muted);
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.detail-back-btn:hover,
+.detail-back-btn:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.detail-hero-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.detail-city {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.9rem;
+  color: var(--detail-muted);
+  margin-bottom: 0.4rem;
+}
+
+.detail-temp {
+  font-size: clamp(3rem, 6vw, 4.25rem);
+  margin: 0;
+  line-height: 1;
+}
+
+.detail-temp span {
+  font-size: 0.6em;
+  margin-left: 0.4rem;
+  color: var(--detail-muted);
+}
+
+.detail-condition {
+  font-size: 1.2rem;
+  margin: 0.4rem 0 0.2rem;
+}
+
+.detail-hero-meta {
+  color: var(--detail-muted);
+  font-size: 0.95rem;
+}
+
+.detail-hero-icon img,
+.detail-hero-icon svg,
+.detail-hero-icon span {
+  width: 110px;
+  height: 110px;
+  display: block;
+}
+
+.detail-hero-icon .icon-fallback {
+  font-size: 3rem;
+  text-align: center;
+}
+
+.detail-hourly,
+.detail-metrics {
+  background: var(--detail-panel);
+  border: 1px solid var(--detail-border);
+  border-radius: 26px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-hourly h2,
+.detail-metrics h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.hour-chip-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 0.75rem;
+}
+
+.hour-chip {
+  background: var(--detail-card);
+  border-radius: 20px;
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hour-chip strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.hour-chip span {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--detail-muted);
+}
+
+.hour-chip img,
+.hour-chip svg,
+.hour-chip span,
+.hour-chip em {
+  width: 38px;
+  height: 38px;
+  display: block;
+  margin: 0 auto 0.25rem;
+}
+
+.hour-chip .icon-fallback {
+  font-size: 1.6rem;
+}
+
+.detail-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card {
+  background: var(--detail-card);
+  border-radius: 24px;
+  padding: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.metric-card h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--detail-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.metric-card strong {
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-card small {
+  color: var(--detail-muted);
+}
+
+.detail-footer-note {
+  text-align: center;
+  color: var(--detail-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .detail-hero-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detail-hero-icon {
+    align-self: center;
+  }
+
+  .detail-shell {
+    padding: 2rem 1.25rem 2.5rem;
+  }
+}

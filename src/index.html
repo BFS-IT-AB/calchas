@@ -18,7 +18,9 @@
       rel="apple-touch-icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23007BFF' width='180' height='180' rx='40'/><text x='90' y='130' font-size='140' text-anchor='middle'>🌦️</text></svg>"
     />
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="day-detail.css" />
     <link rel="stylesheet" href="mobile.css" media="(max-width: 768px)" />
     <title>Calchas - Aktuelle Wetterdaten</title>
   </head>
@@ -157,13 +159,6 @@
               </div>
             </div>
           </article>
-          <article class="surface-card" aria-live="polite">
-            <div id="sources-comparison" class="insights-slot">
-              <div class="placeholder-state">
-                <p>Quellenstatus und API-Vergleiche erscheinen hier.</p>
-              </div>
-            </div>
-          </article>
         </section>
 
         <section
@@ -214,24 +209,42 @@
                 <p class="eyebrow">Radar & Layers</p>
                 <h2>Kartenansicht</h2>
               </div>
-              <div id="map-layer-context" class="map-layer-context"></div>
+              <div
+                id="map-layer-context"
+                class="map-layer-context"
+                data-placeholder="Aktive Layer werden nach dem Laden angezeigt"
+              ></div>
             </div>
             <div class="map-body">
               <div
                 id="weather-map"
                 class="weather-map"
+                data-placeholder="Karte wird nach der ersten Ortssuche aktiviert"
                 role="img"
                 aria-label="Interaktive Wetterkarte"
               ></div>
               <div class="map-controls-grid">
-                <div id="map-radar-controls" class="map-radar-controls"></div>
-                <div id="map-quick-actions" class="map-quick-actions"></div>
-                <div id="map-overlay-legend" class="map-overlay-legend"></div>
+                <div
+                  id="map-radar-controls"
+                  class="map-radar-controls"
+                  data-placeholder="Radar-Layer &amp; Zeitleiste erscheinen hier"
+                ></div>
+                <div
+                  id="map-quick-actions"
+                  class="map-quick-actions"
+                  data-placeholder="Schnellaktionen folgen nach dem Laden"
+                ></div>
+                <div
+                  id="map-overlay-legend"
+                  class="map-overlay-legend"
+                  data-placeholder="Legende der aktiven Overlays"
+                ></div>
               </div>
             </div>
             <div
               id="map-inspector"
               class="map-inspector"
+              data-placeholder="Fahre über die Karte, um Live-Daten je Ort zu sehen"
               aria-live="polite"
             ></div>
           </article>
@@ -365,90 +378,500 @@
             Kompakte Übersicht über alle Feinjustierungen, Quellen und
             Integrationen. Alles Wichtige bleibt hier gebündelt.
           </p>
-          <div class="settings-list" role="list">
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">🎨</div>
-              <div class="settings-tile-body">
-                <h3>Aussehen</h3>
-                <p>Helle oder dunkle Oberfläche für Cockpit und Widgets.</p>
-              </div>
-              <div class="settings-tile-actions">
-                <label class="dark-mode-switch" aria-label="Dark Mode">
-                  <span class="switch-label"></span>
-                  <input type="checkbox" id="darkModeToggle" />
-                  <span class="dark-mode-slider"></span>
-                </label>
-              </div>
-            </article>
+          <div class="settings-panel" role="list">
+            <section class="settings-section">
+              <p class="settings-section-label">Allgemein</p>
+              <div
+                class="settings-list"
+                role="group"
+                aria-label="Allgemeine Einstellungen"
+              >
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="sun"
+                  data-settings-target="appearance"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">🎨</div>
+                  <div class="settings-row-body">
+                    <h3>Aussehen</h3>
+                    <p>Themen, Animationen und App-Layout.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
 
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">🏠</div>
-              <div class="settings-tile-body">
-                <h3>Heimatort</h3>
-                <p>
-                  Standard-Ort zum Start der App. Aktuell:
-                  <strong id="home-location-label">Nicht gesetzt</strong>
-                </p>
-              </div>
-              <div class="settings-tile-actions">
-                <button id="set-home-btn" class="btn-secondary" type="button">
-                  Aktuellen Ort speichern
-                </button>
-                <button id="clear-home-btn" class="btn-link" type="button">
-                  Entfernen
-                </button>
-              </div>
-            </article>
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="leaf"
+                  data-settings-target="home"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">🏠</div>
+                  <div class="settings-row-body">
+                    <h3>Heimatort</h3>
+                    <p>
+                      Standard-Ort zum Start der App.
+                      <strong id="home-location-label">Nicht gesetzt</strong>
+                    </p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
 
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">📏</div>
-              <div class="settings-tile-body">
-                <h3>Einheiten</h3>
-                <p>Temperatur und Windgeschwindigkeit für alle Anzeigen.</p>
-              </div>
-              <div class="settings-tile-actions tile-form">
-                <label class="tile-field">
-                  <span>Temperatur</span>
-                  <select id="temp-unit-select" class="settings-select">
-                    <option value="C">Celsius (°C)</option>
-                    <option value="F">Fahrenheit (°F)</option>
-                  </select>
-                </label>
-                <label class="tile-field">
-                  <span>Wind</span>
-                  <select id="wind-unit-select" class="settings-select">
-                    <option value="km/h">Kilometer pro Stunde (km/h)</option>
-                    <option value="m/s">Meter pro Sekunde (m/s)</option>
-                    <option value="mph">Meilen pro Stunde (mph)</option>
-                  </select>
-                </label>
-              </div>
-            </article>
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="marine"
+                  data-settings-target="units"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">📏</div>
+                  <div class="settings-row-body">
+                    <h3>Einheiten</h3>
+                    <p>Temperatur, Wind und Luftdruck für alle Panels.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
 
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">🌐</div>
-              <div class="settings-tile-body">
-                <h3>Sprache &amp; Speicher</h3>
-                <p>UI-Sprache wählen, Cache &amp; Verlauf pflegen.</p>
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="ember"
+                  data-settings-target="background"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">🔄</div>
+                  <div class="settings-row-body">
+                    <h3>Hintergrundaktualisierungen</h3>
+                    <p>Widget-Updates, Intervalle und geplante Pulls.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="teal"
+                  data-settings-target="models"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">☁️</div>
+                  <div class="settings-row-body">
+                    <h3>Wettermodelle</h3>
+                    <p>Open-Meteo Wettermodelle sind aktiv.</p>
+                    <span class="settings-chip">Open-Meteo</span>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
               </div>
-              <div class="settings-tile-actions tile-form">
-                <label class="tile-field">
-                  <span>Sprache</span>
-                  <select id="lang-select" class="settings-select">
-                    <option value="de">Deutsch</option>
-                    <option value="en">English</option>
-                  </select>
-                </label>
-                <label class="settings-toggle">
-                  <input
-                    type="checkbox"
-                    id="cache-enabled"
-                    checked
-                    aria-label="Daten-Caching aktivieren"
-                  />
-                  <span>Cache aktiv</span>
-                </label>
-                <div class="settings-quick-actions">
+            </section>
+
+            <section class="settings-section">
+              <p class="settings-section-label">Sprache &amp; Daten</p>
+              <div
+                class="settings-list"
+                role="group"
+                aria-label="Sprache und Daten"
+              >
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="plum"
+                  data-settings-target="locale"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">🌐</div>
+                  <div class="settings-row-body">
+                    <h3>Sprache &amp; Speicher</h3>
+                    <p>UI-Sprache wählen, Cache und Verlauf pflegen.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="amber"
+                  data-settings-target="export"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">📤</div>
+                  <div class="settings-row-body">
+                    <h3>Daten exportieren</h3>
+                    <p>Analytics-Ereignisse als JSON sichern.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="amber"
+                  data-settings-target="import"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">📥</div>
+                  <div class="settings-row-body">
+                    <h3>Daten importieren</h3>
+                    <p>Vorher exportierte Nutzungsdaten wiederherstellen.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+              </div>
+            </section>
+
+            <section class="settings-section">
+              <p class="settings-section-label">Community &amp; Info</p>
+              <div
+                class="settings-list"
+                role="group"
+                aria-label="Community und Informationen"
+              >
+                <a
+                  class="settings-row external-link"
+                  data-accent="indigo"
+                  href="https://discord.gg/calchas"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">💬</div>
+                  <div class="settings-row-body">
+                    <h3>Tritt unserem Discord Server bei</h3>
+                    <p>Austausch, Release-Notes und Feature-Feedback.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">↗</span>
+                </a>
+
+                <a
+                  class="settings-row external-link"
+                  data-accent="violet"
+                  href="../docs/README.md"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">ℹ️</div>
+                  <div class="settings-row-body">
+                    <h3>Über Calchas</h3>
+                    <p>Änderungsprotokoll, Version, Lizenzen und mehr.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </section>
+
+            <details class="settings-advanced">
+              <summary>
+                <span>Expertenbereich &amp; Integrationen</span>
+                <span aria-hidden="true">▼</span>
+              </summary>
+              <div
+                class="settings-list"
+                role="group"
+                aria-label="Experteneinstellungen"
+              >
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="ember"
+                  data-settings-target="push"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">🔔</div>
+                  <div class="settings-row-body">
+                    <h3>Push-Benachrichtigungen</h3>
+                    <p>
+                      VAPID-Key hinterlegen, um lokale Push-Dienste zu nutzen.
+                    </p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="teal"
+                  data-settings-target="api-keys"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">🔑</div>
+                  <div class="settings-row-body">
+                    <h3>APIs &amp; Integrationen</h3>
+                    <p>
+                      Optionale Schlüssel bleiben ausschließlich lokal
+                      gespeichert.
+                    </p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="cyan"
+                  data-settings-target="status"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">📊</div>
+                  <div class="settings-row-body">
+                    <h3>Status &amp; Quellen</h3>
+                    <p>
+                      Behalte im Blick, welche Provider aktiv oder optional
+                      sind.
+                    </p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="pink"
+                  data-settings-target="comparison"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">⚖️</div>
+                  <div class="settings-row-body">
+                    <h3>API Vergleiche</h3>
+                    <p>
+                      Open-Meteo und BrightSky im direkten Vergleich inkl.
+                      Abweichungen.
+                    </p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+
+                <article
+                  class="settings-row settings-link"
+                  role="button"
+                  tabindex="0"
+                  data-accent="slate"
+                  data-settings-target="docs"
+                >
+                  <div class="settings-row-icon" aria-hidden="true">📄</div>
+                  <div class="settings-row-body">
+                    <h3>Technische Dokumentation</h3>
+                    <p>Architektur, Teststatus und regulatorische Notizen.</p>
+                  </div>
+                  <span class="settings-row-chevron" aria-hidden="true">›</span>
+                </article>
+              </div>
+            </details>
+          </div>
+          <div
+            id="settings-subview-overlay"
+            class="settings-subview-overlay"
+            aria-hidden="true"
+          >
+            <div class="settings-subview-layer" role="document">
+              <section
+                class="settings-subview"
+                data-view="appearance"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                    aria-label="Zurück zu den Einstellungen"
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Darstellung</p>
+                    <h3>Aussehen</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <p>
+                    Wähle, ob Calchas automatisch dem Systemthema folgen oder
+                    dauerhaft im Dark Mode bleiben soll.
+                  </p>
+                  <label class="dark-mode-switch" aria-label="Dark Mode">
+                    <span class="switch-label">Dark Mode aktivieren</span>
+                    <input type="checkbox" id="darkModeToggle" />
+                    <span class="dark-mode-slider"></span>
+                  </label>
+                </div>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="home"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Favoriten</p>
+                    <h3>Heimatort</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <p>
+                    Lege einen Ort fest, der beim Start sofort geladen wird. Du
+                    kannst ihn jederzeit entfernen.
+                  </p>
+                  <div class="settings-quick-actions">
+                    <button id="set-home-btn" class="btn-primary" type="button">
+                      Aktuellen Ort speichern
+                    </button>
+                    <button id="clear-home-btn" class="btn-link" type="button">
+                      Entfernen
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="units"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Formatierung</p>
+                    <h3>Einheiten</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body tile-form">
+                  <label class="tile-field">
+                    <span>Temperatur</span>
+                    <select id="temp-unit-select" class="settings-select">
+                      <option value="C">Celsius (°C)</option>
+                      <option value="F">Fahrenheit (°F)</option>
+                    </select>
+                  </label>
+                  <label class="tile-field">
+                    <span>Wind</span>
+                    <select id="wind-unit-select" class="settings-select">
+                      <option value="km/h">Kilometer pro Stunde (km/h)</option>
+                      <option value="m/s">Meter pro Sekunde (m/s)</option>
+                      <option value="mph">Meilen pro Stunde (mph)</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="background"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Automatisierung</p>
+                    <h3>Hintergrundaktualisierung</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body tile-form">
+                  <label class="tile-field">
+                    <span>Intervall</span>
+                    <select
+                      id="background-refresh-select"
+                      class="settings-select"
+                    >
+                      <option value="off">Nur manuell</option>
+                      <option value="30">Alle 30 Minuten</option>
+                      <option value="60">Stündlich</option>
+                    </select>
+                  </label>
+                  <p class="settings-helper">
+                    Hintergrundaktualisierungen werden nur ausgeführt, wenn du
+                    Push-Benachrichtigungen erlaubt hast und die App geöffnet
+                    war.
+                  </p>
+                </div>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="models"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Datenbasis</p>
+                    <h3>Wettermodelle</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <p>
+                    Calchas nutzt standardmäßig Open-Meteo als Multi-Model
+                    Provider. Zusätzliche Provider können in Zukunft ergänzt
+                    werden.
+                  </p>
+                  <div class="model-chip-grid">
+                    <span class="settings-chip">Open-Meteo</span>
+                    <span class="settings-chip">BrightSky</span>
+                    <span class="settings-chip">VisualCrossing</span>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="locale"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Sprache &amp; Speicher</p>
+                    <h3>Lokalisierung</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body tile-form">
+                  <label class="tile-field">
+                    <span>Sprache</span>
+                    <select id="lang-select" class="settings-select">
+                      <option value="de">Deutsch</option>
+                      <option value="en">English</option>
+                    </select>
+                  </label>
+                  <label class="settings-toggle">
+                    <input
+                      type="checkbox"
+                      id="cache-enabled"
+                      checked
+                      aria-label="Daten-Caching aktivieren"
+                    />
+                    <span>Cache aktiv</span>
+                  </label>
                   <button
                     id="clear-cache-btn"
                     class="btn-secondary"
@@ -458,164 +881,305 @@
                     Cache leeren
                   </button>
                 </div>
-              </div>
-            </article>
+              </section>
 
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">🔄</div>
-              <div class="settings-tile-body">
-                <h3>Hintergrund-Updates</h3>
-                <p>Lege fest, wie häufig Daten erneut geladen werden.</p>
-              </div>
-              <div class="settings-tile-actions tile-form">
-                <label class="tile-field">
-                  <span>Interval</span>
-                  <select
-                    id="background-refresh-select"
-                    class="settings-select"
-                  >
-                    <option value="off">Nur manuell</option>
-                    <option value="30">Alle 30 Minuten</option>
-                    <option value="60">Stündlich</option>
-                  </select>
-                </label>
-              </div>
-            </article>
-
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">🔔</div>
-              <div class="settings-tile-body">
-                <h3>Push-Benachrichtigungen</h3>
-                <p>VAPID-Key hinterlegen, um lokale Push-Dienste zu nutzen.</p>
-              </div>
-              <div class="settings-tile-actions tile-form">
-                <div class="settings-quick-actions">
+              <section
+                class="settings-subview"
+                data-view="export"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
                   <button
-                    id="pushToggle"
-                    class="btn-secondary"
+                    class="settings-back-btn"
                     type="button"
-                    aria-pressed="false"
+                    data-settings-back
                   >
-                    🔔
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Backup</p>
+                    <h3>Daten exportieren</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <p>Sichere deine Analytics- und App-Daten als JSON-Datei.</p>
+                  <button
+                    id="settings-export-data"
+                    class="btn-primary"
+                    type="button"
+                  >
+                    JSON exportieren
                   </button>
                 </div>
-                <label class="tile-field">
-                  <span>VAPID Public Key</span>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="import"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Backup</p>
+                    <h3>Daten importieren</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <p>Spiele zuvor exportierte Calchas-Daten wieder ein.</p>
+                  <button
+                    id="settings-import-data"
+                    class="btn-secondary"
+                    type="button"
+                  >
+                    JSON wählen
+                  </button>
                   <input
-                    id="vapidKeyInput"
-                    class="settings-input"
-                    placeholder="Base64 URL-safe Public VAPID Key"
-                    aria-describedby="vapid-help"
+                    id="settings-import-file"
+                    type="file"
+                    accept="application/json"
+                    hidden
+                    aria-hidden="true"
                   />
-                </label>
-                <p id="vapid-help" class="settings-helper">
-                  Vom lokalen Push-Server abrufbar oder manuell eintragen.
-                </p>
-                <div class="settings-quick-actions">
-                  <button id="saveVapidBtn" class="btn-secondary" type="button">
-                    Speichern
-                  </button>
+                  <p class="settings-helper">
+                    Unterstützt Calchas-Exporte (*.json) direkt aus der App.
+                  </p>
+                </div>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="push"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
                   <button
-                    id="fetchVapidBtn"
-                    class="btn-secondary"
+                    class="settings-back-btn"
                     type="button"
+                    data-settings-back
                   >
-                    Fetch VAPID
+                    ←
                   </button>
+                  <div>
+                    <p class="eyebrow">Expertenbereich</p>
+                    <h3>Push-Benachrichtigungen</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body tile-form">
+                  <div class="settings-quick-actions">
+                    <button
+                      id="pushToggle"
+                      class="btn-secondary"
+                      type="button"
+                      aria-pressed="false"
+                    >
+                      🔔 Push aktivieren
+                    </button>
+                  </div>
+                  <label class="tile-field">
+                    <span>VAPID Public Key</span>
+                    <input
+                      id="vapidKeyInput"
+                      class="settings-input"
+                      placeholder="Base64 URL-safe Public VAPID Key"
+                      aria-describedby="vapid-help"
+                    />
+                  </label>
+                  <p id="vapid-help" class="settings-helper">
+                    Vom lokalen Push-Server abrufbar oder manuell eintragen.
+                  </p>
+                  <div class="settings-quick-actions">
+                    <button
+                      id="saveVapidBtn"
+                      class="btn-secondary"
+                      type="button"
+                    >
+                      Speichern
+                    </button>
+                    <button
+                      id="fetchVapidBtn"
+                      class="btn-secondary"
+                      type="button"
+                    >
+                      Fetch VAPID
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </section>
 
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">🔑</div>
-              <div class="settings-tile-body">
-                <h3>APIs &amp; Integrationen</h3>
-                <p>Erweiterte Quellen freischalten Eingaben bleiben lokal.</p>
-              </div>
-              <div class="settings-tile-actions tile-form">
-                <div
-                  id="api-keys-container"
-                  class="settings-input-grid"
-                  role="group"
-                  aria-label="Optionale API-Keys"
-                >
-                  <label for="openweathermap-key">
-                    OpenWeatherMap Key
-                    <input
-                      id="openweathermap-key"
-                      class="settings-input"
-                      placeholder="OpenWeatherMap API Key"
-                      aria-label="OpenWeatherMap API Key"
-                      type="password"
-                    />
-                    <small class="settings-helper"
-                      >Persönlicher One Call 3.0 Key erforderlich. Hilfe im
-                      <a
-                        href="../docs/api/API_ACCOUNTS.md#5-openweathermap-optional"
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        >API Guide</a
-                      >.
-                    </small>
-                  </label>
-                  <label for="visualcrossing-key">
-                    VisualCrossing Key
-                    <input
-                      id="visualcrossing-key"
-                      class="settings-input"
-                      placeholder="VisualCrossing API Key"
-                      aria-label="VisualCrossing API Key"
-                      type="password"
-                    />
-                  </label>
-                  <label for="meteostat-key">
-                    Meteostat Key
-                    <input
-                      id="meteostat-key"
-                      class="settings-input"
-                      placeholder="Meteostat API Key"
-                      aria-label="Meteostat API Key"
-                      type="password"
-                    />
-                  </label>
+              <section
+                class="settings-subview"
+                data-view="api-keys"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Integrationen</p>
+                    <h3>APIs &amp; Keys</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <div
+                    id="api-keys-container"
+                    class="settings-input-grid"
+                    role="group"
+                    aria-label="Optionale API-Keys"
+                  >
+                    <label for="openweathermap-key">
+                      OpenWeatherMap Key
+                      <input
+                        id="openweathermap-key"
+                        class="settings-input"
+                        placeholder="OpenWeatherMap API Key"
+                        aria-label="OpenWeatherMap API Key"
+                        type="password"
+                      />
+                      <small class="settings-helper"
+                        >Persönlicher One Call 3.0 Key erforderlich. Hilfe im
+                        <a
+                          href="../docs/api/API_ACCOUNTS.md#5-openweathermap-optional"
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          >API Guide</a
+                        >.
+                      </small>
+                    </label>
+                    <label for="visualcrossing-key">
+                      VisualCrossing Key
+                      <input
+                        id="visualcrossing-key"
+                        class="settings-input"
+                        placeholder="VisualCrossing API Key"
+                        aria-label="VisualCrossing API Key"
+                        type="password"
+                      />
+                    </label>
+                    <label for="meteostat-key">
+                      Meteostat Key
+                      <input
+                        id="meteostat-key"
+                        class="settings-input"
+                        placeholder="Meteostat API Key"
+                        aria-label="Meteostat API Key"
+                        type="password"
+                      />
+                    </label>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </section>
 
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">📊</div>
-              <div class="settings-tile-body">
-                <h3>Status &amp; Quellen</h3>
-                <p>
-                  Behalte im Blick, welche Provider aktiv oder optional sind.
-                </p>
-              </div>
-              <div class="settings-tile-actions">
-                <div
-                  id="api-status"
-                  class="api-status-list"
-                  role="region"
-                  aria-label="Status der Wetterdatenquellen"
-                  aria-live="polite"
-                ></div>
-              </div>
-            </article>
+              <section
+                class="settings-subview"
+                data-view="status"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Monitoring</p>
+                    <h3>Status &amp; Quellen</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <div
+                    id="api-status"
+                    class="api-status-list"
+                    role="region"
+                    aria-label="Status der Wetterdatenquellen"
+                    aria-live="polite"
+                  ></div>
+                </div>
+              </section>
 
-            <article class="settings-tile" role="listitem">
-              <div class="settings-tile-icon">📄</div>
-              <div class="settings-tile-body">
-                <h3>Rechtliches &amp; Hinweise</h3>
-                <p>
-                  Datenschutz, Nutzungsbedingungen und Ansprechpartner in den
-                  Legal-Dokumenten.
-                </p>
-              </div>
-              <div class="settings-tile-actions tile-links">
-                <a href="../legal/privacy.html" target="_blank">Datenschutz</a>
-                <a href="../legal/terms.html" target="_blank">Nutzung</a>
-                <a href="../docs/README.md" target="_blank">Projekt-Doku</a>
-              </div>
-            </article>
+              <section
+                class="settings-subview"
+                data-view="comparison"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Quellenvergleich</p>
+                    <h3>API Vergleiche</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body">
+                  <div
+                    id="settings-source-comparison"
+                    class="source-comparison-panel"
+                    aria-live="polite"
+                  >
+                    <p class="source-comparison-empty">
+                      Noch keine Vergleichsdaten geladen.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="settings-subview"
+                data-view="docs"
+                aria-hidden="true"
+              >
+                <header class="settings-subview-header">
+                  <button
+                    class="settings-back-btn"
+                    type="button"
+                    data-settings-back
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <p class="eyebrow">Richtlinien</p>
+                    <h3>Technische Dokumentation</h3>
+                  </div>
+                </header>
+                <div class="settings-subview-body doc-links">
+                  <a href="../legal/privacy.html" target="_blank"
+                    >Datenschutz</a
+                  >
+                  <a href="../legal/terms.html" target="_blank"
+                    >Nutzungsbedingungen</a
+                  >
+                  <a href="../docs/architecture/overview.md" target="_blank"
+                    >Architektur</a
+                  >
+                  <a href="../docs/status/TESTING_STATUS.md" target="_blank"
+                    >Testing</a
+                  >
+                  <a
+                    href="../docs/status/REQUIREMENTS_VALIDATION.md"
+                    target="_blank"
+                    >Compliance</a
+                  >
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       </div>
@@ -643,6 +1207,22 @@
       }
     </script>
 
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script>
+      if (typeof window !== "undefined" && typeof window.L === "undefined") {
+        const fallbackLeaflet = document.createElement("script");
+        fallbackLeaflet.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        fallbackLeaflet.integrity =
+          "sha256-pNt9A+T5Avzk1l3pNGdisz8Iky3Uczdlz7YTl25sjEo=";
+        fallbackLeaflet.crossOrigin = "";
+        document.body.appendChild(fallbackLeaflet);
+      }
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+      crossorigin="anonymous"
+    ></script>
+
     <script src="utils/constants.js"></script>
     <script src="utils/iconMapper.js"></script>
     <script src="utils/cache.js"></script>
@@ -658,7 +1238,9 @@
     <script src="api/moonPhase.js"></script>
     <script src="ui/errorHandler.js"></script>
     <script src="ui/searchInput.js"></script>
+    <script src="ui/dayDetailTemplate.js"></script>
     <script src="ui/weatherDisplay.js"></script>
+    <script src="features.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
