@@ -162,11 +162,38 @@ body.dark-mode a {
   max-width: 75%;
 }
 
+.app-bar__location-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
 .app-bar__location-text {
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.app-bar__updated {
+  font-size: 0.7rem;
+  color: var(--color-text-muted-2);
+}
+
+.app-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.app-bar__action-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
 }
 
 .icon-button {
@@ -186,6 +213,10 @@ body.dark-mode a {
 
 .bottom-nav__label {
   font-size: 0.7rem;
+}
+
+body.mobile-app #legacy-content {
+  display: none !important;
 }
 
 /* ============================================
@@ -951,7 +982,154 @@ body.dark-mode a {
     #050816 100%
   );
   border-radius: 20px 20px 0 0;
-  .mini-bar-chart {
+  display: none;
+}
+
+.bottom-sheet--visible {
+  display: block;
+}
+
+/* Full-height sheet for location picker */
+.bottom-sheet--full {
+  max-height: 85vh;
+  padding: var(--space-m);
+}
+
+.bottom-sheet__close {
+  margin-left: auto;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+/* Location Search Styles */
+.location-search {
+  margin-bottom: var(--space-m);
+}
+
+.location-search__input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  background: rgba(255,255,255,0.08);
+  border-radius: var(--radius-m);
+  padding: var(--space-s) var(--space-m);
+}
+
+.location-search__icon {
+  color: var(--color-text-muted-2);
+  font-size: 1.2rem;
+}
+
+.location-search__input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  outline: none;
+}
+
+.location-search__input::placeholder {
+  color: var(--color-text-muted-2);
+}
+
+.location-search__results {
+  margin-top: var(--space-s);
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-m);
+  max-height: 200px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+}
+
+.location-search__results li {
+  padding: var(--space-s) var(--space-m);
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.location-search__results li:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.location-search__results li:last-child {
+  border-bottom: none;
+}
+
+/* Location Option Button (Current Location) */
+.location-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+  width: 100%;
+  padding: var(--space-m);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-m);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  margin-bottom: var(--space-m);
+}
+
+.location-option:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.location-option__icon {
+  color: var(--color-primary);
+}
+
+/* Location Sections (Favorites, Recent) */
+.location-section {
+  margin-bottom: var(--space-m);
+}
+
+.location-section__title {
+  font-size: 0.85rem;
+  color: var(--color-text-muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-s);
+}
+
+.location-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.location-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-s) var(--space-m);
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-s);
+  margin-bottom: var(--space-xs);
+  cursor: pointer;
+}
+
+.location-list__item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.location-list__empty {
+  color: var(--color-text-muted-2);
+  font-size: 0.9rem;
+  padding: var(--space-s);
+  text-align: center;
+}
+
+.bottom-sheet .mini-bar-chart {
     display: flex;
     gap: 4px;
     align-items: flex-end;
@@ -980,11 +1158,6 @@ body.dark-mode a {
   .mini-bar__time {
     font-size: 0.7rem;
     color: var(--color-text-muted-2);
-    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-  }
-
-  .bottom-sheet--visible {
-    transform: translateY(0);
   }
 
   .bottom-sheet__header {
@@ -5123,7 +5296,9 @@ body.dark-mode a {
   }
 
   .switch-label {
-    margin-right: 0.35rem;
+    margin-right: 0.75rem;
+    color: var(--color-text-primary);
+    font-size: var(--font-body);
   }
 
   .btn-link {

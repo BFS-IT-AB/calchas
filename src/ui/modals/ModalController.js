@@ -54,6 +54,10 @@
       if (event.target === overlay) {
         closeSheet();
       }
+      // Handle close buttons inside sheets
+      if (event.target.closest("[data-close-sheet]")) {
+        closeSheet();
+      }
     });
 
     document.addEventListener("click", (event) => {

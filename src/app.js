@@ -332,6 +332,17 @@ async function initAppShell(appState) {
     }
   }
 
+  if (window.LocationPickerController && window.LocationPickerController.init) {
+    try {
+      window.LocationPickerController.init();
+    } catch (e) {
+      console.warn(
+        "LocationPickerController Initialisierung fehlgeschlagen",
+        e
+      );
+    }
+  }
+
   if (window.SettingsHome && window.SettingsHome.renderSettingsHome) {
     try {
       window.SettingsHome.renderSettingsHome(appState);
@@ -3422,7 +3433,10 @@ function initApp() {
     appState.isDarkMode = e.target.checked;
     document.body.classList.toggle("dark-mode", appState.isDarkMode);
     try {
-      localStorage.setItem("theme", appState.isDarkMode ? "dark" : "light");
+      localStorage.setItem(
+        "wetter_dark_mode",
+        appState.isDarkMode ? "true" : "false"
+      );
     } catch (e) {
       console.warn("localStorage fehler:", e);
     }

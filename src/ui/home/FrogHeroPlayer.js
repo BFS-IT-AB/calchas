@@ -1,5 +1,5 @@
 (function (global) {
-  const FROG_BASE_PATH = "src/assets/froggie/hubui";
+  const FROG_BASE_PATH = "assets/froggie/hubui";
 
   function getTimeOfDay(current) {
     if (!current || typeof current.time !== "string") return "day";
@@ -74,7 +74,8 @@
   function renderFrogHero(current) {
     const sceneKey = buildSceneKey(current || {});
     applyBackground(sceneKey);
-    initRive(sceneKey);
+    // Rive/Flare animations deferred - the background images already work
+    // initRive(sceneKey);
   }
 
   global.FrogHeroPlayer = {

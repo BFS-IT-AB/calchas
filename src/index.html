@@ -31,16 +31,38 @@
   <body class="mobile-app">
     <div id="app-shell" class="app-shell app-shell">
       <header id="app-bar" class="app-bar">
-        <div class="app-bar__location">
+        <button
+          id="location-picker-btn"
+          class="app-bar__location"
+          type="button"
+          aria-label="Standort wählen"
+          data-bottom-sheet-target="sheet-location-picker"
+        >
           <span class="app-bar__location-icon material-symbols-outlined" aria-hidden="true">location_on</span>
-          <span id="app-bar-location" class="app-bar__location-text">Noch kein Ort</span>
-        </div>
-        <button id="app-bar-settings" class="icon-button" aria-label="Einstellungen öffnen">
-          <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+          <div class="app-bar__location-meta">
+            <span id="app-bar-location" class="app-bar__location-text">Noch kein Ort</span>
+            <small id="topbar-updated" class="app-bar__updated">Keine Aktualisierung</small>
+          </div>
+          <span class="material-symbols-outlined app-bar__chevron" aria-hidden="true">expand_more</span>
         </button>
+        <div class="app-bar__actions">
+          <button
+            id="favoriteToggle"
+            class="icon-button app-bar__action-btn"
+            type="button"
+            aria-label="Zu Favoriten hinzufügen"
+            data-city=""
+          >
+            ☆
+          </button>
+          <button id="app-bar-settings" class="icon-button" aria-label="Einstellungen öffnen" data-nav-target="settings">
+            <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+          </button>
+        </div>
       </header>
 
       <main class="app-main-views" aria-label="Wetteransichten">
+        <div id="error-container" class="toast-stack" aria-live="assertive"></div>
         <section data-view="home" aria-label="Heute">
           <section id="weather-hero" class="weather-hero" aria-live="polite">
             <!-- wird durch WeatherHero.js befüllt -->
@@ -189,6 +211,62 @@
       <div class="alert-badge alert-badge--warning" style="display: none;">⚠️ 0 Warnungen aktiv</div>
 
       <div id="bottom-sheet-overlay" class="bottom-sheet-overlay" hidden aria-hidden="true">
+        <!-- Location Picker Modal -->
+        <section
+          id="sheet-location-picker"
+          class="bottom-sheet bottom-sheet--full"
+          aria-label="Standort wählen"
+        >
+          <header class="bottom-sheet__header">
+            <span class="bottom-sheet__icon material-symbols-outlined">location_on</span>
+            <div>
+              <h2 class="bottom-sheet__title">Standort wählen</h2>
+              <p class="bottom-sheet__subtitle">Suche oder wähle aus deinen Favoriten</p>
+            </div>
+            <button class="bottom-sheet__close" type="button" data-close-sheet aria-label="Schließen">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </header>
+          <div class="bottom-sheet__body">
+            <!-- Search Input -->
+            <div class="location-search">
+              <div class="location-search__input-wrapper">
+                <span class="material-symbols-outlined location-search__icon">search</span>
+                <input
+                  type="text"
+                  id="location-search-input"
+                  class="location-search__input"
+                  placeholder="Stadt suchen..."
+                  autocomplete="off"
+                />
+              </div>
+              <ul id="location-search-results" class="location-search__results" hidden></ul>
+            </div>
+
+            <!-- Current Location Button -->
+            <button class="location-option location-option--current" type="button" id="use-current-location">
+              <span class="material-symbols-outlined location-option__icon">my_location</span>
+              <span class="location-option__text">Aktuellen Standort verwenden</span>
+            </button>
+
+            <!-- Favorites Section -->
+            <div class="location-section">
+              <h3 class="location-section__title">Favoriten</h3>
+              <ul id="favorites-list" class="location-list">
+                <li class="location-list__empty">Keine Favoriten gespeichert</li>
+              </ul>
+            </div>
+
+            <!-- Recent Searches Section -->
+            <div class="location-section">
+              <h3 class="location-section__title">Zuletzt gesucht</h3>
+              <ul id="recents-list" class="location-list">
+                <li class="location-list__empty">Keine kürzlichen Suchen</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <section
           id="sheet-metric-wind"
           class="bottom-sheet"
@@ -424,127 +502,127 @@
           </header>
           <div id="map-layer-list" class="bottom-sheet__body"></div>
         </section>
+
+        <!-- Settings Sheets (inside overlay so they only show when triggered) -->
+        <section
+          id="sheet-settings-theme"
+          class="bottom-sheet"
+          aria-label="Erscheinungsbild wählen"
+        >
+          <header class="bottom-sheet__header">
+            <span class="bottom-sheet__icon">🎨</span>
+            <div>
+              <h2 class="bottom-sheet__title">Aussehen</h2>
+              <p class="bottom-sheet__subtitle">
+                Themen, Animationen und App-Layout.
+              </p>
+            </div>
+          </header>
+          <div class="bottom-sheet__body" id="settings-theme-body"></div>
+        </section>
+
+        <section
+          id="sheet-settings-home"
+          class="bottom-sheet"
+          aria-label="Heimatort verwalten"
+        >
+          <header class="bottom-sheet__header">
+            <span class="bottom-sheet__icon">📍</span>
+            <div>
+              <h2 class="bottom-sheet__title">Heimatort</h2>
+              <p class="bottom-sheet__subtitle">
+                Heimatort und Favoriten verwalten.
+              </p>
+            </div>
+          </header>
+          <div class="bottom-sheet__body" id="settings-home-body"></div>
+        </section>
+
+        <section
+          id="sheet-settings-privacy"
+          class="bottom-sheet"
+          aria-label="Datenschutz &amp; APIs"
+        >
+          <header class="bottom-sheet__header">
+            <span class="bottom-sheet__icon">🔒</span>
+            <div>
+              <h2 class="bottom-sheet__title">Datenschutz &amp; APIs</h2>
+              <p class="bottom-sheet__subtitle">
+                Wie deine Daten gespeichert werden und welche Dienste genutzt werden.
+              </p>
+            </div>
+          </header>
+          <div class="bottom-sheet__body" id="settings-privacy-body"></div>
+        </section>
+
+        <section
+          id="sheet-settings-units"
+          class="bottom-sheet"
+          aria-label="Einheiten anpassen"
+        >
+          <header class="bottom-sheet__header">
+            <span class="bottom-sheet__icon">📏</span>
+            <div>
+              <h2 class="bottom-sheet__title">Einheiten</h2>
+              <p class="bottom-sheet__subtitle">
+                Temperatur, Wind, Druck und mehr.
+              </p>
+            </div>
+          </header>
+          <div class="bottom-sheet__body" id="settings-units-body"></div>
+        </section>
+
+        <section
+          id="sheet-settings-language"
+          class="bottom-sheet"
+          aria-label="Sprache wählen"
+        >
+          <header class="bottom-sheet__header">
+            <span class="bottom-sheet__icon">🌐</span>
+            <div>
+              <h2 class="bottom-sheet__title">Sprache</h2>
+              <p class="bottom-sheet__subtitle">
+                App-Sprache und Datumsformate.
+              </p>
+            </div>
+          </header>
+          <div class="bottom-sheet__body" id="settings-language-body"></div>
+        </section>
+
+        <section
+          id="sheet-settings-about"
+          class="bottom-sheet"
+          aria-label="Über Calchas"
+        >
+          <header class="bottom-sheet__header">
+            <span class="bottom-sheet__icon">ℹ️</span>
+            <div>
+              <h2 class="bottom-sheet__title">Über Calchas</h2>
+              <p class="bottom-sheet__subtitle">
+                Version, Lizenzen und Datenschutzhinweise.
+              </p>
+            </div>
+          </header>
+          <div class="bottom-sheet__body" id="settings-about-body"></div>
+        </section>
+
+        <section
+          id="sheet-map-alerts"
+          class="bottom-sheet"
+          aria-label="Wetter-Warnungen"
+        >
+          <div class="bottom-sheet__header">
+            <span class="bottom-sheet__icon">⚠️</span>
+            <span class="bottom-sheet__title">Aktive Warnungen</span>
+            <span class="bottom-sheet__subtitle" id="alert-count"
+              >0 Warnungen</span
+            >
+          </div>
+          <div class="bottom-sheet__body">
+            <div id="alert-list" class="alert-list"></div>
+          </div>
+        </section>
       </div>
-
-      <!-- Settings Sheets -->
-      <section
-        id="sheet-settings-theme"
-        class="bottom-sheet"
-        aria-label="Erscheinungsbild wählen"
-      >
-        <header class="bottom-sheet__header">
-          <span class="bottom-sheet__icon">🎨</span>
-          <div>
-            <h2 class="bottom-sheet__title">Aussehen</h2>
-            <p class="bottom-sheet__subtitle">
-              Themen, Animationen und App-Layout.
-            </p>
-          </div>
-        </header>
-        <div class="bottom-sheet__body" id="settings-theme-body"></div>
-      </section>
-
-      <section
-        id="sheet-settings-home"
-        class="bottom-sheet"
-        aria-label="Heimatort verwalten"
-      >
-        <header class="bottom-sheet__header">
-          <span class="bottom-sheet__icon">📍</span>
-          <div>
-            <h2 class="bottom-sheet__title">Heimatort</h2>
-            <p class="bottom-sheet__subtitle">
-              Heimatort und Favoriten verwalten.
-            </p>
-          </div>
-        </header>
-        <div class="bottom-sheet__body" id="settings-home-body"></div>
-      </section>
-
-      <section
-        id="sheet-settings-privacy"
-        class="bottom-sheet"
-        aria-label="Datenschutz &amp; APIs"
-      >
-        <header class="bottom-sheet__header">
-          <span class="bottom-sheet__icon">🔒</span>
-          <div>
-            <h2 class="bottom-sheet__title">Datenschutz &amp; APIs</h2>
-            <p class="bottom-sheet__subtitle">
-              Wie deine Daten gespeichert werden und welche Dienste genutzt werden.
-            </p>
-          </div>
-        </header>
-        <div class="bottom-sheet__body" id="settings-privacy-body"></div>
-      </section>
-
-      <section
-        id="sheet-settings-units"
-        class="bottom-sheet"
-        aria-label="Einheiten anpassen"
-      >
-        <header class="bottom-sheet__header">
-          <span class="bottom-sheet__icon">📏</span>
-          <div>
-            <h2 class="bottom-sheet__title">Einheiten</h2>
-            <p class="bottom-sheet__subtitle">
-              Temperatur, Wind, Druck und mehr.
-            </p>
-          </div>
-        </header>
-        <div class="bottom-sheet__body" id="settings-units-body"></div>
-      </section>
-
-      <section
-        id="sheet-settings-language"
-        class="bottom-sheet"
-        aria-label="Sprache wählen"
-      >
-        <header class="bottom-sheet__header">
-          <span class="bottom-sheet__icon">🌐</span>
-          <div>
-            <h2 class="bottom-sheet__title">Sprache</h2>
-            <p class="bottom-sheet__subtitle">
-              App-Sprache und Datumsformate.
-            </p>
-          </div>
-        </header>
-        <div class="bottom-sheet__body" id="settings-language-body"></div>
-      </section>
-
-      <section
-        id="sheet-settings-about"
-        class="bottom-sheet"
-        aria-label="Über Calchas"
-      >
-        <header class="bottom-sheet__header">
-          <span class="bottom-sheet__icon">ℹ️</span>
-          <div>
-            <h2 class="bottom-sheet__title">Über Calchas</h2>
-            <p class="bottom-sheet__subtitle">
-              Version, Lizenzen und Datenschutzhinweise.
-            </p>
-          </div>
-        </header>
-        <div class="bottom-sheet__body" id="settings-about-body"></div>
-      </section>
-
-      <section
-        id="sheet-map-alerts"
-        class="bottom-sheet"
-        aria-label="Wetter-Warnungen"
-      >
-        <div class="bottom-sheet__header">
-          <span class="bottom-sheet__icon">⚠️</span>
-          <span class="bottom-sheet__title">Aktive Warnungen</span>
-          <span class="bottom-sheet__subtitle" id="alert-count"
-            >0 Warnungen</span
-          >
-        </div>
-        <div class="bottom-sheet__body">
-          <div id="alert-list" class="alert-list"></div>
-        </div>
-      </section>
 
       <div id="legacy-content" hidden>
           <div class="app-sky" aria-hidden="true"></div>
@@ -1766,11 +1844,16 @@
     <script src="api/sunriseSunset.js"></script>
     <script src="api/moonPhase.js"></script>
     <script src="ui/errorHandler.js"></script>
+    <script src="ui/components/MetricCard.js"></script>
     <script src="ui/home/WeatherHero.js"></script>
     <script src="ui/home/HomeCards.js"></script>
+    <script src="ui/home/FrogHeroPlayer.js"></script>
     <script src="ui/searchInput.js"></script>
     <script src="ui/dayDetailTemplate.js"></script>
     <script src="ui/weatherDisplay.js"></script>
+    <script src="ui/modals/ModalController.js"></script>
+    <script src="ui/modals/LocationPickerController.js"></script>
+    <script src="ui/shared/BottomNav.js"></script>
     <script src="features.js"></script>
     <script src="app.js"></script>
   </body>
