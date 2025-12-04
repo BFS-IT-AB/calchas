@@ -13,6 +13,9 @@ class OpenWeatherMapAPI {
   constructor() {
     this.timeout = 5000;
     this.name = "OpenWeatherMap";
+    // Verwende standardmäßig Free Tier um 401-Fehler zu vermeiden
+    // One Call 3.0/2.5 erfordern ein kostenpflichtiges Abo
+    this.useFreeTierFirst = true;
     this.endpoints = [
       {
         version: "3.0",
@@ -60,6 +63,26 @@ class OpenWeatherMapAPI {
         throw new Error(coordCheck.error);
       }
 
+      // Verwende standardmäßig Free Tier um 401-Fehler bei One Call zu vermeiden
+      // One Call 3.0/2.5 erfordern ein kostenpflichtiges Abo
+      if (this.useFreeTierFirst) {
+        try {
+          const result = await this._fetchFreeTierBundle({
+            latitude,
+            longitude,
+            apiKey: sanitizedKey,
+            units,
+          });
+          if (result && !result.error) {
+            return result;
+          }
+        } catch (e) {
+          console.info(
+            "OpenWeatherMap Free Tier nicht verfügbar, probiere One Call..."
+          );
+        }
+      }
+
       let lastError = null;
 
       for (const endpoint of this.endpoints) {
@@ -95,20 +118,19 @@ class OpenWeatherMapAPI {
         } catch (err) {
           lastError = err;
           if (this._shouldFallbackToLegacy(endpoint.version, err)) {
-            console.warn(
-              "OpenWeatherMap One Call 3.0 nicht verfügbar – wechsle auf Legacy 2.5.",
-              err.message
-            );
+            // Stille Warnung - Fallback wird automatisch versucht
             continue;
           }
           break;
         }
       }
 
-      if (lastError && this._shouldUseFreeTierBundle(lastError)) {
-        console.warn(
-          "OpenWeatherMap One Call nicht verfügbar – wechsle auf Current/Forecast Free Tier."
-        );
+      // Wenn One Call fehlschlägt und wir noch nicht Free Tier probiert haben
+      if (
+        lastError &&
+        !this.useFreeTierFirst &&
+        this._shouldUseFreeTierBundle(lastError)
+      ) {
         return await this._fetchFreeTierBundle({
           latitude,
           longitude,
@@ -118,10 +140,7 @@ class OpenWeatherMapAPI {
       }
 
       throw (
-        lastError ||
-        new Error(
-          "OpenWeatherMap One Call konnte nicht geladen werden (keine gültige API-Version verfügbar)"
-        )
+        lastError || new Error("OpenWeatherMap konnte nicht geladen werden")
       );
     } catch (error) {
       const classified = this._classifyError(error);

@@ -17,8 +17,15 @@
   }
 
   function render(appState, healthState) {
-    const container = document.querySelector('[data-view="health"]');
-    if (!container) return;
+    // Try multiple container selectors for compatibility
+    const container =
+      document.getElementById("health-view-container") ||
+      document.querySelector('[data-view="health"] .app-view__content') ||
+      document.querySelector('[data-view="health"]');
+    if (!container) {
+      console.warn("[HealthSafetyView] Container not found");
+      return;
+    }
 
     const state = healthState || {};
     const timeline = state.outdoorScoreTimeline || [];
@@ -59,22 +66,26 @@
               <p>Wie angenehm ist es in den nächsten Stunden?</p>
             </header>
             <div class="health-chart-barlist">
-              ${sliced
-                .map((slot) => {
-                  const time = slot.time || "";
-                  const score = slot.score || 0;
-                  return `
-                    <div class="health-chart-row">
-                      <span class="health-chart-row__time">${time}</span>
-                      <span class="health-chart-row__score">${score}</span>
-                      ${buildScoreBar(score)}
-                      <span class="health-chart-row__label">${labelForScore(
-                        score
-                      )}</span>
-                    </div>
-                  `;
-                })
-                .join("")}
+              ${
+                sliced.length > 0
+                  ? sliced
+                      .map((slot) => {
+                        const time = slot.time || "";
+                        const score = slot.score || 0;
+                        return `
+                      <div class="health-chart-row">
+                        <span class="health-chart-row__time">${time}</span>
+                        <span class="health-chart-row__score">${score}</span>
+                        ${buildScoreBar(score)}
+                        <span class="health-chart-row__label">${labelForScore(
+                          score
+                        )}</span>
+                      </div>
+                    `;
+                      })
+                      .join("")
+                  : '<p class="health-empty-notice">Stundenweise Daten laden...</p>'
+              }
             </div>
           </section>
         </div>

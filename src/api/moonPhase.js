@@ -1,13 +1,26 @@
 class MoonPhaseAPI {
   constructor() {
-    this.baseUrl = (API_ENDPOINTS.MOONPHASE.BASE || "").replace(/\/$/, "");
-    this.timeout = API_ENDPOINTS.MOONPHASE.TIMEOUT;
+    this.baseUrl = (API_ENDPOINTS?.MOONPHASE?.BASE || "").replace(/\/$/, "");
+    this.timeout = API_ENDPOINTS?.MOONPHASE?.TIMEOUT || 5000;
     this.name = "PhaseOfTheMoonToday";
+    this.isAvailable = !!this.baseUrl;
   }
 
   async fetchPhase(date = new Date(), apiKey = null, context = {}) {
     const start = Date.now();
     const requestContext = this._normalizeContext(date, context);
+
+    // Wenn keine API-URL konfiguriert ist, direkt lokale Berechnung verwenden
+    if (!this.isAvailable) {
+      const fallback = this._computeLocalPhase(date, context);
+      return {
+        data: fallback,
+        duration: Date.now() - start,
+        source: "moonphase-local",
+        statusMessage: "Lokal berechnet (API nicht konfiguriert)",
+      };
+    }
+
     const queue = this._buildRequestQueue(requestContext);
     let lastError = null;
 
@@ -33,21 +46,21 @@ class MoonPhaseAPI {
       }
     }
 
-    const message =
-      lastError?.message ||
-      "MoonPhase API lieferte keine Daten von PhaseOfTheMoonToday";
-    console.warn("MoonPhaseToday", message);
+    // API nicht erreichbar - verwende lokale Berechnung
+    console.info(
+      "MoonPhaseToday API: Server nicht erreichbar - verwende lokale Berechnung"
+    );
     const fallback = this._computeLocalPhase(date, context);
     if (fallback) {
       return {
         data: fallback,
         duration: Date.now() - start,
         source: "moonphase-local",
-        statusMessage: "Berechnet lokal",
+        statusMessage: "Lokal berechnet (API offline)",
       };
     }
     return {
-      error: message,
+      error: "Mondphase konnte nicht berechnet werden",
       source: "moonphase",
     };
   }

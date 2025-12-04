@@ -1,9 +1,10 @@
 // Service Worker für Calchas
 // Ermöglicht Offline-Funktionalität, Caching und Push-Notifications
 
-const CACHE_NAME = "calchas-v1";
+const CACHE_NAME = "calchas-v3"; // Version erhöht für Navigation-Überarbeitung
 const urlsToCache = [
   "/",
+  "/index.html",
   "/src/index.html",
   "/src/style.css",
   "/src/app.js",
@@ -15,6 +16,9 @@ const urlsToCache = [
   "/src/ui/errorHandler.js",
   "/src/ui/searchInput.js",
   "/src/ui/weatherDisplay.js",
+  "/src/ui/health/HealthSafetyView.js",
+  "/src/ui/history/HistoryViewBrowser.js",
+  "/src/ui/settings/SettingsHome.js",
   "/manifest.json",
 ];
 

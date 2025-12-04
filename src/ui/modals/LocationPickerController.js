@@ -118,11 +118,11 @@
     if (searchInput) searchInput.value = "";
     if (searchResults) searchResults.hidden = true;
 
-    // Load weather for this location
-    if (typeof window.loadWeatherForCity === "function") {
-      window.loadWeatherForCity(cityData.name, cityData.lat, cityData.lon);
+    // Load weather for this location using coordinates directly
+    if (typeof window.loadWeatherByCoords === "function") {
+      window.loadWeatherByCoords(cityData.lat, cityData.lon, cityData.name);
     } else if (typeof window.loadWeather === "function") {
-      window.loadWeather(cityData.lat, cityData.lon, cityData.name);
+      window.loadWeather(cityData.name);
     }
   }
 
@@ -133,15 +133,36 @@
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
 
         if (window.ModalController) {
           window.ModalController.closeSheet();
         }
 
-        if (typeof window.loadWeather === "function") {
-          window.loadWeather(latitude, longitude, "Aktueller Standort");
+        // Try to get location name via reverse geocoding
+        let locationName = "Aktueller Standort";
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          const data = await response.json();
+          if (data && data.address) {
+            locationName =
+              data.address.city ||
+              data.address.town ||
+              data.address.village ||
+              data.address.municipality ||
+              "Aktueller Standort";
+          }
+        } catch (e) {
+          console.warn("Reverse geocoding failed:", e);
+        }
+
+        if (typeof window.loadWeatherByCoords === "function") {
+          window.loadWeatherByCoords(latitude, longitude, locationName);
+        } else if (typeof window.loadWeather === "function") {
+          window.loadWeather(locationName);
         }
       },
       (error) => {

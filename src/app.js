@@ -612,44 +612,59 @@ async function initAppShell(appState) {
     console.warn("Radar / Karten-Initialisierung fehlgeschlagen", e);
   }
 
-  // History View – letzte 30 Tage laden und rendern (über WeatherDataService)
-  try {
-    const { weatherDataService } = await import("./api/WeatherDataService.js");
-    const { default: HistoryView } = await import(
-      "./ui/history/HistoryView.js"
-    );
+  // History View - Browser-kompatible Version
+  console.log("[App] History View check:", !!window.HistoryView);
+  if (window.HistoryView) {
+    try {
+      const historyContainer = document.getElementById("history-container");
+      console.log("[App] History container found:", !!historyContainer);
 
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const historyView = new window.HistoryView({
+        containerId: "history-container",
+      });
 
-    const lat =
-      appState?.currentCoordinates?.lat ??
-      appState?.renderData?.location?.latitude ??
-      52.52;
-    const lon =
-      appState?.currentCoordinates?.lon ??
-      appState?.renderData?.location?.longitude ??
-      13.405;
+      let historyData = [];
 
-    const startDate = thirtyDaysAgo.toISOString().split("T")[0];
-    const endDate = today.toISOString().split("T")[0];
+      // Try to load history data if service is available
+      if (
+        window.weatherDataService &&
+        typeof window.weatherDataService.loadHistory === "function"
+      ) {
+        try {
+          const today = new Date();
+          const thirtyDaysAgo = new Date(
+            today.getTime() - 30 * 24 * 60 * 60 * 1000
+          );
+          const lat = appState?.currentCoordinates?.lat ?? 52.52;
+          const lon = appState?.currentCoordinates?.lon ?? 13.405;
+          const startDate = thirtyDaysAgo.toISOString().split("T")[0];
+          const endDate = today.toISOString().split("T")[0];
 
-    const historyData = await weatherDataService.loadHistory(
-      lat,
-      lon,
-      startDate,
-      endDate
-    );
+          historyData =
+            (await window.weatherDataService.loadHistory(
+              lat,
+              lon,
+              startDate,
+              endDate
+            )) || [];
+          if (appState) appState.history = historyData;
+        } catch (loadErr) {
+          console.warn("History data loading failed:", loadErr);
+        }
+      }
 
-    if (appState) {
-      appState.history = historyData;
+      console.log(
+        "[App] Rendering history with data length:",
+        historyData.length
+      );
+      await historyView.render(historyData);
+      window.HISTORY_VIEW = historyView;
+      console.log("[App] History View initialized successfully");
+    } catch (e) {
+      console.warn("History View konnte nicht initialisiert werden", e);
     }
-
-    const historyView = new HistoryView({ containerId: "history-container" });
-    await historyView.render(historyData);
-    window.HISTORY_VIEW = historyView;
-  } catch (e) {
-    console.warn("History View konnte nicht initialisiert werden", e);
+  } else {
+    console.warn("[App] window.HistoryView is not defined!");
   }
 
   // Detail-Sheets initialisieren, wenn vorhanden
@@ -701,6 +716,8 @@ async function initAppShell(appState) {
         windUnit: units.wind || "km/h",
         locale: appState.locale || "de-DE",
         lastUpdated: Date.now(),
+        aqi: appState.renderData?.aqi || appState.aqi || {},
+        pollen: appState.renderData?.pollen || {},
       };
 
       const healthState =
@@ -739,6 +756,11 @@ async function initAppShell(appState) {
 
       if (window.HomeCards && window.HomeCards.renderHomeCards) {
         window.HomeCards.renderHomeCards(homeState, healthState);
+      }
+
+      // Render Weather Cards Grid (Visual Cards)
+      if (window.WeatherCards && window.WeatherCards.renderWeatherCards) {
+        window.WeatherCards.renderWeatherCards(homeState);
       }
 
       if (window.HealthSafetyView && window.HealthSafetyView.render) {
@@ -2922,6 +2944,8 @@ async function loadWeather(city, options = {}) {
         windUnit: units.wind || "km/h",
         locale: appState.locale || "de-DE",
         lastUpdated: Date.now(),
+        aqi: appState.renderData?.aqi || appState.aqi || {},
+        pollen: appState.renderData?.pollen || {},
       };
 
       const healthState =
@@ -2960,6 +2984,11 @@ async function loadWeather(city, options = {}) {
 
       if (window.HomeCards && window.HomeCards.renderHomeCards) {
         window.HomeCards.renderHomeCards(homeState, healthState);
+      }
+
+      // Render Weather Cards Grid (Visual Cards)
+      if (window.WeatherCards && window.WeatherCards.renderWeatherCards) {
+        window.WeatherCards.renderWeatherCards(homeState);
       }
     } catch (e) {
       console.warn("Neues Home-Layout Rendering fehlgeschlagen", e);
@@ -3026,8 +3055,152 @@ async function loadWeather(city, options = {}) {
     }
   }
 }
+
+/**
+ * Wetter mit bekannten Koordinaten laden (ohne erneute Ortssuche)
+ */
+async function loadWeatherByCoords(lat, lon, cityName, options = {}) {
+  const { silent = false } = options;
+  try {
+    if (window.logAnalyticsEvent) {
+      window.logAnalyticsEvent("search", {
+        city: cityName,
+        lat,
+        lon,
+        timestamp: Date.now(),
+      });
+    }
+
+    if (!silent) {
+      weatherDisplay.showLoading();
+      setSearchComponentsLoadingState(true);
+      errorHandler.clearAll();
+    }
+
+    const location = {
+      city: cityName,
+      lat: parseFloat(lat),
+      lon: parseFloat(lon),
+    };
+
+    appState.currentCity = location.city;
+    appState.currentCoordinates = {
+      lat: location.lat,
+      lon: location.lon,
+      lng: location.lon,
+    };
+
+    const weatherData = await fetchWeatherData(location.lat, location.lon);
+
+    // Speichere WeatherData im globalen State
+    try {
+      appState.weatherData = weatherData;
+      appState.renderData = buildRenderData(
+        weatherData,
+        appState.units || { temperature: "C", wind: "km/h" }
+      );
+    } catch (e) {
+      console.warn("buildRenderData fehlgeschlagen", e);
+    }
+
+    exitDemoMode();
+
+    // Zeige Ergebnisse
+    try {
+      weatherDisplay.displayCurrent(appState.renderData, location.city);
+    } catch (e) {
+      weatherDisplay.displayCurrent(weatherData, location.city);
+    }
+
+    // Home-Layout rendern
+    try {
+      const units = appState.units || { temperature: "C", wind: "km/h" };
+      const homeState = {
+        current:
+          appState.renderData?.currentSnapshot ||
+          appState.renderData?.current ||
+          {},
+        daily: appState.renderData?.openMeteo?.daily || [],
+        hourly:
+          appState.renderData?.hourly ||
+          buildHourlyDisplayPayload(appState.renderData, 24).hours ||
+          [],
+        location: {
+          name: location.city,
+          country: weatherData?.locationDetails?.countryCode,
+        },
+        temperatureUnit: units.temperature || "C",
+        windUnit: units.wind || "km/h",
+        locale: appState.locale || "de-DE",
+        lastUpdated: Date.now(),
+        aqi: appState.renderData?.aqi || appState.aqi || {},
+        pollen: appState.renderData?.pollen || {},
+      };
+
+      const healthState =
+        typeof window.healthSafetyEngine === "function"
+          ? window.healthSafetyEngine(homeState)
+          : {};
+
+      if (window.WeatherHero?.renderWeatherHero) {
+        window.WeatherHero.renderWeatherHero(homeState, {
+          iconForCode: (code, isDay) =>
+            window.weatherIconMapper?.toHtml?.(code, isDay) ||
+            window.iconMapper?.toHtml?.(code, isDay) ||
+            "",
+          formatUpdatedAt: (ts) =>
+            ts
+              ? new Date(ts).toLocaleTimeString(homeState.locale, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "",
+        });
+      }
+
+      if (window.HomeCards?.renderHomeCards) {
+        window.HomeCards.renderHomeCards(homeState, healthState);
+      }
+
+      if (window.WeatherCards?.renderWeatherCards) {
+        window.WeatherCards.renderWeatherCards(homeState);
+      }
+    } catch (e) {
+      console.warn("Home-Layout Rendering fehlgeschlagen", e);
+    }
+
+    displayWeatherResults(location, weatherData);
+    updateTopbarStatus(location.city);
+
+    const favToggle = document.getElementById("favoriteToggle");
+    if (favToggle) {
+      favToggle.dataset.city = location.city;
+      syncFavoriteToggleState(location.city);
+    }
+    if (location.city) {
+      addSearchHistory(location.city);
+      document.title = `Calchas – ${location.city}`;
+    }
+
+    if (!silent) {
+      weatherDisplay.hideLoading();
+    }
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der Wetterdaten:", error);
+    if (!silent) {
+      weatherDisplay.hideLoading();
+      errorHandler.showError(error.message);
+    }
+  } finally {
+    if (!silent) {
+      setSearchComponentsLoadingState(false);
+    }
+  }
+}
+
 if (typeof window !== "undefined") {
   window.loadWeather = loadWeather;
+  window.loadWeatherByCoords = loadWeatherByCoords;
 }
 
 function initializeFeatureModules() {
@@ -3787,23 +3960,32 @@ function initApp() {
     });
   }
 
-  // AUTO-FETCH VAPID on app init (fixes push notification issue)
-  (async () => {
-    try {
-      const key = await ensureVapidKey();
-      if (key) {
-        console.log("✅ VAPID Key bereitgestellt");
-      } else {
-        console.warn(
-          "⚠️ Kein VAPID Key abrufbar – bitte Push-Einstellungen prüfen"
-        );
+  // AUTO-FETCH VAPID on app init - nur wenn Push-Server erreichbar
+  // Push-Benachrichtigungen sind optional und benötigen einen separaten Server
+  if (typeof ensureVapidKey === "function") {
+    setTimeout(async () => {
+      try {
+        // Prüfe erst ob der Push-Server überhaupt läuft
+        const testRes = await fetch("http://localhost:3030/keys", {
+          method: "HEAD",
+        }).catch(() => null);
+        if (!testRes || !testRes.ok) {
+          console.info(
+            "ℹ️ Push-Server nicht verfügbar – Push-Benachrichtigungen deaktiviert"
+          );
+          return;
+        }
+        const key = await ensureVapidKey();
+        if (key) {
+          console.log("✅ VAPID Key bereitgestellt");
+        }
+      } catch (e) {
+        // Stille Fehlerbehandlung - Push ist optional
+      } finally {
+        if (typeof syncPushToggleState === "function") syncPushToggleState();
       }
-    } catch (e) {
-      console.warn("⚠️ VAPID Auto-Fetch fehlgeschlagen:", e.message);
-    } finally {
-      syncPushToggleState();
-    }
-  })();
+    }, 2000); // Verzögert um App-Start nicht zu blockieren
+  }
 
   // Home-Bereich: Immer sinnvolle Demo-Daten anzeigen, falls keine
   // gespeicherten Live-Daten vorhanden sind. So bleibt die App auch bei

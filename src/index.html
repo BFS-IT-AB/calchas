@@ -78,6 +78,11 @@
             <div id="daily-forecast-card" class="card"></div>
           </section>
 
+          <!-- Weather Cards Grid - Visual Cards wie in den Screenshots -->
+          <section class="card-group card-group--grid" aria-label="Wetterdaten">
+            <div id="weather-cards-grid" class="weather-cards-grid"></div>
+          </section>
+
           <section class="card-group" aria-label="Gesundheit und Sicherheit Vorschau">
             <div id="health-preview-card" class="card"></div>
           </section>
@@ -87,7 +92,14 @@
           </section>
         </section>
 
-        <section data-view="health" hidden aria-label="Gesundheit und Sicherheit Vollansicht"></section>
+        <section data-view="health" id="health-section" class="app-view" hidden aria-label="Gesundheit und Sicherheit">
+          <div class="app-view__header">
+            <h2>🏥 Gesundheit & Sicherheit</h2>
+          </div>
+          <div class="app-view__content" id="health-view-container">
+            <!-- Health content will be rendered here -->
+          </div>
+        </section>
 
         <section data-view="radar" hidden aria-label="Kartenansicht">
           <div class="map-view">
@@ -192,19 +204,19 @@
       <nav id="bottom-nav" class="bottom-nav" aria-label="Hauptnavigation">
         <button class="bottom-nav__button bottom-nav__button--active" type="button" data-nav-target="home">
           <span class="bottom-nav__icon material-symbols-outlined" aria-hidden="true">home</span>
-          <span class="bottom-nav__label">Heute</span>
+          <span class="bottom-nav__label">Home</span>
         </button>
         <button class="bottom-nav__button" type="button" data-nav-target="radar">
           <span class="bottom-nav__icon material-symbols-outlined" aria-hidden="true">map</span>
           <span class="bottom-nav__label">Karten</span>
         </button>
         <button class="bottom-nav__button" type="button" data-nav-target="health">
-          <span class="bottom-nav__icon material-symbols-outlined" aria-hidden="true">health_and_safety</span>
+          <span class="bottom-nav__icon material-symbols-outlined" aria-hidden="true">favorite</span>
           <span class="bottom-nav__label">Health</span>
         </button>
-        <button class="bottom-nav__button" type="button" data-nav-target="settings">
-          <span class="bottom-nav__icon material-symbols-outlined" aria-hidden="true">settings</span>
-          <span class="bottom-nav__label">Einstellungen</span>
+        <button class="bottom-nav__button" type="button" data-nav-target="history">
+          <span class="bottom-nav__icon material-symbols-outlined" aria-hidden="true">history</span>
+          <span class="bottom-nav__label">Historie</span>
         </button>
       </nav>
 
@@ -1847,12 +1859,16 @@
     <script src="ui/components/MetricCard.js"></script>
     <script src="ui/home/WeatherHero.js"></script>
     <script src="ui/home/HomeCards.js"></script>
+    <script src="ui/home/WeatherCards.js"></script>
     <script src="ui/home/FrogHeroPlayer.js"></script>
     <script src="ui/searchInput.js"></script>
     <script src="ui/dayDetailTemplate.js"></script>
     <script src="ui/weatherDisplay.js"></script>
     <script src="ui/modals/ModalController.js"></script>
     <script src="ui/modals/LocationPickerController.js"></script>
+    <script src="ui/health/HealthSafetyView.js"></script>
+    <script src="ui/history/HistoryViewBrowser.js"></script>
+    <script src="ui/settings/SettingsHome.js"></script>
     <script src="ui/shared/BottomNav.js"></script>
     <script src="features.js"></script>
     <script src="app.js"></script>

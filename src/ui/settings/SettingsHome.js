@@ -1,12 +1,48 @@
-import "../../i18n/helper.js";
-
+/**
+ * SettingsHome.js - Einstellungen-Hauptseite
+ * Zeigt alle verfügbaren Einstellungsoptionen als Karten an
+ */
 (function (global) {
   function renderSettingsHome(appState) {
     const container = document.getElementById("settings-home-container");
-    if (!container) return;
+    if (!container) {
+      console.warn("[SettingsHome] Container nicht gefunden");
+      return;
+    }
 
-    const { t } = global.i18n || {};
-    const tr = (key) => (t ? t(key) : key);
+    // Translation function with fallback
+    const tr = (key) => {
+      if (global.i18n && global.i18n.t) {
+        return global.i18n.t(key);
+      }
+      // Fallback translations
+      const fallbacks = {
+        "settings.group.appearance": "Erscheinungsbild",
+        "settings.subtitle.appearance": "Thema und Farben",
+        "settings.group.home": "Heimatort",
+        "settings.subtitle.home": "Standardstandort festlegen",
+        "settings.group.units": "Einheiten",
+        "settings.subtitle.units": "Temperatur, Wind, etc.",
+        "settings.group.background": "Hintergrund-Updates",
+        "settings.subtitle.background": "Automatische Aktualisierung",
+        "settings.group.models": "Wettermodelle",
+        "settings.subtitle.models": "Datenquellen auswählen",
+        "settings.group.language": "Sprache",
+        "settings.languageLabel": "Aktuelle Sprache",
+        "settings.languageValueDe": "Deutsch",
+        "settings.languageValueEn": "English",
+        "settings.group.export": "Daten exportieren",
+        "settings.subtitle.export": "Einstellungen sichern",
+        "settings.group.import": "Daten importieren",
+        "settings.subtitle.import": "Einstellungen wiederherstellen",
+        "settings.group.community": "Community",
+        "settings.subtitle.community": "Feedback und Support",
+        "settings.privacy.title": "Datenschutz",
+        "settings.group.about": "Über die App",
+        "settings.subtitle.about": "Version und Infos",
+      };
+      return fallbacks[key] || key;
+    };
 
     container.innerHTML = `
       <div class="settings-home">

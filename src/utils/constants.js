@@ -185,7 +185,7 @@ const VALIDATION = {
   CITY_NAME: {
     MIN_LENGTH: 2,
     MAX_LENGTH: 100,
-    PATTERN: /^[a-zA-Z\s\-äöüÄÖÜß]+$/,
+    PATTERN: /^[a-zA-Z0-9\s\-\.,()äöüÄÖÜßéèêëàâáíìîïóòôõúùûñçčšžåæøœ']+$/i,
     ERROR_MESSAGE: "Ungültiger Stadtname",
   },
 
