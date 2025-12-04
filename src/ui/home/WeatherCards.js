@@ -478,12 +478,14 @@
     const daily = (appState.daily && appState.daily[0]) || {};
     const hourly = appState.hourly || [];
     const aqi = appState.aqi || {};
+    const pollen = appState.pollen || { trees: 1, grass: 1, weeds: 1 };
 
     const modalContent = getModalContent(cardType, {
       current,
       daily,
       hourly,
       aqi,
+      pollen,
     });
 
     const sheetId = `sheet-${cardType}-detail`;
@@ -504,7 +506,7 @@
   }
 
   function getModalContent(type, data) {
-    const { current, daily, hourly, aqi } = data;
+    const { current, daily, hourly, aqi, pollen } = data;
 
     const templates = {
       humidity: () => {
@@ -910,18 +912,126 @@
       },
 
       pollen: () => {
+        const pollenData = pollen || { trees: 1, grass: 1, weeds: 1 };
+        const treesLevel = pollenData.trees || 1;
+        const grassLevel = pollenData.grass || 1;
+        const weedsLevel = pollenData.weeds || 1;
+
+        const getLevelText = (level) => {
+          if (level <= 1) return "Niedrig";
+          if (level <= 2) return "Moderat";
+          if (level <= 3) return "Hoch";
+          return "Sehr hoch";
+        };
+
+        const getLevelColor = (level) => {
+          if (level <= 1) return "#4CAF50";
+          if (level <= 2) return "#FFEB3B";
+          if (level <= 3) return "#FF9800";
+          return "#F44336";
+        };
+
+        const overallLevel = Math.max(treesLevel, grassLevel, weedsLevel);
+
         return `
           <header class="bottom-sheet__header">
             <span class="bottom-sheet__icon">🌿</span>
-            <h2 class="bottom-sheet__title">Pollenflug</h2>
+            <div>
+              <h2 class="bottom-sheet__title">Pollenflug</h2>
+              <p class="bottom-sheet__subtitle">Aktuelle Pollenbelastung</p>
+            </div>
             <button class="bottom-sheet__close" type="button" data-close-sheet>
               <span class="material-symbols-outlined">close</span>
             </button>
           </header>
           <div class="bottom-sheet__body">
             <div class="detail-card">
-              <h3>Pollenbelastung</h3>
-              <p>Detaillierte Polleninformationen sind verfügbar.</p>
+              <div class="detail-card__hero">
+                <span class="detail-card__value" style="color: ${getLevelColor(
+                  overallLevel
+                )}">${getLevelText(overallLevel)}</span>
+              </div>
+              <p style="color: rgba(255,255,255,0.7); margin-bottom: 16px;">Gesamtbelastung heute</p>
+            </div>
+
+            <div class="detail-card">
+              <h3>🌳 Baumpollen</h3>
+              <div class="detail-card__row">
+                <span>Belastung</span>
+                <span class="detail-card__badge" style="background: ${getLevelColor(
+                  treesLevel
+                )}40; color: ${getLevelColor(treesLevel)}">${getLevelText(
+          treesLevel
+        )} (${treesLevel}/4)</span>
+              </div>
+              <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                ${
+                  treesLevel <= 1
+                    ? "Kaum Belastung durch Baumpollen. Gute Bedingungen für Allergiker."
+                    : treesLevel <= 2
+                    ? "Leichte Belastung möglich. Empfindliche Personen sollten Vorsicht walten lassen."
+                    : treesLevel <= 3
+                    ? "Erhöhte Belastung. Allergiker sollten längere Aufenthalte im Freien meiden."
+                    : "Sehr hohe Belastung! Allergiker sollten drinnen bleiben und Fenster geschlossen halten."
+                }
+              </p>
+            </div>
+
+            <div class="detail-card">
+              <h3>🌾 Gräserpollen</h3>
+              <div class="detail-card__row">
+                <span>Belastung</span>
+                <span class="detail-card__badge" style="background: ${getLevelColor(
+                  grassLevel
+                )}40; color: ${getLevelColor(grassLevel)}">${getLevelText(
+          grassLevel
+        )} (${grassLevel}/4)</span>
+              </div>
+              <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                ${
+                  grassLevel <= 1
+                    ? "Minimale Gräserpollenbelastung. Ideal für Outdoor-Aktivitäten."
+                    : grassLevel <= 2
+                    ? "Moderate Gräserpollenbelastung. Bei Empfindlichkeit Antihistaminika bereithalten."
+                    : grassLevel <= 3
+                    ? "Starke Gräserpollenbelastung. Aktivitäten im Freien reduzieren."
+                    : "Extreme Gräserpollenbelastung! Aufenthalt im Freien vermeiden."
+                }
+              </p>
+            </div>
+
+            <div class="detail-card">
+              <h3>🌱 Kräuterpollen</h3>
+              <div class="detail-card__row">
+                <span>Belastung</span>
+                <span class="detail-card__badge" style="background: ${getLevelColor(
+                  weedsLevel
+                )}40; color: ${getLevelColor(weedsLevel)}">${getLevelText(
+          weedsLevel
+        )} (${weedsLevel}/4)</span>
+              </div>
+              <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                ${
+                  weedsLevel <= 1
+                    ? "Geringe Kräuterpollenbelastung. Keine besonderen Vorsichtsmaßnahmen nötig."
+                    : weedsLevel <= 2
+                    ? "Leichte Kräuterpollenbelastung. Bei Allergien auf Symptome achten."
+                    : weedsLevel <= 3
+                    ? "Hohe Kräuterpollenbelastung. Medikamente griffbereit halten."
+                    : "Sehr hohe Kräuterpollenbelastung! Allergiker sollten besondere Vorsicht walten lassen."
+                }
+              </p>
+            </div>
+
+            <div class="detail-card">
+              <h3>💡 Tipps für Allergiker</h3>
+              <ul style="font-size: 0.85rem; color: rgba(255,255,255,0.7); padding-left: 20px; margin: 8px 0;">
+                <li>Wäsche nicht im Freien trocknen</li>
+                <li>Abends duschen und Haare waschen</li>
+                <li>Fenster morgens geschlossen halten</li>
+                <li>Pollenfilter im Auto aktivieren</li>
+                <li>Sonnenbrille tragen zum Augenschutz</li>
+              </ul>
             </div>
           </div>
         `;

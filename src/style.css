@@ -9211,8 +9211,9 @@ body.mobile-app #legacy-content {
 
 /* Pollen Card */
 .weather-card--pollen {
-  min-height: auto;
+  min-height: 140px;
   padding: 14px 16px;
+  overflow: visible;
 }
 
 .weather-card--wide {
@@ -9222,10 +9223,11 @@ body.mobile-app #legacy-content {
 .weather-card__pollen-grid {
   display: flex;
   justify-content: space-around;
-  gap: 8px;
+  gap: 12px;
   margin-top: 8px;
   flex: 1;
-  align-items: center;
+  align-items: flex-start;
+  padding-bottom: 8px;
 }
 
 .pollen-gauge {
@@ -9233,11 +9235,14 @@ body.mobile-app #legacy-content {
   flex-direction: column;
   align-items: center;
   position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .pollen-gauge svg {
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
 }
 
 .pollen-gauge__content {
@@ -9246,33 +9251,29 @@ body.mobile-app #legacy-content {
   align-items: center;
   text-align: center;
   margin-top: 4px;
+  gap: 1px;
 }
 
 .pollen-gauge__icon {
-  font-size: 1rem;
-  margin-bottom: 2px;
+  font-size: 0.9rem;
 }
 
 .pollen-gauge__label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
 }
 
 .pollen-gauge__value {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 2px;
-}
-
-.pollen-gauge__level {
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .pollen-gauge__level {
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   color: var(--color-text-muted-2);
+  white-space: nowrap;
 }
 
 /* ========================================

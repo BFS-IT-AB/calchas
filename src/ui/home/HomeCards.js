@@ -566,7 +566,6 @@
     renderDaySummaryCard(appState, healthState);
     renderHourlyForecastCard(appState);
     renderDailyForecastCard(appState);
-    renderMetricGrid(appState);
   }
 
   global.HomeCards = { renderHomeCards, openDayDetailModal };
