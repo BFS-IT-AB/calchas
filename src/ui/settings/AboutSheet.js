@@ -83,7 +83,7 @@
           ${renderAboutRow(
             "heart",
             "Mitwirkende",
-            "Übersetzer",
+            null,
             "#5c6bc0",
             "contributors"
           )}
