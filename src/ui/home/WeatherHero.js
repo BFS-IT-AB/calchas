@@ -143,9 +143,6 @@
             tempUnit
           )}</span>
           ${locationTimeHtml}
-          <span class="weather-hero__updated">⏱ ${
-            updatedLabel || "jetzt"
-          }</span>
         </div>
       </div>
 
