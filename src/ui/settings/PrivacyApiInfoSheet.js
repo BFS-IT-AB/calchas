@@ -1,5 +1,3 @@
-import "../../i18n/helper.js";
-
 /**
  * PrivacyApiInfoSheet.js - Datenschutz & API-Info
  * Design inspiriert von WeatherMaster App

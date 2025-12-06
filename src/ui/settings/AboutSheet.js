@@ -30,10 +30,10 @@
         <!-- App Header -->
         <div class="about-header">
           <div class="about-header__icon">
-            <img src="assets/google-weather-icons/weather/sunny.svg" alt="WeatherMaster" onerror="this.textContent='☁️'"/>
+            <img src="assets/google-weather-icons/weather/sunny.svg" alt="Calchas" onerror="this.textContent='☁️'"/>
           </div>
           <div class="about-header__info">
-            <h2 class="about-header__name">WeatherMaster</h2>
+            <h2 class="about-header__name">Calchas</h2>
             <div class="about-header__badges">
               <span class="about-badge about-badge--version">v${version}</span>
               <button class="about-badge about-badge--changelog" type="button" data-action="changelog">Was ist neu</button>
@@ -115,6 +115,8 @@
   function showChangelog() {
     const existingModal = document.getElementById("changelog-modal");
     if (existingModal) existingModal.remove();
+
+    const version = global.APP_VERSION || "2.6.6";
 
     const modal = document.createElement("div");
     modal.id = "changelog-modal";

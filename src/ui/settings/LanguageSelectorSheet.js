@@ -1,5 +1,3 @@
-import "../../i18n/helper.js";
-
 /**
  * LanguageSelectorSheet.js - Sprach-Auswahl
  * Design inspiriert von WeatherMaster App

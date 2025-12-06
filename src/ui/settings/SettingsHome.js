@@ -95,7 +95,7 @@
         )}
         ${renderRow(
           "about",
-          "Über WeatherMaster",
+          "Über Calchas",
           "Änderungsprotokoll, Version, Lizenzen und mehr",
           "sheet-settings-about"
         )}

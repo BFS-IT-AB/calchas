@@ -1,5 +1,3 @@
-import "../../i18n/helper.js";
-
 /**
  * ThemeSelectorSheet.js - Theme-Auswahl
  * Design inspiriert von WeatherMaster App
