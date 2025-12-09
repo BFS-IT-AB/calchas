@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Calchas – PWA Weather Forecast with Push Notifications
+=======
+# Calchas – PWA Weather Forecast with smart dayinsights, radar-maps, history-views and health-tips
+>>>>>>> 74675f5 (firewall test 9.12 / 1.)
 
 Calchas ist eine moderne, responsive PWA-Wetterplattform mit Dual-API-Support, Offline-Funktionalität, Push-Benachrichtigungen und erweiterten Features (Favoriten, Einheiten-Umschalter, Wetterkarten, Alerts, historische Daten).
 
@@ -16,7 +20,11 @@ Calchas ist eine moderne, responsive PWA-Wetterplattform mit Dual-API-Support, O
 ## Features
 
 - **🌍 Ortssuche**: Per Nominatim Geocoding (OpenStreetMap)
+<<<<<<< HEAD
 - **📡 Dual-API-System**: Open-Meteo (Hauptquelle) + BrightSky (Fallback) mit automatischer Retry-Logik
+=======
+- **📡 Dual-API-System+**: Open-Meteo (Hauptquelle) + BrightSky (Fallback) mit automatischer Retry-Logik + weitere
+>>>>>>> 74675f5 (firewall test 9.12 / 1.)
 - **📊 Detaillierte Vorhersagen**: Neues Android-inspiriertes Hero-Dashboard (Now → Overview → Insights) mit Sonnenpfad, High/Low-Chips, Taupunkt-, Feuchte-, Wind-, Regen-, UV- und Druckkarten plus 24h-Stundenmatrix direkt im Tagespanel; DOM-IDs wie `#current-hero`, `#overview-panels` und `#insights-grid` sind 1:1 auf das refaktorierte `weatherDisplay.js` gemappt.
 - **🔄 Offline-First PWA**: Service Worker, App-Shell-Caching, Offline-Modus
 - **🔔 Push-Benachrichtigungen**: Lokaler VAPID-basierter Push-Server inkl. Dashboard
