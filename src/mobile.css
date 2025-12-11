@@ -659,7 +659,7 @@ body.mobile-app .health-cards-grid {
 body.mobile-app .health-metric-card {
   min-height: 100px;
   padding: 10px 8px;
-  border-radius: 14px;
+  border-radius: 25px;
 }
 
 body.mobile-app .health-metric-card__header {

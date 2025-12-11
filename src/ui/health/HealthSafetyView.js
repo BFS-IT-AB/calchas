@@ -198,7 +198,7 @@
     const label = labelForScore(currentScore);
 
     return `
-      <button class="health-metric-card" data-health-card="outdoor" type="button">
+      <button class="health-metric-card" data-health-card="outdoor" type="button" style="margin-left: 2px;">
         <div class="health-metric-card__header">
           <span class="health-metric-card__icon">🏃</span>
           <span class="health-metric-card__label">Outdoor-Score</span>
@@ -230,7 +230,7 @@
     }
 
     return `
-      <button class="health-metric-card" data-health-card="clothing" type="button">
+      <button class="health-metric-card" data-health-card="clothing" type="button" style="margin-left: 0px;">
         <div class="health-metric-card__header">
           <span class="health-metric-card__icon">${icon}</span>
           <span class="health-metric-card__label">Kleidung</span>
@@ -260,7 +260,7 @@
     }
 
     return `
-      <button class="health-metric-card" data-health-card="driving" type="button">
+      <button class="health-metric-card" data-health-card="driving" type="button" style="margin-left: 2px;padding-bottom: 8px;">
         <div class="health-metric-card__header">
           <span class="health-metric-card__icon">${icon}</span>
           <span class="health-metric-card__label">Fahrsicherheit</span>
@@ -290,7 +290,7 @@
     }
 
     return `
-      <button class="health-metric-card" data-health-card="heat" type="button">
+      <button class="health-metric-card" data-health-card="heat" type="button" style="margin-left: 0px; ">
         <div class="health-metric-card__header">
           <span class="health-metric-card__icon">${icon}</span>
           <span class="health-metric-card__label">Hitzerisiko</span>
@@ -320,7 +320,7 @@
     }
 
     return `
-      <button class="health-metric-card" data-health-card="uv" type="button">
+      <button class="health-metric-card" data-health-card="uv" type="button" style="margin-left: 2px;">
         <div class="health-metric-card__header">
           <span class="health-metric-card__icon">${icon}</span>
           <span class="health-metric-card__label">UV-Schutz</span>
@@ -341,7 +341,7 @@
     const info = getWindchillInfo(windchill);
 
     return `
-      <button class="health-metric-card" data-health-card="windchill" type="button">
+      <button class="health-metric-card" data-health-card="windchill" type="button" style="margin-left: 0px;"> 
         <div class="health-metric-card__header">
           <span class="health-metric-card__icon">${info.icon}</span>
           <span class="health-metric-card__label">Windchill</span>
@@ -377,7 +377,7 @@
     }
 
     return `
-      <button class="health-metric-card" data-health-card="aqi" type="button">
+      <button class="health-metric-card" data-health-card="aqi" type="button" style="margin-left: 2px;">
         <div class="health-metric-card__header">
           <span class="health-metric-card__icon">${icon}</span>
           <span class="health-metric-card__label">Luftqualität</span>
