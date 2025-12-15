@@ -13,6 +13,25 @@
   box-sizing: border-box;
 }
 
+/* Light-mode variant for day detail view */
+[data-theme="light"] .detail-theme {
+  color-scheme: light;
+  --detail-bg: #f5f7fb;
+  --detail-panel: #ffffff;
+  --detail-pill: #f3f6fb;
+  --detail-card: #ffffff;
+  --detail-border: rgba(26, 26, 46, 0.06);
+  --detail-accent: #f7b267;
+  --detail-muted: rgba(26, 26, 46, 0.7);
+  color: #1a1a2e;
+  background: linear-gradient(
+      circle at top,
+      rgba(247, 178, 103, 0.04),
+      transparent 45%
+    ),
+    var(--detail-bg);
+}
+
 .detail-theme {
   margin: 0;
   min-height: 100vh;

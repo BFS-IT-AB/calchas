@@ -21,6 +21,21 @@
   --mobile-gold: #ffd68a;
 }
 
+/* Light-mode overrides for mobile variables */
+[data-theme="light"] body.mobile-app {
+  --mobile-bg: #f5f7fa;
+  --mobile-shell: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
+  --mobile-card: #ffffff;
+  --mobile-card-strong: linear-gradient(160deg, #ffffff 0%, #f8fbff 75%);
+  --mobile-card-soft: #f3f6fb;
+  --mobile-border: rgba(26, 26, 46, 0.06);
+  --mobile-border-strong: rgba(26, 26, 46, 0.08);
+  --mobile-text: #1a1a2e;
+  --mobile-muted: rgba(26, 26, 46, 0.6);
+  --mobile-pill: rgba(26, 26, 46, 0.04);
+  --mobile-accent: #4c6fff;
+}
+
 body.mobile-app {
   background: radial-gradient(
       circle at 20% 0%,
@@ -456,6 +471,19 @@ body.mobile-app .hourly-item {
   gap: 0.25rem;
 }
 
+/* Light-mode adjustments for hourly items so content is visible on white */
+[data-theme="light"] body.mobile-app .hourly-item {
+  background: #f6f8fb;
+  border: 1px solid rgba(26, 26, 46, 0.06);
+  color: var(--mobile-text);
+}
+
+[data-theme="light"] body.mobile-app .hourly-item .hourly-item__temp,
+[data-theme="light"] body.mobile-app .hourly-item .hourly-item__time,
+[data-theme="light"] body.mobile-app .hourly-item .hourly-item__precip {
+  color: var(--mobile-text);
+}
+
 body.mobile-app .hour-icon,
 body.mobile-app .hourly-item img {
   width: 42px;
@@ -495,6 +523,21 @@ body.mobile-app .forecast-pill-temps {
   display: flex;
   flex-direction: column;
   font-weight: 600;
+}
+
+/* Light-mode inner forecast pill adjustments on mobile */
+[data-theme="light"] body.mobile-app .forecast-pill-temps {
+  background: rgba(0, 0, 0, 0.02);
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+}
+
+[data-theme="light"] body.mobile-app .forecast-pill-temps span {
+  color: var(--mobile-text);
+}
+
+[data-theme="light"] body.mobile-app .forecast-pill-icon-wrap {
+  background: transparent;
 }
 
 body.mobile-app .forecast-pill-icon-wrap {
@@ -773,6 +816,27 @@ body.mobile-app .settings-row {
   padding: 14px 16px;
   gap: 14px;
   background: rgba(18, 24, 38, 0.85);
+}
+
+/* Light mode overrides for settings list on mobile */
+[data-theme="light"] body.mobile-app .settings-row {
+  background: #f6f8fb;
+}
+
+[data-theme="light"] body.mobile-app .settings-row:hover {
+  background: #eef3f8;
+}
+
+[data-theme="light"] body.mobile-app .settings-row__title {
+  color: var(--mobile-text);
+}
+
+[data-theme="light"] body.mobile-app .settings-row__subtitle {
+  color: var(--mobile-muted);
+}
+
+[data-theme="light"] body.mobile-app .settings-row__icon svg {
+  color: rgba(26, 26, 46, 0.65);
 }
 
 body.mobile-app .settings-row__icon {
