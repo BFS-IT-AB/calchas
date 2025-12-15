@@ -5463,7 +5463,7 @@ body.dark-mode .source-compare-card {
 
 /* Day summary card needs transparent background since .summary-card has its own */
 #day-summary-card.card {
-  background: transparent;
+  background: #ffffff;
   box-shadow: none;
   padding: 0;
 }
@@ -5503,25 +5503,40 @@ body.dark-mode .source-compare-card {
   letter-spacing: 0.02em;
 }
 
-.insight-card__text {
-  font-size: 1.05rem;
-  line-height: 1.6;
-  color: rgb(0 0 0 / 92%);
-  margin: 0;
-  font-weight: 400;
+/* Light Mode */
+body.light .insight-card__text {
+  color: rgb(0 0 0 / 92%) !important;
+}
+
+/* Dark Mode */
+body.dark .insight-card__text {
+  color: rgb(255 255 255 / 88%) !important;
 }
 
 /* ========================================
      SUMMARY CARD (Tagesübersicht - aufklappbar)
      ======================================== */
-.summary-card {
-  background: rgba(20, 28, 50, 0.65);
+/* Standard: Dark Mode */
+body.dark .summary-card {
+  background: rgba(20, 28, 50, 0.65); /* dunkler Hintergrund */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* helle Border */
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
 }
+
+/* Light Mode */
+body.light .summary-card {
+  background: #ffffff; /* weißer Hintergrund */
+  border: 1px solid #000000; /* schwarze Border */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+
 
 .summary-card__header {
   display: flex;
@@ -5577,7 +5592,7 @@ body.dark-mode .source-compare-card {
   font-size: 1rem;
   font-weight: 500;
   margin: 0 0 var(--space-m);
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-color) !important; /* <-- zwingt die Farbe */
 }
 
 .summary-card__list {
@@ -5589,13 +5604,27 @@ body.dark-mode .source-compare-card {
   gap: var(--space-s);
 }
 
-.summary-card__list li {
-  position: relative;
-  padding-left: 1.2rem;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.85);
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  h2.summary-card__intro {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
 }
+
+/* Light Mode */
+@media (prefers-color-scheme: light) {
+  h2.summary-card__intro {
+    color: #222 !important;
+  }
+}
+
+
+
+
+
+
+
+
 
 .summary-card__list li::before {
   content: "•";
@@ -9826,19 +9855,22 @@ h2 {
   margin-bottom: var(--spacing-md);
 }
 
-/* Light Mode */
-@media (prefers-color-scheme: light) {
-  h2 {
-    color: #222;
-  }
+/* Standard Light Mode */
+body.light h2,
+body.light .insight-card__text,
+body.light .card p,
+body.light .card small {
+    color: #222 !important; /* dunkelgrau */
 }
 
 /* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  h2 {
-    color: #f1f1f1;
-  }
+body.dark h2,
+body.dark .insight-card__text,
+body.dark .card p,
+body.dark .card small {
+    color: #f1f1f1 !important; /* helles Grau/Weiß */
 }
+
 
 
 h3 {
