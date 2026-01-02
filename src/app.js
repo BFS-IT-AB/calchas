@@ -881,7 +881,7 @@ async function initAppShell(appState) {
     console.warn("Radar / Karten-Initialisierung fehlgeschlagen", e);
   }
 
-  // History View - Browser-kompatible Version
+  // History View - Browser-kompatible Version (Redesigned)
   if (window.HistoryView) {
     try {
       const historyView = new window.HistoryView({
@@ -889,20 +889,28 @@ async function initAppShell(appState) {
       });
       let historyData = [];
 
-      // Try to load history data if service is available
+      // Load 12-month history data for climate statistics
       if (
         window.weatherDataService &&
         typeof window.weatherDataService.loadHistory === "function"
       ) {
         try {
           const today = new Date();
-          const thirtyDaysAgo = new Date(
-            today.getTime() - 30 * 24 * 60 * 60 * 1000
+          // Load past 365 days for complete climate overview
+          const oneYearAgo = new Date(
+            today.getTime() - 365 * 24 * 60 * 60 * 1000
           );
           const lat = appState?.currentCoordinates?.lat ?? 52.52;
           const lon = appState?.currentCoordinates?.lon ?? 13.405;
-          const startDate = thirtyDaysAgo.toISOString().split("T")[0];
+          const startDate = oneYearAgo.toISOString().split("T")[0];
           const endDate = today.toISOString().split("T")[0];
+
+          console.log(
+            "[History] Loading historical data from",
+            startDate,
+            "to",
+            endDate
+          );
 
           historyData =
             (await window.weatherDataService.loadHistory(
@@ -911,7 +919,18 @@ async function initAppShell(appState) {
               startDate,
               endDate
             )) || [];
-          if (appState) appState.history = historyData;
+
+          if (appState) {
+            appState.history = historyData;
+            // Store coordinates for history refresh
+            appState.historyCoordinates = { lat, lon };
+          }
+
+          console.log(
+            "[History] Loaded",
+            historyData.length,
+            "days of historical data"
+          );
         } catch (loadErr) {
           console.warn("History data loading failed:", loadErr);
         }
