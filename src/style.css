@@ -65,7 +65,7 @@
   --radius-lg: 1.5rem;
   --radius-pill: 999px;
 
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.15s ease-out;
   --blur: 22px;
   --max-width: 1200px;
 
@@ -117,7 +117,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: stretch;
-  transition: background 0.5s ease;
+  transition: background 0.2s ease;
   line-height: 1.5;
   overflow: hidden;
 }
@@ -183,13 +183,14 @@ body.dark-mode a {
 [data-theme="light"] .bottom-nav {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.85) 0%,
-    rgba(248, 250, 252, 0.9) 50%,
-    rgba(255, 255, 255, 0.85) 100%
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.92) 50%,
+    rgba(255, 255, 255, 0.9) 100%
   );
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
 }
 
 [data-theme="light"] .bottom-nav__button {
@@ -238,12 +239,7 @@ body.dark-mode a {
 }
 
 [data-theme="light"] .bottom-nav {
-  animation-name: navSlideUp, navGlowLight;
-  animation-duration: 0.5s, 4s;
-  animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1), ease-in-out;
-  animation-fill-mode: forwards, none;
-  animation-iteration-count: 1, infinite;
-  animation-delay: 0s, 0.5s;
+  animation: navSlideUp 0.2s ease-out forwards;
 }
 
 /* Some components used explicit dark colors; ensure they flip in light mode */
@@ -928,7 +924,7 @@ body.dark-mode a {
   width: 100%;
   max-width: 100%;
   z-index: 30;
-  transition: transform 0.35s ease;
+  transition: transform 0.2s ease;
   padding-top: 10px;
   padding-bottom: 10px;
 }
@@ -962,7 +958,7 @@ body.dark-mode a {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50px;
   padding: 6px 12px 6px 14px;
-  transition: background 0.3s ease, border 0.3s ease;
+  transition: background 0.15s ease, border 0.15s ease;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
@@ -1157,8 +1153,8 @@ body.mobile-app #legacy-content {
 }
 
 .metric-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
+  transform: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
 }
 
 .metric-card__icon {
@@ -1320,8 +1316,8 @@ body.mobile-app #legacy-content {
 }
 
 .alert-badge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: none;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
 }
 
 /* Alert List */
@@ -4077,7 +4073,6 @@ body.mobile-app #legacy-content {
 
 .contributor-card:hover {
   background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-2px);
 }
 
 .contributor-card__avatar {
@@ -6372,16 +6367,19 @@ body.dark-mode .source-compare-card {
   margin-bottom: 8px;
 }
 
+/* Smooth visual transition for card groups */
 .card-group--grid {
   padding: 0;
   display: block;
   margin-bottom: var(--space-m);
+  margin-top: var(--space-s);
 }
 
 .card-group--grid .weather-cards-grid {
   display: grid !important;
   grid-template-columns: repeat(2, 1fr) !important;
   gap: 12px !important;
+  padding-top: 8px;
 }
 
 .card {
@@ -6390,12 +6388,12 @@ body.dark-mode .source-compare-card {
   padding: 16px 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  transform: none;
+  box-shadow: 0 5px 22px rgba(0, 0, 0, 0.18);
 }
 
 /* Day summary card needs transparent background since .summary-card has its own */
@@ -6456,12 +6454,11 @@ body.dark-mode .source-compare-card {
 
 /* Insight Card hover effect */
 .insight-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.1s ease;
 }
 
 .insight-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.16);
 }
 
 /* Light Mode */
@@ -6485,12 +6482,12 @@ body.dark .insight-card__text {
   overflow: hidden;
   color: #f3f6fa;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  transform: none;
+  box-shadow: 0 5px 22px rgba(0, 0, 0, 0.18);
 }
 
 /* Light Mode */
@@ -6533,7 +6530,7 @@ body.light .summary-card {
 
 .summary-card__chevron {
   font-size: 1.3rem;
-  transition: transform 0.3s ease;
+  transition: transform 0.15s ease;
   opacity: 0.7;
 }
 
@@ -6626,12 +6623,11 @@ body.light .summary-card__list li::before {
   padding: 16px 20px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.1s ease;
 }
 
 .hourly-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 22px rgba(0, 0, 0, 0.18);
 }
 
 .hourly-card__header {
@@ -6717,12 +6713,11 @@ body.light .summary-card__list li::before {
   padding: 16px 20px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.1s ease;
 }
 
 .daily-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 22px rgba(0, 0, 0, 0.18);
 }
 
 .daily-card__header {
@@ -6762,16 +6757,15 @@ body.light .summary-card__list li::before {
   border-radius: 16px;
   color: inherit;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.1s;
 }
 
 .daily-item:hover {
   background: rgba(80, 80, 80, 0.8);
-  transform: translateY(-2px);
 }
 
 .daily-item:active {
-  transform: scale(0.97);
+  transform: scale(0.99);
 }
 
 .daily-item__max {
@@ -7369,22 +7363,19 @@ body.light .summary-card__list li::before {
   align-items: center;
   padding: 8px 20px;
   gap: 2px;
-  /* Enhanced Liquid Glass Effect */
+  /* Subtle Glass Effect - reduced blur */
   background: linear-gradient(
     135deg,
-    rgba(18, 28, 45, 0.2) 0%,
-    rgba(8, 15, 28, 0.3) 50%,
-    rgba(18, 28, 45, 0.2) 100%
+    rgba(18, 28, 45, 0.65) 0%,
+    rgba(8, 15, 28, 0.75) 50%,
+    rgba(18, 28, 45, 0.65) 100%
   );
-  backdrop-filter: blur(28px) saturate(1.8);
-  -webkit-backdrop-filter: blur(28px) saturate(1.8);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 50px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
   z-index: 40;
-  /* Subtle glow animation */
-  animation: navGlow 4s ease-in-out infinite;
 }
 
 .bottom-nav__button {
@@ -7403,8 +7394,8 @@ body.light .summary-card__list li::before {
   padding: 10px 12px;
   border-radius: 25px;
   cursor: pointer;
-  transition: color 0.2s ease-out, background 0.2s ease-out,
-    transform 0.15s ease-out, box-shadow 0.2s ease-out, padding 0.2s ease-out;
+  transition: color 0.12s ease-out, background 0.12s ease-out,
+    padding 0.12s ease-out;
   overflow: hidden;
 }
 
@@ -7424,7 +7415,7 @@ body.light .summary-card__list li::before {
 
 .bottom-nav__button:hover {
   color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .bottom-nav__button:hover::before {
@@ -7432,7 +7423,7 @@ body.light .summary-card__list li::before {
 }
 
 .bottom-nav__button:active {
-  transform: translateY(0) scale(0.96);
+  transform: translateY(0) scale(0.98);
 }
 
 .bottom-nav__button--active {
@@ -7452,7 +7443,7 @@ body.light .summary-card__list li::before {
 }
 
 .bottom-nav__button--active .bottom-nav__icon {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .bottom-nav__icon {
@@ -7512,11 +7503,11 @@ body.light .summary-card__list li::before {
   pointer-events: none;
 }
 
-/* Entrance animation for nav */
+/* Entrance animation for nav - subtle */
 @keyframes navSlideUp {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(12px);
+    transform: translateX(-50%) translateY(4px);
   }
   to {
     opacity: 1;
@@ -7525,7 +7516,7 @@ body.light .summary-card__list li::before {
 }
 
 .bottom-nav {
-  animation: navSlideUp 0.35s ease-out forwards;
+  animation: navSlideUp 0.2s ease-out forwards;
 }
 
 /* Responsive adjustments */
@@ -8896,7 +8887,6 @@ body.dark-mode .hourly-item {
 .hourly-item:hover {
   background: rgba(0, 123, 255, 0.15);
   border-color: var(--accent);
-  transform: translateY(-4px);
 }
 
 .hourly-item.active {
@@ -8999,8 +8989,7 @@ body.dark-mode .forecast-pill {
 .forecast-pill:hover,
 .forecast-pill:focus-visible {
   border-color: rgba(255, 180, 92, 0.8);
-  box-shadow: 0 10px 30px rgba(255, 180, 92, 0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 180, 92, 0.12);
 }
 
 .forecast-pill.is-active {
@@ -9136,7 +9125,6 @@ body.dark-mode .forecast-nav {
 .forecast-nav:not(:disabled):hover {
   background: var(--accent);
   color: #fff;
-  transform: translateY(-2px);
 }
 
 .forecast-carousel-indicator {
@@ -9230,8 +9218,7 @@ body.dark-mode .forecast-card {
 
 .forecast-card:hover {
   background: rgba(0, 123, 255, 0.12);
-  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.25);
-  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 123, 255, 0.2);
 }
 
 .forecast-card-header {
@@ -9703,8 +9690,7 @@ body.dark-mode .source-card {
 }
 
 .source-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 6px 18px rgba(0, 123, 255, 0.15);
 }
 
 .source-card h3 {
@@ -12682,8 +12668,7 @@ body.dark-mode .map-layer-btn-label {
 }
 
 .map-layer-btn:not(.is-disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
 #weather-map,
@@ -13336,7 +13321,7 @@ body.dark-mode .map-inspector {
   border-radius: 24px;
   color: #fff;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
   text-align: left;
   position: relative;
   overflow: hidden;
@@ -13350,12 +13335,12 @@ body.dark-mode .map-inspector {
 
 .weather-card:hover {
   background: rgba(50, 50, 50, 0.98);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  transform: none;
+  box-shadow: 0 5px 22px rgba(0, 0, 0, 0.18);
 }
 
 .weather-card:active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
 .weather-card__header {
@@ -14548,16 +14533,15 @@ body.dark-mode .map-inspector {
   padding: 16px;
   border: 1px solid var(--color-border, rgba(255, 255, 255, 0.06));
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: box-shadow 0.1s;
 }
 
 .weather-alerts-section:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.16);
 }
 
 .weather-alerts-section:active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
 .weather-alerts-header {
@@ -14943,12 +14927,11 @@ body.dark-mode .map-inspector {
 
 .health-metric-card:hover {
   background: rgba(30, 40, 70, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
 }
 
 .health-metric-card:active {
-  transform: scale(0.97);
+  transform: scale(0.99);
 }
 
 .health-metric-card__header {
@@ -15022,8 +15005,7 @@ body.dark-mode .map-inspector {
 }
 
 .outdoor-score-section:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.24);
 }
 
 .outdoor-score-section:active {
