@@ -11,8 +11,17 @@
   --sky-top: #5a6b73;
   --sky-mid: #687982;
   --sky-bottom: #768790;
+
+  /* Hero Widget Farben - wetterabhängig */
+  --hero-bg: #8caac8;
+  --hero-text: #1a1a1a;
+
+  /* Card Hintergrund */
+  --card-bg: #2a2a2a;
+  --card-bg-hover: #353535;
+
   --bg-light: linear-gradient(135deg, #eef2ff 0%, #dbe4ff 100%);
-  --bg-dark: radial-gradient(circle at 20% 20%, #20283b 0%, #05070f 70%);
+  --bg-dark: radial-gradient(circle at 20% 20%, #1a1a1a 0%, #0a0a0a 70%);
   --text-light: #e8ecff;
   --text-heading: #fdfdff;
   --text-muted: rgba(232, 236, 255, 0.65);
@@ -20,22 +29,22 @@
   --box-dark: rgba(255, 255, 255, 0.08);
   --modal-surface-light: #111827;
   --modal-surface-dark: #050b18;
-  --settings-card-bg: #161f32;
-  --settings-card-bg-dark: #0c1526;
+  --settings-card-bg: #2a2a2a;
+  --settings-card-bg-dark: #1a1a1a;
   --settings-card-border: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.12);
   --border-dark: rgba(5, 7, 15, 0.55);
   --shadow-light: 0 25px 60px rgba(5, 7, 15, 0.5);
   --shadow-dark: 0 10px 50px rgba(0, 0, 0, 0.65);
 
-  --surface-base: rgba(9, 14, 29, 0.8);
-  --surface-elevated: rgba(12, 18, 35, 0.92);
+  --surface-base: rgba(26, 26, 26, 0.95);
+  --surface-elevated: rgba(42, 42, 42, 0.95);
   --surface-glow: rgba(99, 132, 255, 0.18);
   --surface-highlight: rgba(255, 255, 255, 0.04);
   --surface-gradient: linear-gradient(
     145deg,
-    rgba(78, 108, 219, 0.18),
-    rgba(9, 12, 25, 0.8)
+    rgba(60, 60, 60, 0.18),
+    rgba(26, 26, 26, 0.8)
   );
 
   --accent: #5d7bff;
@@ -93,7 +102,7 @@
 html {
   scroll-behavior: smooth;
   height: 100%;
-  background: var(--sky-top, #5a6b73);
+  background: #1a1a1a;
 }
 
 body {
@@ -102,7 +111,7 @@ body {
     "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--sky-top, #5a6b73);
+  background: #1a1a1a;
   color: var(--text-light);
   height: 100%;
   display: flex;
@@ -890,7 +899,7 @@ body.dark-mode a {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
-  background: var(--sky-top, #5a6a7a);
+  background: #1a1a1a;
 }
 
 /* New mobile-first app shell layout */
@@ -903,7 +912,7 @@ body.dark-mode a {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--sky-top, #5a6a7a);
+  background: #1a1a1a;
 }
 
 .app-bar {
@@ -911,7 +920,7 @@ body.dark-mode a {
   align-items: center;
   justify-content: center;
   padding: 10px 16px;
-  background: var(--sky-top, #5a6b73);
+  background: transparent;
   position: fixed;
   top: 0;
   left: 0;
@@ -919,21 +928,14 @@ body.dark-mode a {
   width: 100%;
   max-width: 100%;
   z-index: 30;
-  transition: transform 0.35s ease, background 0.5s ease;
+  transition: transform 0.35s ease;
   padding-top: 10px;
   padding-bottom: 10px;
 }
 
-/* Verlängerung nach unten um dunklen Balken während Animation zu verhindern */
+/* Kein ::after Element mehr - saubere Transparenz */
 .app-bar::after {
-  content: "";
-  position: absolute;
-  bottom: -20px;
-  left: 0;
-  right: 0;
-  height: 20px;
-  background: inherit;
-  pointer-events: none;
+  display: none;
 }
 
 .app-bar--hidden {
@@ -948,11 +950,21 @@ body.dark-mode a {
   width: 100%;
   max-width: 340px;
   margin: 0 auto;
-  background: rgba(0, 0, 0, 0.18);
+  /* Liquid Glass Effect */
+  background: linear-gradient(
+    135deg,
+    rgba(18, 28, 45, 0.25) 0%,
+    rgba(8, 15, 28, 0.35) 50%,
+    rgba(18, 28, 45, 0.25) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 6px 12px 6px 14px;
-  transition: background 0.5s ease;
+  transition: background 0.3s ease, border 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Favoriten-Button verstecken für cleanes Design */
@@ -1062,30 +1074,33 @@ body.dark-mode a {
   flex: 1;
   padding: calc(56px + var(--space-s)) 0 calc(64px + var(--space-m));
   overflow-y: auto;
-  background: #0c1322;
+  background: transparent;
 }
 
 /* Home View - volle Breite für Hero, Padding für Cards */
 [data-view="home"] {
   padding: 0;
+  background: #1a1a1a;
+  min-height: 100vh;
 }
 
 [data-view="home"] .card-group {
-  padding: 0 var(--space-l);
+  padding: 0 16px;
 }
 
-/* Erste Card-Group soll nahtlos an Szene anschließen */
+/* Erste Card-Group mit sanftem Übergang */
 [data-view="home"] .card-group:first-of-type {
-  margin-top: 12px;
-  padding-top: 0;
+  margin-top: 0;
+  padding-top: 20px;
   position: relative;
   z-index: 3;
   background: transparent;
 }
 
 [data-view="home"] .weather-hero {
-  padding: 0;
+  padding: 16px;
   margin: 0;
+  padding-bottom: 24px;
 }
 
 /* Andere Views bekommen Padding */
@@ -1094,6 +1109,7 @@ body.dark-mode a {
 [data-view="history"],
 [data-view="settings"] {
   padding: 0 var(--space-l);
+  background: #1a1a1a;
 }
 
 body.mobile-app #legacy-content {
@@ -6345,19 +6361,21 @@ body.dark-mode .source-compare-card {
   padding: var(--space-m) var(--space-l) calc(64px + var(--space-l));
   display: flex;
   flex-direction: column;
-  gap: var(--space-l);
+  gap: var(--space-m);
 }
 
 .card-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-m);
+  gap: 16px;
+  padding: 0 16px;
+  margin-bottom: 8px;
 }
 
 .card-group--grid {
   padding: 0;
   display: block;
-  margin-bottom: var(--space-l);
+  margin-bottom: var(--space-m);
 }
 
 .card-group--grid .weather-cards-grid {
@@ -6367,33 +6385,48 @@ body.dark-mode .source-compare-card {
 }
 
 .card {
-  background: rgba(12, 17, 32, 0.95);
-  border-radius: var(--radius-m);
-  padding: var(--space-l);
-  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.35);
+  background: rgba(42, 42, 42, 0.95);
+  border-radius: 24px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
 }
 
 /* Day summary card needs transparent background since .summary-card has its own */
 #day-summary-card.card {
-  background: #ffffff;
+  background: transparent;
   box-shadow: none;
   padding: 0;
+  border: none;
+}
+
+#day-summary-card.card:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .card--primary {
   background: transparent;
   box-shadow: none;
-  padding: var(--space-m) var(--space-l);
+  padding: 0;
+  border: none;
 }
 
 /* ========================================
      INSIGHT CARD (Einsichten)
      ======================================== */
 .insight-card {
-  background: transparent;
-  border-radius: 0;
-  padding: var(--space-m) 0;
-  border: none;
+  background: rgba(42, 42, 42, 0.95);
+  border-radius: 24px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .insight-card__header {
@@ -6405,7 +6438,6 @@ body.dark-mode .source-compare-card {
 
 .insight-card__icon {
   font-size: 1.1rem;
-  opacity: 0.85;
 }
 
 .insight-card__title {
@@ -6413,6 +6445,23 @@ body.dark-mode .source-compare-card {
   font-weight: 600;
   margin: 0;
   letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.insight-card__text {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Insight Card hover effect */
+.insight-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
 }
 
 /* Light Mode */
@@ -6428,24 +6477,27 @@ body.dark .insight-card__text {
 /* ========================================
      SUMMARY CARD (Tagesübersicht - aufklappbar)
      ======================================== */
-/* Standard: Dark Mode */
-body.dark .summary-card {
-  background: rgba(20, 28, 50, 0.65); /* dunkler Hintergrund */
-  border: 1px solid rgba(255, 255, 255, 0.06); /* helle Border */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 16px;
+/* Standard: Dark Mode Look */
+.summary-card {
+  background: rgba(42, 42, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
   overflow: hidden;
+  color: #f3f6fa;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
 }
 
 /* Light Mode */
 body.light .summary-card {
-  background: #ffffff; /* weißer Hintergrund */
-  border: 1px solid #000000; /* schwarze Border */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 16px;
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1a1a1a;
 }
 
 .summary-card__header {
@@ -6528,21 +6580,58 @@ body.light .summary-card {
   }
 }
 
+/* Textfarben in der Summary Card */
+.summary-card__header,
+.summary-card__title,
+.summary-card__intro,
+.summary-card__list li,
+.summary-card__chevron {
+  color: #f3f6fa !important;
+}
+
+body.light .summary-card__header,
+body.light .summary-card__title,
+body.light .summary-card__intro,
+body.light .summary-card__list li,
+body.light .summary-card__chevron {
+  color: #222 !important;
+}
+
+.summary-card__icon {
+  opacity: 1;
+}
+
+.summary-card__list li {
+  position: relative;
+  padding-left: 1rem;
+}
+
 .summary-card__list li::before {
   content: "•";
   position: absolute;
   left: 0;
-  color: rgba(255, 255, 255, 0.5);
-  color: var(--color-text-muted-2);
+  color: rgba(195, 204, 224, 0.85);
+}
+
+body.light .summary-card__list li::before {
+  color: #666;
 }
 
 /* ========================================
      HOURLY CARD (Stündliche Vorhersage)
      ======================================== */
 .hourly-card {
-  background: rgba(20, 25, 45, 0.95);
-  border-radius: var(--radius-m);
-  padding: var(--space-l);
+  background: rgba(42, 42, 42, 0.95);
+  border-radius: 24px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hourly-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
 }
 
 .hourly-card__header {
@@ -6554,13 +6643,13 @@ body.light .summary-card {
 
 .hourly-card__icon {
   font-size: 1.2rem;
-  opacity: 0.7;
 }
 
 .hourly-card__title {
   font-size: 1rem;
   font-weight: 600;
   margin: 0;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .hourly-card__scroll {
@@ -6574,13 +6663,12 @@ body.light .summary-card {
 }
 
 .hourly-card__scroll::-webkit-scrollbar {
-  height: 10px;
-  border: #ffffff;
+  height: 6px;
 }
 
 .hourly-card__scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .hourly-item {
@@ -6588,20 +6676,18 @@ body.light .summary-card {
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  /* WICHTIG: Korrigierte Breitenberechnung
-       (Gesamtbreite / 3 minus die Gaps, die dazwischen liegen) */
   flex: 0 0 calc(33.333% - (2 * var(--space-m) / 3));
-  /* min-width: 50px; wird nicht mehr benötigt */
   scroll-snap-align: start;
 }
 
 .hourly-item__temp {
   font-size: 1rem;
   font-weight: 500;
+  color: #fff;
 }
 
 .hourly-item__temp--highlight {
-  background: linear-gradient(135deg, #d4a5ff, #9b6fd4);
+  background: rgba(255, 255, 255, 0.15);
   padding: 4px 10px;
   border-radius: 12px;
   font-weight: 600;
@@ -6615,21 +6701,28 @@ body.light .summary-card {
 .hourly-item__precip {
   font-size: 0.65rem;
   color: #6eb5ff;
-  opacity: 0.9;
 }
 
 .hourly-item__time {
   font-size: 0.75rem;
-  color: var(--color-text-muted-2);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* ========================================
      DAILY CARD (Mehrtägige Vorhersage)
      ======================================== */
 .daily-card {
-  background: rgba(20, 25, 45, 0.95);
-  border-radius: var(--radius-m);
-  padding: var(--space-l);
+  background: rgba(42, 42, 42, 0.95);
+  border-radius: 24px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.daily-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
 }
 
 .daily-card__header {
@@ -6641,13 +6734,13 @@ body.light .summary-card {
 
 .daily-card__icon {
   font-size: 1.2rem;
-  opacity: 0.7;
 }
 
 .daily-card__title {
   font-size: 1rem;
   font-weight: 600;
   margin: 0;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .daily-card__grid {
@@ -6664,16 +6757,16 @@ body.light .summary-card {
   gap: 6px;
   min-width: 64px;
   padding: var(--space-m) var(--space-s);
-  background: rgba(10, 15, 30, 0.6);
+  background: rgba(60, 60, 60, 0.6);
   border: none;
-  border-radius: var(--radius-m);
+  border-radius: 16px;
   color: inherit;
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
 }
 
 .daily-item:hover {
-  background: rgba(30, 40, 70, 0.8);
+  background: rgba(80, 80, 80, 0.8);
   transform: translateY(-2px);
 }
 
@@ -6684,11 +6777,12 @@ body.light .summary-card {
 .daily-item__max {
   font-size: 1rem;
   font-weight: 600;
+  color: #fff;
 }
 
 .daily-item__min {
   font-size: 0.85rem;
-  color: var(--color-text-muted-2);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .daily-item__icon {
@@ -6844,17 +6938,150 @@ body.light .summary-card {
   gap: 4px;
 }
 
-/* Weather Hero - Screenshot-konformes Design */
+/* Weather Hero - Widget-Design wie in den Screenshots */
 .weather-hero {
-  background: var(--sky-top, #5a6b73);
-  border-radius: 0;
-  padding: 0;
+  padding: 16px;
+  padding-bottom: 0;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: visible;
   margin: 0;
   width: 100%;
+}
+
+.weather-hero__widget {
+  /* Liquid Glass Effect */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  color: #ffffff;
+}
+
+.weather-hero__location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.weather-hero__location-icon {
+  font-size: 0.9rem;
+}
+
+.weather-hero__location-name {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.weather-hero__main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.weather-hero__temp-block {
+  display: flex;
+  align-items: flex-start;
+}
+
+.weather-hero__temp-value {
+  font-size: 5rem;
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -4px;
+}
+
+.weather-hero__icon-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weather-hero__weather-icon {
+  font-size: 4rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+.weather-hero__condition {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+
+.weather-hero__minmax {
+  display: flex;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-bottom: 12px;
+}
+
+.weather-hero__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+}
+
+.weather-hero__feels {
+  font-weight: 500;
+}
+
+.weather-hero__local-time {
+  font-weight: 400;
+}
+
+.weather-hero__updated {
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.weather-hero__quick-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  width: 100%;
+}
+
+.weather-hero__stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weather-hero__stat-icon {
+  font-size: 1rem;
+}
+
+.weather-hero__stat-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .weather-hero__header {
@@ -7014,47 +7241,49 @@ body.light .summary-card {
   --sky-top: #3a4055;
   --sky-mid: #4a5065;
   --sky-bottom: #5a6070;
-  --card-bg: #0f1729;
+  --card-bg: #1a1a1a;
 }
 
-/* Sanfter Übergang von Himmelsfarbe (oben) zum Fields-Bild */
+/* Overlay für sanfte Übergänge an allen Rändern */
 .frog-hero-pond::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: var(
-    --top-gradient,
-    linear-gradient(
+  inset: 0;
+  background:
+    /* Oberer Gradient - Himmel verschmelzen */ linear-gradient(
       to bottom,
       var(--sky-top, #5a6b73) 0%,
-      var(--sky-top, #5a6b73) 40%,
-      rgba(90, 107, 115, 0.6) 70%,
-      transparent 100%
-    )
-  );
+      transparent 25%
+    ),
+    /* Unterer Gradient - zu Cards verschmelzen */
+      linear-gradient(
+        to top,
+        #1a1a1a 0%,
+        rgba(26, 26, 26, 0.85) 8%,
+        rgba(26, 26, 26, 0.4) 18%,
+        transparent 35%
+      ),
+    /* Linker Seitenrand */
+      linear-gradient(
+        to right,
+        rgba(26, 26, 26, 0.7) 0%,
+        rgba(26, 26, 26, 0.3) 3%,
+        transparent 8%
+      ),
+    /* Rechter Seitenrand */
+      linear-gradient(
+        to left,
+        rgba(26, 26, 26, 0.7) 0%,
+        rgba(26, 26, 26, 0.3) 3%,
+        transparent 8%
+      );
   z-index: 2;
   pointer-events: none;
 }
 
-/* Sanfter Übergang von Froggy-Szene zu Karten (unten) - wie im Ziel-Screenshot */
+/* After nicht mehr benötigt - alles in before kombiniert */
 .frog-hero-pond::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(
-    to top,
-    #0c1322 0%,
-    rgba(12, 19, 34, 0.6) 50%,
-    transparent 100%
-  );
-  z-index: 2;
-  pointer-events: none;
+  display: none;
 }
 
 /* Alte Styles entfernen */
@@ -7143,15 +7372,15 @@ body.light .summary-card {
   /* Enhanced Liquid Glass Effect */
   background: linear-gradient(
     135deg,
-    rgba(18, 28, 45, 0.15) 0%,
-    rgba(8, 15, 28, 0.25) 50%,
-    rgba(18, 28, 45, 0.15) 100%
+    rgba(18, 28, 45, 0.2) 0%,
+    rgba(8, 15, 28, 0.3) 50%,
+    rgba(18, 28, 45, 0.2) 100%
   );
   backdrop-filter: blur(28px) saturate(1.8);
   -webkit-backdrop-filter: blur(28px) saturate(1.8);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 50px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25),
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   z-index: 40;
   /* Subtle glow animation */
@@ -7210,10 +7439,10 @@ body.light .summary-card {
   color: #ffffff;
   background: linear-gradient(
     135deg,
-    rgba(99, 140, 255, 0.35) 0%,
-    rgba(138, 180, 255, 0.25) 100%
+    rgba(99, 140, 255, 0.3) 0%,
+    rgba(138, 180, 255, 0.2) 100%
   );
-  box-shadow: 0 4px 16px rgba(99, 140, 255, 0.3),
+  box-shadow: 0 4px 16px rgba(99, 140, 255, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   padding: 10px 16px;
 }
@@ -13078,8 +13307,8 @@ body.dark-mode .map-inspector {
 .weather-cards-grid {
   display: grid !important;
   grid-template-columns: repeat(2, 1fr) !important;
-  gap: 12px !important;
-  padding: 0;
+  gap: 16px !important;
+  padding: 0 16px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -13101,16 +13330,17 @@ body.dark-mode .map-inspector {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 12px;
-  background: rgba(20, 28, 50, 0.95);
+  padding: 14px;
+  background: rgba(42, 42, 42, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
-  color: inherit;
+  border-radius: 24px;
+  color: #fff;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   text-align: left;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 /* Wide cards should auto-size to content */
@@ -13119,9 +13349,9 @@ body.dark-mode .map-inspector {
 }
 
 .weather-card:hover {
-  background: rgba(30, 40, 70, 0.95);
+  background: rgba(50, 50, 50, 0.98);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
 }
 
 .weather-card:active {
@@ -13132,29 +13362,29 @@ body.dark-mode .map-inspector {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .weather-card__icon {
-  font-size: 1rem;
-  opacity: 0.85;
+  font-size: 0.9rem;
+  opacity: 0.9;
 }
 
 .weather-card__label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .weather-card__value-large {
-  font-size: 2.5rem;
-  font-weight: 300;
+  font-size: 3rem;
+  font-weight: 200;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: -1px;
+  color: #fff;
+  letter-spacing: -2px;
 }
 
 .weather-card__unit {

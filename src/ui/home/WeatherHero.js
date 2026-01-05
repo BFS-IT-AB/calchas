@@ -111,38 +111,72 @@
       updatedLabel,
       tempUnit,
       locationTime,
+      precipProb,
+      uvIndex,
+      windSpeed,
     } = data;
 
     const icon = getWeatherIcon(weatherCode, isDay);
     const weatherDesc = description || getWeatherDescription(weatherCode);
 
+    // Ortszeit HTML
     const locationTimeHtml = locationTime
       ? `<span class="weather-hero__local-time">🕐 ${locationTime}</span>`
       : "";
 
     return `
-      <div class="weather-hero__header">
-        <div class="weather-hero__left">
-          <span class="weather-hero__label">Jetzt</span>
-          <div class="weather-hero__temp-display">
+      <div class="weather-hero__widget">
+        <div class="weather-hero__location">
+          <span class="weather-hero__location-icon">📍</span>
+          <span class="weather-hero__location-name">${locationName}</span>
+        </div>
+
+        <div class="weather-hero__main">
+          <div class="weather-hero__temp-block">
             <span class="weather-hero__temp-value">${formatTemperature(
               temp,
               tempUnit
             )}</span>
-            <span class="weather-hero__temp-icon">${icon}</span>
           </div>
-          <div class="weather-hero__minmax">
-            <span>↑${formatTemperature(tempMax, tempUnit)}</span>
-            <span>↓${formatTemperature(tempMin, tempUnit)}</span>
+          <div class="weather-hero__icon-block">
+            <span class="weather-hero__weather-icon">${icon}</span>
           </div>
         </div>
-        <div class="weather-hero__right">
-          <span class="weather-hero__condition">${weatherDesc}</span>
+
+        <div class="weather-hero__condition">${weatherDesc}</div>
+        <div class="weather-hero__minmax">
+          <span>H:${formatTemperature(tempMax, tempUnit)}</span>
+          <span>L:${formatTemperature(tempMin, tempUnit)}</span>
+        </div>
+
+        <div class="weather-hero__meta">
           <span class="weather-hero__feels">Gefühlt ${formatTemperature(
             feelsLike,
             tempUnit
           )}</span>
           ${locationTimeHtml}
+          <span class="weather-hero__updated">⟳ ${updatedLabel}</span>
+        </div>
+
+        <div class="weather-hero__quick-stats">
+          <div class="weather-hero__stat">
+            <span class="weather-hero__stat-icon">💧</span>
+            <span class="weather-hero__stat-value">${
+              precipProb != null ? Math.round(precipProb) + "%" : "–"
+            }</span>
+          </div>
+          <div class="weather-hero__stat">
+            <span class="weather-hero__stat-icon">☀️</span>
+            <span class="weather-hero__stat-value">${
+              uvIndex != null ? uvIndex : "–"
+            }</span>
+          </div>
+          <div class="weather-hero__stat">
+            <span class="weather-hero__stat-icon">💨</span>
+            <span class="weather-hero__stat-value">${
+              windSpeed != null ? Math.round(windSpeed) + "km/h" : "–"
+            }</span>
+          </div>
         </div>
       </div>
 
@@ -187,6 +221,12 @@
       updatedLabel,
       tempUnit,
       locationTime,
+      precipProb:
+        daily.precipProbMax ||
+        daily.precipitationProbabilityMax ||
+        current.precipitationProbability,
+      uvIndex: daily.uvIndexMax || current.uvIndex,
+      windSpeed: current.windSpeed,
     };
 
     console.log("[WeatherHero] Rendering with data:", data);
