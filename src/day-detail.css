@@ -52,7 +52,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.12s linear;
 }
 
 .detail-shell[data-state="loading"] {
@@ -122,7 +122,7 @@
   gap: 0.35rem;
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: color 0.12s linear, background 0.12s linear;
 }
 
 .detail-back-btn:hover,

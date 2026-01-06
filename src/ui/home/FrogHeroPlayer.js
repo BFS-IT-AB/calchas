@@ -159,12 +159,8 @@
       ${hexToRgba(colors.top, 0.3)} 85%,
       transparent 100%)`;
 
-    // Erstelle dynamischen unteren Gradient (für Übergang zu Karten)
-    const bottomGradient = `linear-gradient(to top,
-      ${CARD_BG_COLOR} 0%,
-      ${hexToRgba(CARD_BG_COLOR, 0.7)} 40%,
-      ${hexToRgba(CARD_BG_COLOR, 0.3)} 70%,
-      transparent 100%)`;
+    // Entferne den unteren Balken-Gradienten komplett (transparent)
+    const bottomGradient = `linear-gradient(to top, transparent 0%, transparent 100%)`;
 
     // App-Bar Gradient - nahtloser Übergang von Himmelfarbe zu transparent
     const appBarGradient = `linear-gradient(to bottom,
