@@ -633,6 +633,15 @@ async function initAppShell(appState) {
     }
   }
 
+  // Ensure the stored or system theme is applied on startup
+    if (window.ThemeSelectorSheet && window.ThemeSelectorSheet.initTheme) {
+      try {
+        window.ThemeSelectorSheet.initTheme();
+      } catch (e) {
+        console.warn("ThemeSelectorSheet Init fehlgeschlagen", e);
+      }
+    }
+    
   if (window.UnitsSelectorSheet && window.UnitsSelectorSheet.renderUnitsSheet) {
     try {
       window.UnitsSelectorSheet.renderUnitsSheet(appState);

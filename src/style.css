@@ -103,7 +103,7 @@
 html {
   scroll-behavior: smooth;
   height: 100%;
-  background: #1a1a1a;
+    background: var(--theme-bg);
 }
 
 body {
@@ -112,7 +112,7 @@ body {
     "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #1a1a1a;
+  background: var(--theme-bg);
   color: var(--text-light);
   height: 100%;
   display: flex;
@@ -145,6 +145,24 @@ body.dark-mode a {
   --theme-text: #f1f3f6;
   --theme-text-muted: #a7b1c6;
   --theme-border: rgba(255, 255, 255, 0.1);
+}
+
+/* Force opaque backgrounds in dark mode to avoid grey artifacts */
+[data-theme="dark"] body,
+[data-theme="dark"] .app-shell,
+[data-theme="dark"] .app-main-views,
+[data-theme="dark"] .bottom-sheet {
+  background: #000000 !important;
+  color-scheme: dark;
+}
+
+/* Force opaque backgrounds in light mode for consistency */
+[data-theme="light"] body,
+[data-theme="light"] .app-shell,
+[data-theme="light"] .app-main-views,
+[data-theme="light"] .bottom-sheet {
+  background: #ffffff !important;
+  color-scheme: light;
 }
 
 /* Light Mode */
@@ -3078,6 +3096,7 @@ body.mobile-app #legacy-content {
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  margin: 0;
 }
 
 .settings-row__icon svg {
@@ -3093,6 +3112,7 @@ body.mobile-app #legacy-content {
   gap: 3px;
   min-width: 0;
   overflow: visible;
+  justify-content: center;
 }
 
 .settings-row__title {
@@ -3489,7 +3509,8 @@ body.mobile-app #legacy-content {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px;
+  padding: 14px 16px 14px 16px;
+  padding-right: 56px; /* reserve space for absolute check */
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(25, 32, 55, 0.9);
@@ -3497,6 +3518,19 @@ body.mobile-app #legacy-content {
   text-align: left;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  position: relative; /* for absolutely positioned check */
+}
+
+.theme-option__icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  line-height: 1; /* ensure emojis don't add extra spacing */
 }
 
 .theme-option:hover {
@@ -3529,6 +3563,8 @@ body.mobile-app #legacy-content {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  justify-content: center;
+  min-width: 0;
 }
 
 .theme-option__title {
@@ -3546,6 +3582,32 @@ body.mobile-app #legacy-content {
   font-size: 16px;
   color: #e091b8;
   font-weight: 600;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Fix: remove unexpected large left offset on settings rows (except first)
+   and ensure theme options aren't shifted due to inline styles or transforms */
+.settings-home .settings-row:not(:first-child) {
+  margin-left: 0 !important;
+  transform: none !important;
+  left: auto !important;
+  padding-left: 16px !important; /* keep consistent with other rows */
+}
+
+/* Fix: theme options alignment — prevent accidental offsets inside the theme sheet */
+.theme-settings .theme-option {
+  margin-left: 0 !important;
+  transform: none !important;
+  left: auto !important;
+  padding-left: 16px !important;
+}
+
+/* Safety catch-all: remove any extremely large left margins if present */
+.settings-row, .theme-option {
+  margin-left: 0 !important;
 }
 
 /* English-Box zentrieren ohne kleinere Breite */
@@ -5354,15 +5416,8 @@ body.mobile-app #legacy-content {
   width: 100%;
   max-width: 100%;
   max-height: 85vh;
-  /* Liquid Glass Design */
-  background: linear-gradient(
-    180deg,
-    rgba(18, 24, 40, 0.95) 0%,
-    rgba(7, 11, 22, 0.98) 50%,
-    rgba(5, 8, 22, 1) 100%
-  );
-  backdrop-filter: blur(40px) saturate(1.8);
-  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+ /* Solid surface to avoid semi-transparent gray on dark backgrounds */
+  background: var(--theme-surface);
   border-radius: 24px 24px 0 0;
   display: none;
   padding: 20px;
@@ -5370,12 +5425,22 @@ body.mobile-app #legacy-content {
   z-index: 10000;
   transform: translateY(100%);
   opacity: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Theme-specific overrides to ensure full black/white sheets */
+[data-theme="dark"] .bottom-sheet {
+  background: #000000; /* pure black */
+  border-top-color: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="light"] .bottom-sheet {
+  background: #ffffff; /* pure white */
+  border-top-color: rgba(0, 0, 0, 0.06);
 }
 
 .bottom-sheet--visible {
@@ -6137,8 +6202,9 @@ body.mobile-app #legacy-content {
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: none;
-  padding: 16px 20px;
-  background: rgba(22, 28, 42, 0.7);
+   padding: 14px 16px; /* normalized to match settings-card */
+  background: rgba(22, 28, 42, 0.9);
+  box-sizing: border-box;
 }
 
 .settings-list .settings-row:first-child {
