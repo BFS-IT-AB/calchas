@@ -219,10 +219,11 @@
       tempUnit,
       locationTime,
       precipProb:
-        daily.precipProbMax ||
-        daily.precipitationProbabilityMax ||
-        current.precipitationProbability,
-      uvIndex: daily.uvIndexMax || current.uvIndex,
+        daily.precipProbMax ??
+        daily.precipitationProbabilityMax ??
+        current.precipitationProbability ??
+        current.precipProb,
+      uvIndex: daily.uvIndexMax ?? current.uvIndex,
       windSpeed: current.windSpeed,
     };
 

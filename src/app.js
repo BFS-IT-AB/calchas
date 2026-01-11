@@ -381,12 +381,21 @@ function setupAppBarScrollBehavior() {
               // Hochscrollen - zeigen
               appBar.classList.remove("app-bar--hidden");
             }
+
+            // Scrolled-State für Styling (z.B. solider Hintergrund)
+            if (currentScrollTop > 10) {
+              appBar.classList.add("app-bar--scrolled");
+            } else {
+              appBar.classList.remove("app-bar--scrolled");
+            }
+
             lastScrollTop = currentScrollTop;
           }
 
           // Am Anfang der Seite immer zeigen
           if (currentScrollTop <= 10) {
             appBar.classList.remove("app-bar--hidden");
+            appBar.classList.remove("app-bar--scrolled");
           }
 
           ticking = false;
@@ -2736,6 +2745,7 @@ function buildRenderData(rawData, units) {
         summary: h.summary || h.description,
         isDay: h.isDay === 1 || h.isDay === true,
         precipProb: h.precipitationProbability,
+        precipitationProbability: h.precipitationProbability,
         uvIndex: h.uvIndex,
         pressure: h.pressure || h.surfacePressure,
         surfacePressure: h.surfacePressure,

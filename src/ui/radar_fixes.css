@@ -96,14 +96,45 @@
 /* Fix: Move top controls down to avoid notch/rounded corners */
 .radar-view__top-controls {
   position: absolute;
-  top: max(50px, env(safe-area-inset-top) + 20px); /* Pushes down further for smartphone notch */
+  top: max(
+    50px,
+    env(safe-area-inset-top) + 20px
+  ); /* Pushes down further for smartphone notch */
   left: 16px;
-  right: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  pointer-events: none; /* Let clicks pass through empty areas */
-  z-index: 500;
+  right: calc(
+    16px + env(safe-area-inset-right)
+  ); /* Fix for button being too far right on curved edges */
+  display: flex !important;
+  justify-content: center !important; /* Center for cleanliness */
+  align-items: flex-start !important;
+  height: 0; /* height 0 so it doesn't block clicks below, children will have height */
+  overflow: visible !important;
+  z-index: 1000;
+  pointer-events: none; /* Container passes clicks */
+}
+
+/* DEPRECATED: Layer Button (Merged into Legend) */
+.radar-view__layer-btn,
+#map-layer-toggle,
+.map-layer-menu {
+  display: none !important;
+}
+
+/* Adjusted Legend Items for Interactivity */
+.radar-view__legend-item {
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+.radar-view__legend-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.radar-view__legend-item.active-layer {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Ensure children are clickable */
@@ -114,7 +145,9 @@
 /* FIX: Timeline Controls Size & Usability - Pill Shape */
 .radar-view__bottom-overlay {
   position: absolute;
-  bottom: calc(85px + env(safe-area-inset-bottom)); /* Increased base offset to clear bottom nav */
+  bottom: calc(
+    85px + env(safe-area-inset-bottom)
+  ); /* Increased base offset to clear bottom nav */
   left: 0;
   right: 0;
   padding: 0;
@@ -304,8 +337,8 @@
 .map-layer-checkbox {
   width: 20px;
   height: 20px;
-  border-radius: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%; /* Circle according to new UI style */
+  border: 2px solid rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -314,10 +347,11 @@
 }
 
 .map-layer-checkbox::after {
-  content: "check";
-  font-family: "Material Symbols Outlined";
-  font-size: 14px;
-  color: white;
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
   opacity: 0;
   transform: scale(0.5);
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -380,21 +414,72 @@
   /* Hide the vertical divider on very small screens to save space */
   .radar-view__control-divider-vertical {
     display: none;
-}
-/* Weather Popup Styles */
-.weather-detail-popup .leaflet-popup-content-wrapper {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  color: #fff;
-  padding: 0;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
 }
 
+/* UI Consistency (Glassmorphism & Style Match) - Consolidated */
+.weather-detail-popup .leaflet-popup-content-wrapper,
+.map-layer-menu,
+.radar-view__timeline,
+.radar-view__layer-btn,
+#map-layer-selector {
+  /* Exact match for .bottom-nav */
+  background: linear-gradient(
+    135deg,
+    rgba(18, 28, 45, 0.65) 0%,
+    rgba(8, 15, 28, 0.75) 50%,
+    rgba(18, 28, 45, 0.65) 100%
+  ) !important;
+  backdrop-filter: blur(12px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 24px !important;
+  color: #fff !important;
+}
+
+.map-layer-menu {
+  padding: 12px 0 !important;
+  width: 240px !important;
+}
+
+.map-layer-item {
+  margin: 0 8px;
+  border-radius: 16px !important;
+}
+
+/* Ensure Tip matches the gradient background roughly or is hidden */
 .weather-detail-popup .leaflet-popup-tip {
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(
+    18,
+    28,
+    45,
+    0.75
+  ); /* Approximate the dark part of gradient */
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: none;
+  border-left: none;
+  box-shadow: none;
+}
+
+/* Close Button REMOVED per user request */
+.weather-detail-popup .leaflet-popup-close-button {
+  display: none !important;
+}
+
+/* Directional Popups */
+.weather-detail-popup.popup-below .leaflet-popup-content-wrapper {
+  margin-top: 40px !important; /* Push down */
+}
+
+/* Hide tip if we are flipping */
+.weather-detail-popup.popup-below .leaflet-popup-tip-container {
+  display: none;
+}
+
+.weather-detail-popup.popup-left .leaflet-popup-content-wrapper {
+  /* Standard Leaflet logic handles left/right well usually, but we can tweak margins */
 }
 
 .weather-detail-popup .leaflet-popup-content {
@@ -408,7 +493,7 @@
 }
 
 .popup-header {
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 6px;
   margin-bottom: 8px;
   font-size: 13px;
@@ -429,7 +514,7 @@
 .popup-label {
   font-size: 10px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
   margin-bottom: 2px;
 }
 
@@ -439,13 +524,17 @@
   color: #fff;
 }
 
+/* Coordinates Visibility Improvement */
 .popup-footer {
-  margin-top: 8px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  text-align: right;
-  opacity: 0.5;
-  font-size: 10px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  opacity: 0.9;
+  font-size: 11px;
+  color: #e2e8f0; /* Brighter color */
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .weather-popup-loading {
@@ -466,11 +555,84 @@
 }
 
 .radar-view__legend-item:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .radar-view__legend-item.active-layer {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   font-weight: 700;
-  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Map Dark Mode for Better Contrast */
+.radar-view .leaflet-tile-pane .leaflet-layer:first-child {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* Ensure Weather Layers are clear */
+.radar-view .leaflet-tile-pane .leaflet-layer:not(:first-child) {
+  filter: none;
+  opacity: 1 !important;
+}
+
+/* Hide Leaflet Attribution */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Enhancing Rain Layer Visibility */
+/* Balanced boost for weather tiles - Reduced intensity per user feedback */
+.leaflet-layer img[src*="openweathermap.org"],
+.leaflet-layer img[src*="rainviewer.com"] {
+  filter: saturate(110%) brightness(1.05);
+}
+
+/* Ensure map fills entire screen including edges */
+.radar-view,
+.radar-view__map-wrapper {
+  width: 100vw !important;
+  height: 100vh !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Fix Layer Button Position (User Feedback) */
+.radar-view__layer-btn,
+#map-layer-toggle {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  margin: 0 !important;
+  order: 2; /* Ensure it is on the right */
+}
+
+/* Adjust Menu Position since Button moved */
+.map-layer-menu {
+  top: calc(max(50px, env(safe-area-inset-top) + 20px) + 50px) !important;
+  right: 16px !important;
+}
+
+.radar-view__legend {
+  background: linear-gradient(
+    135deg,
+    rgba(18, 28, 45, 0.65) 0%,
+    rgba(8, 15, 28, 0.75) 50%,
+    rgba(18, 28, 45, 0.65) 100%
+  ) !important;
+  backdrop-filter: blur(12px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 24px !important;
+  color: #fff !important;
+  padding: 8px 18px !important;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 1001;
 }

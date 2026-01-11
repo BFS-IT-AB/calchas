@@ -13,9 +13,10 @@
 
   function generateFrames() {
     const now = Date.now();
-    const stepMinutes = 15;
-    const pastHours = 24;
-    const futureHours = 6;
+    const stepMinutes = 10;
+    // Balanced range for reliable data
+    const pastHours = 2;
+    const futureHours = 1;
     const result = [];
 
     const pastCount = Math.floor((pastHours * 60) / stepMinutes);
@@ -90,25 +91,21 @@
     const label = document.getElementById("map-timeline-label");
     if (label && ts) {
       const date = new Date(ts);
-      const now = Date.now();
-      const diffMinutes = Math.round((ts - now) / 60000);
+      // Removed context (Min zurück/voraus) as requested
       const timeStr = date.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
-      let context = "Live";
-      if (diffMinutes < -5) {
-        context = `${Math.abs(diffMinutes)} Min zurück`;
-      } else if (diffMinutes > 5) {
-        context = `${diffMinutes} Min voraus`;
-      }
-      label.textContent = `${timeStr} · ${context}`;
+
+      // User wanted ONLY time, no "Min zurück" text
+      label.textContent = `${timeStr}`;
 
       const subtitle = document.querySelector(
         '[data-view="radar"] .map-view__subtitle'
       );
       if (subtitle) {
-        subtitle.textContent = `Zeitstempel: ${timeStr} (${context})`;
+        // Keep context here perhaps? No, user said "lösche diese metrik"
+        subtitle.textContent = `Zeitstempel: ${timeStr}`;
       }
     }
   }

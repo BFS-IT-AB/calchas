@@ -23,6 +23,17 @@ class MapComponent {
     // default shifts map content left and down (left: negative x, down: positive y)
     this.anchorOffset = { x: 150, y: 200 };
 
+    // --- RainViewer Integration ---
+    this.rainViewerCache = [];
+    this.rainViewerHost = "https://tilecache.rainviewer.com";
+    this.activeProvider = null;
+    this.currentTimestamp = null;
+
+    // Expose as MapContainer for RadarController
+    if (typeof window !== "undefined") {
+      window.MapContainer = this;
+    }
+
     // Check if Leaflet is available
     if (typeof L === "undefined") {
       console.warn("⚠️ Leaflet library not loaded. Map features unavailable.");
@@ -82,16 +93,68 @@ class MapComponent {
         {
           attribution: "&copy; OpenStreetMap contributors",
           maxZoom: 19,
+          attributionControl: false, // Disable default attribution as requested by user
         }
       ).addTo(this.map);
+
+      // Add minimal custom attribution bottom-right if legally needed, but user asked to remove white credits.
+      // We will ensure the control is hidden via CSS in action 2.
+
+      // Map Interaction setup
+
+      // TRACK POPUP STATE to prevent immediate reopening when clicking to close
+      this._popupJustClosed = false;
+      this.map.on("popupclose", () => {
+        this._popupJustClosed = true;
+        // Small delay to ensure the click event is ignored if it caused the close
+        setTimeout(() => {
+          this._popupJustClosed = false;
+        }, 200);
+      });
 
       // --- NEW: Map Interaction (Click/Tap handler for weather info) ---
       // Fixes issue where user wants data when moving/tapping over map.
       this.map.on("click", async (e) => {
+        // If a popup just closed (e.g. user clicked map to dismiss), do not open a new one immediately.
+        if (this._popupJustClosed) return;
+
         const { lat, lng } = e.latlng;
+
+        // Smart Positioning Logic
+        const containerPoint = this.map.latLngToContainerPoint(e.latlng);
+        const size = this.map.getSize();
+        let className = "weather-detail-popup";
+        let offset = [0, 0];
+        // Default autoPan padding
+        let autoPanPadding = [50, 50];
+
+        // Edge Detection
+        const isTop = containerPoint.y < size.y * 0.35;
+        const isBottom = containerPoint.y > size.y * 0.75;
+        const isLeft = containerPoint.x < size.x * 0.2;
+        const isRight = containerPoint.x > size.x * 0.8;
+
+        if (isTop) {
+          className += " popup-below";
+          // No offset needed if we use CSS margin, or use offset to push down
+          offset = [0, 20];
+        } else if (isBottom) {
+          offset = [0, -10];
+        }
+
+        // Logic for left/right is usually handled well by Leaflet autoPan,
+        // but we can increase padding on the side we are close to.
+        if (isLeft) autoPanPadding = [100, 50]; // Force more pan from left
+        if (isRight) autoPanPadding = [50, 100]; // Force more pan from right
+
         // Show loading popup
         const uniqueId = `popup-${Date.now()}`;
-        const popup = L.popup({ className: "weather-detail-popup" })
+        const popup = L.popup({
+          className,
+          offset,
+          autoPan: true,
+          autoPanPadding,
+        })
           .setLatLng([lat, lng])
           .setContent(
             `
@@ -173,14 +236,19 @@ class MapComponent {
             // Update popup content
             // Leaflet doesn't have a simple updateContent on the opened popup instance easily if we just used openOn
             // But we can just open a new one or bind.
-            L.popup({ className: "weather-detail-popup" })
+            L.popup({
+              className,
+              offset,
+              autoPan: true,
+              autoPanPadding: [50, 50],
+            })
               .setLatLng([lat, lng])
               .setContent(content)
               .openOn(this.map);
           }
         } catch (err) {
           console.error("Failed to fetch weather for point", err);
-          L.popup({ className: "weather-detail-popup" })
+          L.popup({ className, offset })
             .setLatLng([lat, lng])
             .setContent(
               `<div class="weather-popup-error">Daten nicht verfügbar</div>`
@@ -191,7 +259,7 @@ class MapComponent {
 
       // Add default weather overlay (precipitation) - this makes weather layers actually overlay the map
       try {
-        this.addWeatherOverlay("openweathermap", null, "rain");
+        this.addWeatherOverlay("rainviewer", null, "rain");
       } catch (err) {
         console.warn("Failed to add default weather overlay:", err);
       }
@@ -509,6 +577,17 @@ class MapComponent {
           "URL:",
           layerUrl.substring(0, 80) + "..."
         );
+      } else if (provider === "rainviewer") {
+        // Init RainViewer
+        this._fetchRainViewerData(); // Async but fine
+        this.activeProvider = "rainviewer";
+
+        layerUrl = this._buildRainViewerUrl(
+          this.currentTimestamp || Date.now()
+        );
+        attribution = "RainViewer";
+        // Ensure layerType is consistent, usually 'rain' or 'radar'
+        if (!layerType) layerType = "rain";
       } else if (provider === "weather-radar") {
         layerUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=8437e4b8d4acc41194a3cd3325c41233`;
         attribution = "© OpenWeatherMap Precipitation";
@@ -613,8 +692,17 @@ class MapComponent {
       // If we want to show it but it doesn't exist, we need to add it
       if (!this.overlays[layerType]) {
         console.log(`Layer ${layerType} not found in overlays, creating it...`);
-        // Default to openweathermap with demo key (handled by default param in addWeatherOverlay)
-        this.addWeatherOverlay("openweathermap", null, layerType);
+
+        let provider = "openweathermap";
+        if (
+          layerType === "rain" ||
+          layerType === "radar" ||
+          layerType === "regen"
+        ) {
+          provider = "rainviewer";
+        }
+
+        this.addWeatherOverlay(provider, null, layerType);
         return this;
       }
       // Add it back to the map if it's not already there
@@ -820,6 +908,87 @@ class MapComponent {
     }
 
     return this;
+  }
+
+  // --- RainViewer & Timeline Support ---
+
+  async _fetchRainViewerData() {
+    try {
+      if (this.rainViewerCache.length > 0) return; // Already loaded
+      const response = await fetch(
+        "https://api.rainviewer.com/public/weather-maps.json"
+      );
+      const data = await response.json();
+      this.rainViewerCache = [
+        ...(data.radar?.past || []),
+        ...(data.radar?.nowcast || []),
+      ];
+      if (data.host) this.rainViewerHost = data.host;
+      console.log(
+        "[MapComponent] RainViewer frames loaded:",
+        this.rainViewerCache.length
+      );
+
+      // If we have a pending specific timestamp, update now
+      if (this.currentTimestamp) {
+        this.handleTimelineUpdate(this.currentTimestamp);
+      }
+    } catch (e) {
+      console.warn("[MapComponent] Failed to fetch RainViewer frames", e);
+    }
+  }
+
+  _buildRainViewerUrl(ts) {
+    // Find closest timestamp in cache
+    let useTime = ts;
+    if (this.rainViewerCache.length > 0 && typeof ts === "number") {
+      // Find closest
+      // RadarController sends ms. RainViewer is seconds.
+      const tsSec = ts / 1000;
+      const closest = this.rainViewerCache.reduce((prev, curr) => {
+        return Math.abs(curr.time - tsSec) < Math.abs(prev.time - tsSec)
+          ? curr
+          : prev;
+      });
+      if (closest) {
+        useTime = closest.time; // This is in seconds
+      }
+    } else {
+      // Fallback for initial load or no data
+      useTime = Math.floor(Date.now() / 1000);
+    }
+
+    // URL pattern: {host}/v2/radar/{ts}/{size}/{z}/{x}/{y}/{color}/{smooth}_{snow}.png
+    return `${this.rainViewerHost}/v2/radar/${useTime}/512/{z}/{x}/{y}/2/1_1.png`;
+  }
+
+  handleTimelineUpdate(timestamp) {
+    this.currentTimestamp = timestamp;
+
+    // Fallback: If cache is empty, try to fetch if we haven't
+    if (this.rainViewerCache.length === 0 && !this._fetchingRainViewer) {
+      this._fetchingRainViewer = true;
+      this._fetchRainViewerData().finally(() => {
+        this._fetchingRainViewer = false;
+      });
+    }
+
+    // Attempt to update common RainViewer layers
+    const targetLayer = this.overlays["rain"] || this.overlays["radar"];
+    if (targetLayer && this.map.hasLayer(targetLayer)) {
+      const newUrl = this._buildRainViewerUrl(timestamp);
+      // Optimize: Only setUrl if changed
+      if (targetLayer._url !== newUrl) {
+        targetLayer.setUrl(newUrl);
+      }
+    }
+  }
+
+  // Support generic MapLayerManager interface
+  updateLayerData(layerId, timestamp) {
+    if (layerId === "radar" || layerId === "rain") {
+      this.handleTimelineUpdate(timestamp);
+    }
   }
 }
 
