@@ -210,7 +210,10 @@
       ${hexToRgba(colors.top, 0.15)} 85%,
       transparent 100%)`;
 
-    // Setze CSS Custom Properties global auf document.documentElement
+    // Setze CSS Custom Properties auf pond (lokal für den Hero) — vermeide globale Overrides
+    // Globale Sky-Token bleiben gesetzt, aber die Seiten-Hintergrundfarbe (page-bg)
+    // wird nicht mehr global überschrieben, damit andere Views (z. B. Settings)
+    // von der Theme-Farbe unbeeinflusst bleiben.
     document.documentElement.style.setProperty("--sky-top", colors.top);
     document.documentElement.style.setProperty(
       "--sky-top-rgb",
@@ -223,19 +226,17 @@
       hexToRgb(colors.bottom)
     );
     document.documentElement.style.setProperty("--ground-color", groundColor);
-    document.documentElement.style.setProperty("--page-bg", pageBgColor);
     document.documentElement.style.setProperty("--top-gradient", topGradient);
     document.documentElement.style.setProperty(
       "--bottom-gradient",
       bottomGradient
     );
-    document.documentElement.style.setProperty("--card-bg", pageBgColor);
     document.documentElement.style.setProperty(
       "--app-bar-gradient",
       appBarGradient
     );
 
-    // Auch auf pond für lokale Verwendung
+    // Nur lokal auf pond setzen, damit Änderungen nicht die gesamte Seite beeinflussen
     pond.style.setProperty("--sky-top", colors.top);
     pond.style.setProperty("--sky-top-rgb", hexToRgb(colors.top));
     pond.style.setProperty("--sky-mid", colors.mid);
@@ -247,16 +248,8 @@
     pond.style.setProperty("--bottom-gradient", bottomGradient);
     pond.style.setProperty("--card-bg", pageBgColor);
 
-    // HTML und Body bekommen die dunklere Bodenfarbe als Basis-Hintergrund
-    document.documentElement.style.background = pageBgColor;
-    if (body) {
-      body.style.background = pageBgColor;
-    }
-
-    // App-shell bekommt den dunkleren Hintergrund
-    if (appShell) {
-      appShell.style.background = pageBgColor;
-    }
+    // Entfernt globale Hintergrund-Änderungen (kein documentElement/body/appShell override)
+    // Dadurch bleibt die Seitenfarbe in anderen Views stabil (z. B. Settings).
 
     // App-Bar bekommt die Himmelsfarbe als Hintergrund
     if (appBar) {
@@ -265,8 +258,11 @@
 
     // Weather-hero bekommt die Himmelsfarbe als Hintergrund, aber unten einen Übergang zum Seitenhintergrund
     if (weatherHero) {
-      // Verlauf: Oben Himmelsfarbe (bis 25%), dann sanfter Übergang zur Seitenhintergrundfarbe
-      weatherHero.style.background = `linear-gradient(to bottom, ${colors.top} 0%, ${colors.top} 25%, ${pageBgColor} 100%)`;
+      // Kein zusätzlicher Seitenhintergrund hier — die Pond-Background zeigt das Bild komplett
+      weatherHero.style.background = "none";
+      if (pond) {
+        pond.style.backgroundPosition = 'center center';
+      }
     }
 
     // Weather-hero Header bekommt die Himmelsfarbe als Hintergrund (Bereich über dem Bild)

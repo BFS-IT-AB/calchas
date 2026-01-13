@@ -1,10 +1,11 @@
-/* Übergang vom Himmel (oben) zur oberen Hintergrundfarbe */
-.fields-sky-transition {
+/* Übergang vom Himmel (oben) innerhalb des Hero-Bereichs (lokal) */
+.weather-hero .fields-sky-transition {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 120px;
+  /* Sanfter Übergang vom Himmel zur Transparenz - lokal für Hero */
   background: linear-gradient(
     to bottom,
     var(--sky-top, #87ceeb) 0%,
@@ -14,10 +15,10 @@
   -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
   z-index: 5;
   pointer-events: none;
-}
+} 
 
-/* Übergang vom Boden (unten) zur unteren Hintergrundfarbe */
-.fields-ground-transition {
+/* Übergang vom Boden (unten) innerhalb des Hero-Bereichs (lokal) */
+.weather-hero .fields-ground-transition {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -77,10 +78,10 @@
   --text-muted: rgba(232, 236, 255, 0.65);
   --box-light: rgba(255, 255, 255, 0.05);
   --box-dark: rgba(255, 255, 255, 0.08);
-  --modal-surface-light: #111827;
+  --modal-surface-light: #ffffff;
   --modal-surface-dark: #050b18;
-  --settings-card-bg: #2a2a2a;
-  --settings-card-bg-dark: #1a1a1a;
+  --settings-card-bg: #ffffff;
+  --settings-card-bg-dark: #1a1a1a; 
   --settings-card-border: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.12);
   --border-dark: rgba(5, 7, 15, 0.55);
@@ -152,7 +153,7 @@
 html {
   scroll-behavior: smooth;
   height: 100%;
-  background: var(--bg-dark);
+  background: var(--theme-bg);
 }
 
 body {
@@ -161,8 +162,8 @@ body {
     "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-dark);
-  color: var(--text-light);
+  background: var(--theme-bg);
+  color: var(--theme-text);
   height: 100%;
   display: flex;
   justify-content: center;
@@ -189,7 +190,8 @@ body.dark-mode a {
 /* Dark Mode (default) */
 :root,
 [data-theme="dark"] {
-  --theme-bg: #050816;
+  --theme-bg: #000000;
+  --page-bg: var(--theme-bg);
   --theme-surface: #101522;
   --theme-text: #f1f3f6;
   --theme-text-muted: #a7b1c6;
@@ -224,14 +226,44 @@ body.dark-mode a {
 
 /* Light Mode */
 [data-theme="light"] {
-  --theme-bg: #f5f7fa;
-  --page-bg: #f5f7fa; /* Ensure page-bg matches theme-bg in light mode by default */
+  --theme-bg: #ffffff;
+  --page-bg: var(--theme-bg); /* Ensure page-bg matches theme-bg in light mode */
   --theme-surface: #ffffff;
   --theme-text: #1a1a2e;
   --theme-text-muted: #5a5a7a;
   --svg-stroke-bg: rgba(0, 0, 0, 0.1);
   --svg-stroke-muted: rgba(0, 0, 0, 0.15);
   --theme-border: rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure common cards and text turn dark in Light Mode */
+[data-theme="light"] .card,
+[data-theme="light"] .card h1,
+[data-theme="light"] .card h2,
+[data-theme="light"] .card h3,
+[data-theme="light"] .card p,
+[data-theme="light"] .card small,
+[data-theme="light"] .card .card-title,
+[data-theme="light"] .card .card-subtitle,
+[data-theme="light"] .summary-card,
+[data-theme="light"] .daily-card,
+[data-theme="light"] .settings-card {
+  color: var(--theme-text) !important;
+}
+
+/* Ensure surfaces for these components are light */
+[data-theme="light"] .card,
+[data-theme="light"] .summary-card,
+[data-theme="light"] .daily-card,
+[data-theme="light"] .settings-card {
+  background: var(--theme-surface) !important;
+}
+
+/* Additional force for daily items */
+[data-theme="light"] .daily-item {
+  background: rgba(255,255,255,1) !important;
+  color: var(--theme-text) !important;
+  border-color: rgba(0,0,0,0.06) !important;
 }
 
 /* Broader light-mode variable overrides for components that use different tokens */
@@ -319,7 +351,7 @@ body.dark-mode a {
 
 /* Some components used explicit dark colors; ensure they flip in light mode */
 [data-theme="light"] .app-main-views {
-  background: var(--page-bg);
+  background: #ffffff;
 }
 
 [data-theme="light"] .icon-button {
@@ -1265,6 +1297,16 @@ body.dark-mode a {
   min-height: 100vh;
 }
 
+/* Nicht-Home Views: erzwinge Theme-Hintergrund damit Hero-Effekte nicht durchschlagen */
+[data-view]:not([data-view="home"]) {
+  --page-bg: var(--theme-bg) !important;
+}
+
+/* App main views outside of home should display the theme background */
+[data-view]:not([data-view="home"]) .app-main-views,
+[data-view]:not([data-view="home"]) {
+  background: var(--theme-bg) !important;
+}
 [data-view="home"] .card-group {
   padding: 0 16px;
   background: transparent;
@@ -6186,6 +6228,13 @@ body.dark-mode .settings-row {
   background: var(--settings-card-bg-dark);
 }
 
+/* Dark mode: ensure settings card surface is dark */
+body.dark-mode .settings-card {
+  background: var(--settings-card-bg-dark);
+  color: var(--theme-text);
+  border: 1px solid var(--settings-card-border);
+}
+
 .settings-subview-overlay {
   position: fixed;
   inset: 0;
@@ -6209,6 +6258,12 @@ body.dark-mode .settings-row {
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
   max-height: calc(100vh - 3rem);
   overflow-y: auto;
+}
+
+/* Light mode: explicitly set modal/sheet background to light surface */
+[data-theme="light"] .settings-subview-layer {
+  background: var(--modal-surface-light);
+  color-scheme: light;
 }
 
 body.dark-mode .settings-subview-layer {
@@ -7172,14 +7227,14 @@ body.dark-mode .source-compare-card {
 }
 
 /* Light Mode */
-body.light .insight-card__text {
+[data-theme="light"] .insight-card__text {
   color: rgb(0 0 0 / 92%) !important;
 }
 
 /* Dark Mode */
-body.dark .insight-card__text {
+[data-theme="dark"] .insight-card__text {
   color: rgb(255 255 255 / 88%) !important;
-}
+} 
 
 /* ========================================
      SUMMARY CARD (Tagesübersicht - aufklappbar)
@@ -7209,11 +7264,11 @@ body.dark .insight-card__text {
 }
 
 /* Light Mode */
-body.light .summary-card {
+[data-theme="light"] .summary-card {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(0, 0, 0, 0.08);
   color: #1a1a1a;
-}
+} 
 
 .summary-card__header {
   display: flex;
@@ -7319,13 +7374,13 @@ body.light .summary-card {
   color: #f3f6fa !important;
 }
 
-body.light .summary-card__header,
-body.light .summary-card__title,
-body.light .summary-card__intro,
-body.light .summary-card__list li,
-body.light .summary-card__chevron {
+[data-theme="light"] .summary-card__header,
+[data-theme="light"] .summary-card__title,
+[data-theme="light"] .summary-card__intro,
+[data-theme="light"] .summary-card__list li,
+[data-theme="light"] .summary-card__chevron {
   color: #222 !important;
-}
+} 
 
 .summary-card__icon {
   opacity: 1;
@@ -7343,7 +7398,7 @@ body.light .summary-card__chevron {
   color: rgba(195, 204, 224, 0.85);
 }
 
-body.light .summary-card__list li::before {
+[data-theme="light"] .summary-card__list li::before {
   color: #666;
 }
 
@@ -7638,6 +7693,37 @@ body.light .summary-card__list li::before {
 .daily-item__date {
   font-size: 0.7rem;
   color: var(--color-text-muted-2);
+}
+
+/* Light Mode overrides for daily card (ensure boxes are light and text is dark) */
+[data-theme="light"] .daily-card {
+  background: rgba(255,255,255,0.98);
+  border: 1px solid rgba(0,0,0,0.06);
+  color: var(--theme-text);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .daily-card__title {
+  color: var(--theme-text);
+}
+
+[data-theme="light"] .daily-item {
+  background: rgba(255,255,255,1);
+  border: 1px solid rgba(0,0,0,0.06);
+  color: var(--theme-text);
+}
+
+[data-theme="light"] .daily-item__max {
+  color: var(--theme-text);
+}
+
+[data-theme="light"] .daily-item__min {
+  color: var(--theme-text-muted);
+}
+
+/* Make daily-item hover subtle in light mode */
+[data-theme="light"] .daily-item:hover {
+  background: rgba(245,245,245,1);
 }
 
 /* ========================================
@@ -11699,8 +11785,8 @@ body.dark-mode .legal-card {
 /* Prefers Color Scheme */
 @media (prefers-color-scheme: dark) {
   body {
-    background: var(--bg-dark);
-    color: var(--text-dark);
+    background: var(--theme-bg);
+    color: var(--theme-text);
   }
 }
 
@@ -11768,18 +11854,18 @@ h2 {
 }
 
 /* Standard Light Mode */
-body.light h2,
-body.light .insight-card__text,
-body.light .card p,
-body.light .card small {
+[data-theme="light"] h2,
+[data-theme="light"] .insight-card__text,
+[data-theme="light"] .card p,
+[data-theme="light"] .card small {
   color: #222 !important; /* dunkelgrau */
 }
 
 /* Dark Mode */
-body.dark h2,
-body.dark .insight-card__text,
-body.dark .card p,
-body.dark .card small {
+[data-theme="dark"] h2,
+[data-theme="dark"] .insight-card__text,
+[data-theme="dark"] .card p,
+[data-theme="dark"] .card small {
   color: #f1f1f1 !important; /* helles Grau/Weiß */
 }
 
@@ -17236,133 +17322,133 @@ body.dark-mode .map-inspector {
   }
 }
 
- 
- / *   R e - a d d   m i s s i n g   s w a r m   d e f i n i t i o n s   f o r   r a d a r - v i e w   l e g e n d   * / 
- 
- . r a d a r - v i e w _ _ l e g e n d - s w a t c h   { 
- 
-     d i s p l a y :   i n l i n e - b l o c k ; 
- 
-     w i d t h :   1 2 p x ; 
- 
-     h e i g h t :   1 2 p x ; 
- 
-     b o r d e r - r a d i u s :   5 0 % ; 
- 
-     b o r d e r :   1 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 2 ) ; 
- 
-     f l e x - s h r i n k :   0 ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l e g e n d - s w a t c h - - r a i n   { 
- 
-     b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 9 0 d e g ,   # 4 f c 3 f 7 ,   # 0 2 8 8 d 1 ) ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l e g e n d - s w a t c h - - s n o w   { 
- 
-     b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 9 0 d e g ,   # e 0 f 7 f a ,   # b 3 e 5 f c ) ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l e g e n d - s w a t c h - - t e m p   { 
- 
-     b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 9 0 d e g ,   # 4 f c 3 f 7 ,   # f f 7 0 4 3 ) ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l e g e n d - s w a t c h - - w i n d   { 
- 
-     b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 9 0 d e g ,   # 8 0 c b c 4 ,   # 0 0 4 d 4 0 ) ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l e g e n d - s w a t c h - - c l o u d s   { 
- 
-     b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 9 0 d e g ,   # c f d 8 d c ,   # 9 0 a 4 a e ) ; 
- 
- } 
- 
- 
- 
- / *   U p d a t e d   L a y e r   B u t t o n   S t y l e   * / 
- 
- . r a d a r - v i e w _ _ l a y e r - b t n   { 
- 
-     d i s p l a y :   f l e x   ! i m p o r t a n t ; 
- 
-     a l i g n - i t e m s :   c e n t e r ; 
- 
-     j u s t i f y - c o n t e n t :   c e n t e r ; 
- 
-     w i d t h :   3 2 p x   ! i m p o r t a n t ; 
- 
-     h e i g h t :   3 2 p x   ! i m p o r t a n t ; 
- 
-     m i n - w i d t h :   3 2 p x ; 
- 
-     p a d d i n g :   0   ! i m p o r t a n t ; 
- 
-     b a c k g r o u n d :   r g b a ( 1 0 ,   1 6 ,   3 2 ,   0 . 8 5 ) ; 
- 
-     b a c k d r o p - f i l t e r :   b l u r ( 2 0 p x ) ; 
- 
-     - w e b k i t - b a c k d r o p - f i l t e r :   b l u r ( 2 0 p x ) ; 
- 
-     b o r d e r :   1 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
- 
-     b o r d e r - r a d i u s :   v a r ( - - r a d i u s - s ) ; 
- 
-     c o l o r :   v a r ( - - c o l o r - t e x t - s e c o n d a r y ) ; 
- 
-     c u r s o r :   p o i n t e r ; 
- 
-     p o i n t e r - e v e n t s :   a u t o ; 
- 
-     t r a n s i t i o n :   a l l   0 . 1 5 s   e a s e ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l a y e r - b t n   s p a n : n o t ( . m a t e r i a l - s y m b o l s - o u t l i n e d )   { 
- 
-     d i s p l a y :   n o n e   ! i m p o r t a n t ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l a y e r - b t n   . m a t e r i a l - s y m b o l s - o u t l i n e d   { 
- 
-     f o n t - s i z e :   2 0 p x ; 
- 
-     c o l o r :   v a r ( - - c o l o r - t e x t - s e c o n d a r y ) ; 
- 
-     m a r g i n :   0   ! i m p o r t a n t ; 
- 
- } 
- 
- 
- 
- . r a d a r - v i e w _ _ l a y e r - b t n : h o v e r   { 
- 
-     b a c k g r o u n d :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
- 
-     c o l o r :   v a r ( - - c o l o r - t e x t - p r i m a r y ) ; 
- 
- } 
- 
- 
+
+/* Re-add missing swarm definitions for radar-view legend */
+
+.radar-view__legend-swatch {
+
+  display: inline-block;
+
+  width: 12px;
+
+  height: 12px;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  flex-shrink: 0;
+
+}
+
+
+
+.radar-view__legend-swatch--rain {
+
+  background: linear-gradient(90deg, #4fc3f7, #0288d1);
+
+}
+
+
+
+.radar-view__legend-swatch--snow {
+
+  background: linear-gradient(90deg, #e0f7fa, #b3e5fc);
+
+}
+
+
+
+.radar-view__legend-swatch--temp {
+
+  background: linear-gradient(90deg, #4fc3f7, #ff7043);
+
+}
+
+
+
+.radar-view__legend-swatch--wind {
+
+  background: linear-gradient(90deg, #80cbc4, #004d40);
+
+}
+
+
+
+.radar-view__legend-swatch--clouds {
+
+  background: linear-gradient(90deg, #cfd8dc, #90a4ae);
+
+}
+
+
+
+/* Updated Layer Button Style */
+
+.radar-view__layer-btn {
+
+  display: flex !important;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 32px !important;
+
+  height: 32px !important;
+
+  min-width: 32px;
+
+  padding: 0 !important;
+
+  background: rgba(10, 16, 32, 0.85);
+
+  backdrop-filter: blur(20px);
+
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  border-radius: var(--radius-s);
+
+  color: var(--color-text-secondary);
+
+  cursor: pointer;
+
+  pointer-events: auto;
+
+  transition: all 0.15s ease;
+
+}
+
+
+
+.radar-view__layer-btn span:not(.material-symbols-outlined) {
+
+  display: none !important;
+
+}
+
+
+
+.radar-view__layer-btn .material-symbols-outlined {
+
+  font-size: 20px;
+
+  color: var(--color-text-secondary);
+
+  margin: 0 !important;
+
+}
+
+
+
+.radar-view__layer-btn:hover {
+
+  background: rgba(255, 255, 255, 0.1);
+
+  color: var(--color-text-primary);
+
+}
+
+
