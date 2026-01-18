@@ -187,7 +187,7 @@
   function applyDynamicGradients(tod, cond) {
     const colors = getSkyColors(tod, cond);
     const groundColor = getGroundColor(tod, cond);
-    const pageBgColor = darkenColor(groundColor, 0.6); // Dunklere Version der Bodenfarbe
+    const pageBgColor = darkenColor(groundColor, 0.85); // Leicht dunklere Version der Bodenfarbe
     const pond = document.getElementById("frog-hero-pond");
     const appShell = document.querySelector(".app-shell");
     const weatherHero = document.querySelector(".weather-hero");
@@ -210,10 +210,7 @@
       ${hexToRgba(colors.top, 0.15)} 85%,
       transparent 100%)`;
 
-    // Setze CSS Custom Properties auf pond (lokal für den Hero) — vermeide globale Overrides
-    // Globale Sky-Token bleiben gesetzt, aber die Seiten-Hintergrundfarbe (page-bg)
-    // wird nicht mehr global überschrieben, damit andere Views (z. B. Settings)
-    // von der Theme-Farbe unbeeinflusst bleiben.
+    // Setze CSS Custom Properties global auf document.documentElement
     document.documentElement.style.setProperty("--sky-top", colors.top);
     document.documentElement.style.setProperty(
       "--sky-top-rgb",
@@ -226,11 +223,21 @@
       hexToRgb(colors.bottom)
     );
     document.documentElement.style.setProperty("--ground-color", groundColor);
+    document.documentElement.style.setProperty(
+      "--ground-color-rgb",
+      hexToRgb(groundColor)
+    );
+    document.documentElement.style.setProperty("--page-bg", pageBgColor);
+    document.documentElement.style.setProperty(
+      "--page-bg-rgb",
+      hexToRgb(pageBgColor)
+    );
     document.documentElement.style.setProperty("--top-gradient", topGradient);
     document.documentElement.style.setProperty(
       "--bottom-gradient",
       bottomGradient
     );
+    document.documentElement.style.setProperty("--card-bg", pageBgColor);
     document.documentElement.style.setProperty(
       "--app-bar-gradient",
       appBarGradient
@@ -243,26 +250,62 @@
     pond.style.setProperty("--sky-bottom", colors.bottom);
     pond.style.setProperty("--sky-bottom-rgb", hexToRgb(colors.bottom));
     pond.style.setProperty("--ground-color", groundColor);
+    pond.style.setProperty("--ground-color-rgb", hexToRgb(groundColor));
     pond.style.setProperty("--page-bg", pageBgColor);
+    pond.style.setProperty("--page-bg-rgb", hexToRgb(pageBgColor));
     pond.style.setProperty("--top-gradient", topGradient);
     pond.style.setProperty("--bottom-gradient", bottomGradient);
     pond.style.setProperty("--card-bg", pageBgColor);
 
-    // Entfernt globale Hintergrund-Änderungen (kein documentElement/body/appShell override)
-    // Dadurch bleibt die Seitenfarbe in anderen Views stabil (z. B. Settings).
+    // Auch auf weather-hero__scene setzen für die Übergangs-Elemente
+    const scene = document.querySelector(".weather-hero__scene");
+    if (scene) {
+      scene.style.setProperty("--sky-top", colors.top);
+      scene.style.setProperty("--sky-top-rgb", hexToRgb(colors.top));
+      scene.style.setProperty("--page-bg", pageBgColor);
+      scene.style.setProperty("--page-bg-rgb", hexToRgb(pageBgColor));
+    }
 
-    // App-Bar bekommt die Himmelsfarbe als Hintergrund
+    // HTML und Body bekommen die Bodenfarbe als Basis-Hintergrund
+    // Die Himmelsfarbe wird nur auf den oberen Bereich (weather-hero) angewendet
+    const homeSection = document.querySelector('[data-view="home"]');
+    const isHomeVisible = homeSection && !homeSection.hidden;
+
+    if (isHomeVisible) {
+      // Body und html bekommen die dunkle Bodenfarbe als durchgehenden Hintergrund
+      document.documentElement.style.background = pageBgColor;
+      if (body) {
+        body.style.background = pageBgColor;
+      }
+
+      // App-shell bekommt auch die Bodenfarbe
+      if (appShell) {
+        appShell.style.background = pageBgColor;
+      }
+
+      // Home-Section bekommt die Bodenfarbe als Hintergrund
+      if (homeSection) {
+        homeSection.style.background = pageBgColor;
+      }
+
+      // Card-Groups bekommen alle die Bodenfarbe
+      // Der Übergang erfolgt durch fields-ground-transition im Bild selbst
+      const cardGroups = document.querySelectorAll(
+        '[data-view="home"] .card-group'
+      );
+      cardGroups.forEach((cg) => {
+        cg.style.background = pageBgColor;
+      });
+    }
+
+    // App-Bar bekommt die Himmelsfarbe als Hintergrund (fixiert oben)
     if (appBar) {
       appBar.style.background = colors.top;
     }
 
-    // Weather-hero bekommt die Himmelsfarbe als Hintergrund, aber unten einen Übergang zum Seitenhintergrund
+    // Weather-hero bekommt Gradient von Himmel zu Boden, um Lücken am unteren Rand zu kaschieren
     if (weatherHero) {
-      // Kein zusätzlicher Seitenhintergrund hier — die Pond-Background zeigt das Bild komplett
-      weatherHero.style.background = "none";
-      if (pond) {
-        pond.style.backgroundPosition = 'center center';
-      }
+      weatherHero.style.background = `linear-gradient(to bottom, ${colors.top} 50%, ${pageBgColor} 100%)`;
     }
 
     // Weather-hero Header bekommt die Himmelsfarbe als Hintergrund (Bereich über dem Bild)

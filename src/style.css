@@ -1,47 +1,38 @@
-/* Übergang vom Himmel (oben) innerhalb des Hero-Bereichs (lokal) */
-.weather-hero .fields-sky-transition {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 120px;
-  /* Sanfter Übergang vom Himmel zur Transparenz - lokal für Hero */
-  background: linear-gradient(
-    to bottom,
-    var(--sky-top, #87ceeb) 0%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-  z-index: 5;
-  pointer-events: none;
-} 
+/* Übergang vom Himmel (oben) - DEAKTIVIERT da weather-hero jetzt Himmelsfarbe hat */
+.weather-hero__scene .fields-sky-transition {
+  display: none;
+}
 
-/* Übergang vom Boden (unten) innerhalb des Hero-Bereichs (lokal) */
-.weather-hero .fields-ground-transition {
+/* Übergang vom Boden (unten) - Großer, weicher Gradient am unteren Rand des Fields-Bildes */
+.weather-hero__scene .fields-ground-transition {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
-  height: 140px;
+  right: 0;
+  height: 250px;
   background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(42, 32, 48, 0.4) 40%,
-      var(--page-bg, #2a2030) 100%
-    ),
-    radial-gradient(
-      ellipse at bottom left,
-      var(--page-bg, #2a2030) 0%,
-      transparent 40%
-    ),
-    radial-gradient(
-      ellipse at bottom right,
-      var(--page-bg, #2a2030) 0%,
-      transparent 40%
-    );
-  z-index: 5;
+    to bottom,
+    transparent 0%,
+    rgba(var(--page-bg-rgb, 42, 32, 48), 0.02) 15%,
+    rgba(var(--page-bg-rgb, 42, 32, 48), 0.1) 30%,
+    rgba(var(--page-bg-rgb, 42, 32, 48), 0.25) 45%,
+    rgba(var(--page-bg-rgb, 42, 32, 48), 0.5) 60%,
+    rgba(var(--page-bg-rgb, 42, 32, 48), 0.75) 75%,
+    rgba(var(--page-bg-rgb, 42, 32, 48), 0.9) 90%,
+    var(--page-bg, #2a2030) 100%
+  );
   pointer-events: none;
+  z-index: 2;
+  border-radius: 0 0 24px 24px;
+}
+
+/* Seitliche Übergänge - DEAKTIVIERT */
+.weather-hero__scene .fields-side-transition-left {
+  display: none;
+}
+
+.weather-hero__scene .fields-side-transition-right {
+  display: none;
 }
 /* Fix: Entfernt fixierte, geblurrte Balken am unteren Rand (Blur-Balken über Navigation) */
 /* Haupt-CSS-Datei - Design und Layout */
@@ -81,7 +72,7 @@
   --modal-surface-light: #ffffff;
   --modal-surface-dark: #050b18;
   --settings-card-bg: #ffffff;
-  --settings-card-bg-dark: #1a1a1a; 
+  --settings-card-bg-dark: #1a1a1a;
   --settings-card-border: rgba(255, 255, 255, 0.08);
   --border-light: rgba(255, 255, 255, 0.12);
   --border-dark: rgba(5, 7, 15, 0.55);
@@ -157,9 +148,20 @@ html {
 }
 
 body {
-  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
-    "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
-    "Helvetica Neue", sans-serif;
+  font-family:
+    "Inter",
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Roboto",
+    "Oxygen",
+    "Ubuntu",
+    "Cantarell",
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--theme-bg);
@@ -190,8 +192,8 @@ body.dark-mode a {
 /* Dark Mode (default) */
 :root,
 [data-theme="dark"] {
-  --theme-bg: #000000;
-  --page-bg: var(--theme-bg);
+  --theme-bg: #1a2530;
+  --page-bg: #1a2530; /* Wird dynamisch durch FrogHeroPlayer überschrieben */
   --theme-surface: #101522;
   --theme-text: #f1f3f6;
   --theme-text-muted: #a7b1c6;
@@ -199,26 +201,15 @@ body.dark-mode a {
 }
 
 /* Force opaque backgrounds in dark mode to avoid grey artifacts */
-[data-theme="dark"] body,
-[data-theme="dark"] .app-shell,
-[data-theme="dark"] .app-main-views {
-  background: var(--page-bg, #1a2025);
-  color-scheme: dark;
-}
-
+/* Hinweis: Home-View bekommt dynamischen Hintergrund von FrogHeroPlayer.js */
+/* Die Inline-Styles von FrogHeroPlayer haben höhere Priorität */
 [data-theme="dark"] .bottom-sheet {
   background: var(--page-bg, #1a2025);
   color-scheme: dark;
 }
 
 /* Force opaque backgrounds in light mode for consistency */
-[data-theme="light"] body,
-[data-theme="light"] .app-shell,
-[data-theme="light"] .app-main-views {
-  background: var(--page-bg, #f5f7fa);
-  color-scheme: light;
-}
-
+/* Die Inline-Styles von FrogHeroPlayer haben höhere Priorität */
 [data-theme="light"] .bottom-sheet {
   background: #ffffff;
   color-scheme: light;
@@ -227,7 +218,9 @@ body.dark-mode a {
 /* Light Mode */
 [data-theme="light"] {
   --theme-bg: #ffffff;
-  --page-bg: var(--theme-bg); /* Ensure page-bg matches theme-bg in light mode */
+  --page-bg: var(
+    --theme-bg
+  ); /* Ensure page-bg matches theme-bg in light mode */
   --theme-surface: #ffffff;
   --theme-text: #1a1a2e;
   --theme-text-muted: #5a5a7a;
@@ -261,9 +254,9 @@ body.dark-mode a {
 
 /* Additional force for daily items */
 [data-theme="light"] .daily-item {
-  background: rgba(255,255,255,1) !important;
+  background: rgba(255, 255, 255, 1) !important;
   color: var(--theme-text) !important;
-  border-color: rgba(0,0,0,0.06) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
 }
 
 /* Broader light-mode variable overrides for components that use different tokens */
@@ -323,7 +316,8 @@ body.dark-mode a {
     rgba(93, 123, 255, 0.2) 0%,
     rgba(138, 180, 255, 0.15) 100%
   );
-  box-shadow: 0 4px 16px rgba(93, 123, 255, 0.2),
+  box-shadow:
+    0 4px 16px rgba(93, 123, 255, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -335,12 +329,17 @@ body.dark-mode a {
 @keyframes navGlowLight {
   0%,
   100% {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 2px 8px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03);
   }
   50% {
-    box-shadow: 0 8px 40px rgba(93, 123, 255, 0.12),
-      0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    box-shadow:
+      0 8px 40px rgba(93, 123, 255, 0.12),
+      0 2px 8px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
       inset 0 -1px 0 rgba(0, 0, 0, 0.03);
   }
 }
@@ -1075,8 +1074,11 @@ body.dark-mode a {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50px;
   padding: 6px 12px 6px 14px;
-  transition: background 0.08s linear, border 0.08s linear;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
+  transition:
+    background 0.08s linear,
+    border 0.08s linear;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -1096,7 +1098,8 @@ body.dark-mode a {
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  transition: background 0.12s linear,
+  transition:
+    background 0.12s linear,
     transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: visible;
@@ -1116,7 +1119,9 @@ body.dark-mode a {
     transparent 70%
   );
   transform: translate(-50%, -50%);
-  transition: width 0.2s linear, height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.2s linear,
+    height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 0;
 }
@@ -1134,7 +1139,9 @@ body.dark-mode a {
 .app-bar__location:active::before {
   width: 200px;
   height: 200px;
-  transition: width 0.12s linear, height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.12s linear,
+    height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-bar__location > * {
@@ -1204,7 +1211,9 @@ body.dark-mode a {
   font-size: 1.1rem;
   color: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
-  transition: background 0.12s linear, color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    background 0.12s linear,
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -1225,7 +1234,9 @@ body.dark-mode a {
     transparent 70%
   );
   transform: translate(-50%, -50%);
-  transition: width 0.16s linear, height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.16s linear,
+    height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 0;
 }
@@ -1244,7 +1255,9 @@ body.dark-mode a {
 .app-bar__action-btn:active::before {
   width: 100px;
   height: 100px;
-  transition: width 0.08s linear, height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.08s linear,
+    height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-bar__action-btn > * {
@@ -1293,7 +1306,7 @@ body.dark-mode a {
 /* Home View - volle Breite für Hero, Padding für Cards */
 [data-view="home"] {
   padding: 0;
-  background: transparent;
+  background: var(--page-bg, #2a2030);
   min-height: 100vh;
 }
 
@@ -1309,22 +1322,22 @@ body.dark-mode a {
 }
 [data-view="home"] .card-group {
   padding: 0 16px;
-  background: transparent;
+  background: var(--page-bg, #2a2030);
 }
 
-/* Erste Card-Group mit sanftem Übergang */
+/* Erste Card-Group - bekommt Gradient für sanften Übergang (wird dynamisch in JS gesetzt) */
 [data-view="home"] .card-group:first-of-type {
-  margin-top: -20px;
-  padding-top: 0;
+  margin-top: 0;
+  padding-top: 24px;
   position: relative;
   z-index: 3;
-  background: transparent;
 }
 
 [data-view="home"] .weather-hero {
   padding: 16px;
   margin: 0;
-  padding-bottom: 24px;
+  padding-bottom: 0;
+  background: var(--sky-top, #5a6a72);
 }
 
 /* Andere Views bekommen Padding */
@@ -1333,7 +1346,7 @@ body.dark-mode a {
 [data-view="history"],
 [data-view="settings"] {
   padding: 0 var(--space-l);
-  background: #1a1a1a;
+  background: var(--theme-bg);
 }
 
 body.mobile-app #legacy-content {
@@ -1371,7 +1384,9 @@ body.mobile-app #legacy-content {
   color: var(--color-text-main);
   cursor: pointer;
   overflow: hidden;
-  transition: transform var(--transition), box-shadow var(--transition),
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
     background 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3289,7 +3304,9 @@ body.mobile-app #legacy-content {
   color: #ffffff;
   font-size: 15px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .unit-selector-option:hover {
@@ -3325,7 +3342,9 @@ body.mobile-app #legacy-content {
   text-align: left;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s, background 0.2s;
+  transition:
+    transform 0.2s,
+    background 0.2s;
 }
 
 .settings-card:hover {
@@ -3381,7 +3400,10 @@ body.mobile-app #legacy-content {
   color: #ffffff;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
 }
 
 .settings-option:hover {
@@ -3490,7 +3512,10 @@ body.mobile-app #legacy-content {
   color: #ffffff;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.15s;
   position: relative; /* for absolutely positioned check */
 }
 
@@ -3620,7 +3645,10 @@ body.mobile-app #legacy-content {
   color: #ffffff;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.15s;
 }
 
 .language-option:hover {
@@ -3707,7 +3735,9 @@ body.mobile-app #legacy-content {
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
   padding: 0;
   flex-shrink: 0;
 }
@@ -3721,7 +3751,9 @@ body.mobile-app #legacy-content {
   border-radius: 50%;
   background: #e7e9f5;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 }
 
 .pill-switch--on {
@@ -3806,7 +3838,10 @@ body.mobile-app #legacy-content {
   padding: 6px 10px;
   font-size: 11px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .chip--active {
@@ -4283,7 +4318,9 @@ body.mobile-app #legacy-content {
   color: rgba(255, 255, 255, 0.6);
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 
 .about-modal__close:hover {
@@ -4585,7 +4622,9 @@ body.mobile-app #legacy-content {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 12px;
   text-decoration: none;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 
 .contributor-card:hover {
@@ -4903,7 +4942,9 @@ body.mobile-app #legacy-content {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .home-clear-btn:hover:not(:disabled) {
@@ -5367,7 +5408,8 @@ body.mobile-app #legacy-content {
   -webkit-backdrop-filter: blur(0px);
   z-index: 9999;
   pointer-events: none;
-  transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -5400,9 +5442,11 @@ body.mobile-app #legacy-content {
   transform: translateY(100%);
   opacity: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.5),
+  box-shadow:
+    0 -8px 48px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -5442,7 +5486,8 @@ body.mobile-app #legacy-content {
   justify-content: center;
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -5541,7 +5586,9 @@ body.mobile-app #legacy-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -6063,7 +6110,9 @@ body.mobile-app #legacy-content {
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(140deg, rgba(255, 255, 255, 0.12), transparent);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
 }
@@ -7026,7 +7075,8 @@ body.dark-mode .source-compare-card {
   left: -10%;
   width: 120%;
   height: 90px;
-  background: radial-gradient(circle at 50% 0%, #1a2038, transparent 65%),
+  background:
+    radial-gradient(circle at 50% 0%, #1a2038, transparent 65%),
     linear-gradient(180deg, rgba(12, 18, 35, 0.85), rgba(5, 7, 15, 0.95));
   border-radius: 50% 50% 0 0;
 }
@@ -7111,7 +7161,9 @@ body.dark-mode .source-compare-card {
   padding: 16px 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .card:hover {
@@ -7155,9 +7207,13 @@ body.dark-mode .source-compare-card {
   border-radius: 24px;
   padding: 16px 20px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
@@ -7218,7 +7274,9 @@ body.dark-mode .source-compare-card {
 
 /* Insight Card hover effect */
 .insight-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .insight-card:hover {
@@ -7246,7 +7304,12 @@ body.dark-mode .source-compare-card {
 [data-theme="light"] .weather-card::before,
 [data-theme="light"] .card::before {
   /* gentle white shimmer so boxes remain visually light on hover */
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent) !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  ) !important;
   opacity: 1 !important;
   display: block !important;
   pointer-events: none !important;
@@ -7258,7 +7321,7 @@ body.dark-mode .source-compare-card {
 /* Dark Mode */
 [data-theme="dark"] .insight-card__text {
   color: rgb(255 255 255 / 88%) !important;
-} 
+}
 
 /* ========================================
      SUMMARY CARD (Tagesübersicht - aufklappbar)
@@ -7279,7 +7342,9 @@ body.dark-mode .source-compare-card {
   overflow: hidden;
   color: #f3f6fa;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .summary-card:hover {
@@ -7292,7 +7357,7 @@ body.dark-mode .source-compare-card {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(0, 0, 0, 0.08);
   color: #1a1a1a;
-} 
+}
 
 .summary-card__header {
   display: flex;
@@ -7345,7 +7410,8 @@ body.dark-mode .source-compare-card {
   max-height: 1000px;
   opacity: 1;
   overflow: hidden;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -7354,7 +7420,8 @@ body.dark-mode .source-compare-card {
   max-height: 0;
   opacity: 0;
   padding: 0 var(--space-l);
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -7404,7 +7471,7 @@ body.dark-mode .source-compare-card {
 [data-theme="light"] .summary-card__list li,
 [data-theme="light"] .summary-card__chevron {
   color: #222 !important;
-} 
+}
 
 .summary-card__icon {
   opacity: 1;
@@ -7443,7 +7510,9 @@ body.dark-mode .source-compare-card {
   padding: 16px 20px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .hourly-card:hover {
@@ -7507,9 +7576,11 @@ body.dark-mode .source-compare-card {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   padding: 10px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -7549,7 +7620,8 @@ body.dark-mode .source-compare-card {
     rgba(45, 50, 65, 0.4) 100%
   );
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25),
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(14px) saturate(1.5);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
@@ -7610,7 +7682,9 @@ body.dark-mode .source-compare-card {
   padding: 16px 20px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .daily-card:hover {
@@ -7663,7 +7737,9 @@ body.dark-mode .source-compare-card {
   border-radius: 16px;
   color: inherit;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.2s;
 }
 
 .daily-item:hover {
@@ -7721,10 +7797,10 @@ body.dark-mode .source-compare-card {
 
 /* Light Mode overrides for daily card (ensure boxes are light and text is dark) */
 [data-theme="light"] .daily-card {
-  background: rgba(255,255,255,0.98);
-  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   color: var(--theme-text);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="light"] .daily-card__title {
@@ -7732,8 +7808,8 @@ body.dark-mode .source-compare-card {
 }
 
 [data-theme="light"] .daily-item {
-  background: rgba(255,255,255,1);
-  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255, 255, 255, 1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   color: var(--theme-text);
 }
 
@@ -7747,7 +7823,7 @@ body.dark-mode .source-compare-card {
 
 /* Make daily-item hover subtle in light mode */
 [data-theme="light"] .daily-item:hover {
-  background: rgba(245,245,245,1);
+  background: rgba(245, 245, 245, 1);
 }
 
 /* Light Mode: ensure interactive boxes keep a white surface on hover (avoid grey) */
@@ -7767,9 +7843,9 @@ body.dark-mode .source-compare-card {
 [data-theme="light"] .forecast-card:hover,
 [data-theme="light"] .source-card:hover,
 [data-theme="light"] .health-metric-card:hover {
-  background: rgba(255,255,255,1) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
-  border-color: rgba(0,0,0,0.06) !important;
+  background: rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
 }
 
 /* ========================================
@@ -7923,8 +7999,10 @@ body.dark-mode .source-compare-card {
   text-align: center;
   position: relative;
   z-index: 5;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
   color: #ffffff;
 }
 
@@ -8109,14 +8187,18 @@ body.dark-mode .source-compare-card {
   font-size: 1.6rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 1);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .weather-hero__feels {
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.85);
   font-weight: 500;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .weather-hero__local-time {
@@ -8124,7 +8206,9 @@ body.dark-mode .source-compare-card {
   color: rgba(255, 255, 255, 0.9);
   margin-top: 8px;
   font-weight: 500;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .weather-hero__updated {
@@ -8148,7 +8232,9 @@ body.dark-mode .source-compare-card {
   font-size: 0.9rem;
   z-index: 100;
   opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
   pointer-events: none;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
@@ -8179,6 +8265,14 @@ body.dark-mode .source-compare-card {
   border-radius: 24px;
 }
 
+/* CSS-Variablen für die Übergangsfarben erben */
+.weather-hero__scene {
+  --sky-top: var(--sky-top, #5a6a72);
+  --sky-top-rgb: var(--sky-top-rgb, 90, 106, 114);
+  --page-bg: var(--page-bg, #2a2030);
+  --page-bg-rgb: var(--page-bg-rgb, 42, 32, 48);
+}
+
 .weather-hero__scene::before {
   display: none;
 }
@@ -8190,13 +8284,16 @@ body.dark-mode .source-compare-card {
   background-position: center bottom;
   background-repeat: no-repeat;
   position: relative;
-  border-radius: 0;
+  border-radius: 24px;
   /* Default CSS-Variablen für dynamische Gradienten */
   --sky-top: #3a4055;
+  --sky-top-rgb: 58, 64, 85;
   --sky-mid: #4a5065;
   --sky-bottom: #5a6070;
   --ground-color: #4a3845;
+  --ground-color-rgb: 74, 56, 69;
   --page-bg: #2a2030;
+  --page-bg-rgb: 42, 32, 48;
 }
 
 .frog-hero-pond::before {
@@ -8301,7 +8398,9 @@ body.dark-mode .source-compare-card {
   -webkit-backdrop-filter: blur(12px) saturate(1.2);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 50px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    0 1px 4px rgba(0, 0, 0, 0.15);
   z-index: 40;
 }
 
@@ -8321,7 +8420,9 @@ body.dark-mode .source-compare-card {
   padding: 10px 12px;
   border-radius: 25px;
   cursor: pointer;
-  transition: color 0.12s ease-out, background 0.12s ease-out,
+  transition:
+    color 0.12s ease-out,
+    background 0.12s ease-out,
     padding 0.12s ease-out;
   overflow: hidden;
 }
@@ -8360,7 +8461,8 @@ body.dark-mode .source-compare-card {
     rgba(99, 140, 255, 0.3) 0%,
     rgba(138, 180, 255, 0.2) 100%
   );
-  box-shadow: 0 4px 16px rgba(99, 140, 255, 0.25),
+  box-shadow:
+    0 4px 16px rgba(99, 140, 255, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   padding: 10px 16px;
 }
@@ -8375,7 +8477,9 @@ body.dark-mode .source-compare-card {
 
 .bottom-nav__icon {
   font-size: 1.3rem;
-  transition: transform 0.2s ease-out, color 0.2s ease-out;
+  transition:
+    transform 0.2s ease-out,
+    color 0.2s ease-out;
   position: relative;
   z-index: 1;
 }
@@ -8388,7 +8492,9 @@ body.dark-mode .source-compare-card {
   opacity: 0;
   max-width: 0;
   overflow: hidden;
-  transition: opacity 0.18s ease-out, max-width 0.2s ease-out;
+  transition:
+    opacity 0.18s ease-out,
+    max-width 0.2s ease-out;
 }
 
 .bottom-nav__button--active .bottom-nav__label {
@@ -8400,12 +8506,17 @@ body.dark-mode .source-compare-card {
 @keyframes navGlow {
   0%,
   100% {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   }
   50% {
-    box-shadow: 0 8px 40px rgba(99, 140, 255, 0.15),
-      0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    box-shadow:
+      0 8px 40px rgba(99, 140, 255, 0.15),
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
       inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   }
 }
@@ -8491,8 +8602,11 @@ body.dark-mode .source-compare-card {
 /* Hover state for desktop - subtle lift */
 @media (hover: hover) {
   .bottom-nav:hover {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      0 4px 12px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -8599,7 +8713,8 @@ body.dark-mode .source-compare-card {
   min-height: 260px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 20% 20%,
       rgba(93, 123, 255, 0.18),
       transparent 55%
@@ -8615,7 +8730,8 @@ body.dark-mode .source-compare-card {
   min-height: 260px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 70% 15%,
       rgba(13, 110, 253, 0.15),
       transparent 60%
@@ -9884,7 +10000,8 @@ body.dark-mode .hourly-item {
 .forecast-pill {
   border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 30% 20%,
       rgba(255, 255, 255, 0.08),
       transparent 65%
@@ -9905,7 +10022,8 @@ body.dark-mode .hourly-item {
 }
 
 body.dark-mode .forecast-pill {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 70% 0%,
       rgba(255, 255, 255, 0.08),
       transparent 55%
@@ -10806,7 +10924,9 @@ body.dark-mode .error-alert.error-success {
   padding: 4px;
   line-height: 1;
   border-radius: 4px;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .error-close:hover {
@@ -13654,7 +13774,8 @@ body.dark-mode .map-inspector {
   border-radius: 18px;
   padding: var(--spacing-sm);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7),
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
     0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
@@ -13684,7 +13805,8 @@ body.dark-mode .map-inspector {
 body.dark-mode .map-overlay-legend {
   background: rgba(15, 23, 42, 0.8);
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 18px 40px rgba(2, 6, 23, 0.55);
   color: #f8fafc;
 }
@@ -14256,12 +14378,18 @@ body.dark-mode .map-inspector {
   border-radius: 24px;
   color: #fff;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
   text-align: left;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
 /* Wide cards should auto-size to content */
@@ -14301,7 +14429,8 @@ body.dark-mode .map-inspector {
     transparent 70%
   );
   transform: translate(-50%, -50%);
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 0;
@@ -14835,9 +14964,13 @@ body.dark-mode .map-inspector {
   padding: var(--space-l);
   margin-bottom: var(--space-m);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -14877,8 +15010,11 @@ body.dark-mode .map-inspector {
     rgba(30, 40, 60, 0.6) 100%
   );
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(24px) saturate(1.8);
   -webkit-backdrop-filter: blur(24px) saturate(1.8);
 }
@@ -15984,7 +16120,10 @@ body.dark-mode .map-inspector {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
   min-height: 100px;
   width: 100%;
   color: inherit;
@@ -16067,7 +16206,9 @@ body.dark-mode .map-inspector {
   padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .outdoor-score-section:hover {
@@ -16736,7 +16877,10 @@ body.dark-mode .map-inspector {
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.15s;
 }
 
 .settings-action-btn:hover {
@@ -16863,7 +17007,9 @@ body.dark-mode .map-inspector {
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 
 .settings-discord-btn:hover {
@@ -17110,7 +17256,9 @@ body.dark-mode .map-inspector {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   z-index: 99999;
   opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
   pointer-events: none;
 }
 
@@ -17368,11 +17516,9 @@ body.dark-mode .map-inspector {
   }
 }
 
-
 /* Re-add missing swarm definitions for radar-view legend */
 
 .radar-view__legend-swatch {
-
   display: inline-block;
 
   width: 12px;
@@ -17384,55 +17530,31 @@ body.dark-mode .map-inspector {
   border: 1px solid rgba(255, 255, 255, 0.2);
 
   flex-shrink: 0;
-
 }
-
-
 
 .radar-view__legend-swatch--rain {
-
   background: linear-gradient(90deg, #4fc3f7, #0288d1);
-
 }
-
-
 
 .radar-view__legend-swatch--snow {
-
   background: linear-gradient(90deg, #e0f7fa, #b3e5fc);
-
 }
-
-
 
 .radar-view__legend-swatch--temp {
-
   background: linear-gradient(90deg, #4fc3f7, #ff7043);
-
 }
-
-
 
 .radar-view__legend-swatch--wind {
-
   background: linear-gradient(90deg, #80cbc4, #004d40);
-
 }
-
-
 
 .radar-view__legend-swatch--clouds {
-
   background: linear-gradient(90deg, #cfd8dc, #90a4ae);
-
 }
-
-
 
 /* Updated Layer Button Style */
 
 .radar-view__layer-btn {
-
   display: flex !important;
 
   align-items: center;
@@ -17464,37 +17586,22 @@ body.dark-mode .map-inspector {
   pointer-events: auto;
 
   transition: all 0.15s ease;
-
 }
-
-
 
 .radar-view__layer-btn span:not(.material-symbols-outlined) {
-
   display: none !important;
-
 }
 
-
-
 .radar-view__layer-btn .material-symbols-outlined {
-
   font-size: 20px;
 
   color: var(--color-text-secondary);
 
   margin: 0 !important;
-
 }
 
-
-
 .radar-view__layer-btn:hover {
-
   background: rgba(255, 255, 255, 0.1);
 
   color: var(--color-text-primary);
-
 }
-
-

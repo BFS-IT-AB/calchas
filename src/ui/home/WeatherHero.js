@@ -177,7 +177,9 @@
 
       <div class="weather-hero__scene" aria-hidden="true">
         <div class="fields-sky-transition"></div>
+        <div class="fields-side-transition-left"></div>
         <div id="frog-hero-pond" class="frog-hero-pond"></div>
+        <div class="fields-side-transition-right"></div>
         <div class="fields-ground-transition"></div>
       </div>
     `;
