@@ -192,34 +192,34 @@ class MapComponent {
                   <div class="popup-item">
                     <span class="popup-label">Temp</span>
                     <span class="popup-value">${current.temperature_2m}${
-              data.current_units.temperature_2m
-            }</span>
+                      data.current_units.temperature_2m
+                    }</span>
                   </div>
                   <div class="popup-item">
                     <span class="popup-label">Wind</span>
                     <span class="popup-value">${
                       current.wind_speed_10m
                     } <small>km/h</small> <span style="display:inline-block; transform: rotate(${
-              current.wind_direction_10m
-            }deg)">↓</span></span>
+                      current.wind_direction_10m
+                    }deg)">↓</span></span>
                   </div>
                   <div class="popup-item">
                     <span class="popup-label">Regen</span>
                     <span class="popup-value">${current.precipitation}${
-              data.current_units.precipitation
-            }</span>
+                      data.current_units.precipitation
+                    }</span>
                   </div>
                   <div class="popup-item">
                     <span class="popup-label">Feuchtigkeit</span>
                     <span class="popup-value">${current.relative_humidity_2m}${
-              data.current_units.relative_humidity_2m
-            }</span>
+                      data.current_units.relative_humidity_2m
+                    }</span>
                   </div>
                   <div class="popup-item">
                     <span class="popup-label">Wolken</span>
                     <span class="popup-value">${current.cloud_cover}${
-              data.current_units.cloud_cover
-            }</span>
+                      data.current_units.cloud_cover
+                    }</span>
                   </div>
                   <div class="popup-item">
                     <span class="popup-label">Sichtweite</span>
@@ -603,10 +603,10 @@ class MapComponent {
         delete this.overlays[layerType];
       }
 
-      // Overlay Layer hinzufügen (höhere Deckkraft für bessere Sichtbarkeit)
+      // Overlay Layer hinzufügen (angepasste Deckkraft für bessere Lesbarkeit der Karte)
       const overlayLayer = L.tileLayer(layerUrl, {
         attribution,
-        opacity: 1.0, // Maximum visibility
+        opacity: 0.6, // Reduced intensity as requested
         maxZoom: 18,
       }).addTo(this.map);
 
@@ -930,7 +930,10 @@ class MapComponent {
       );
 
       // Regenerate RadarController frames now that data is available
-      if (global.RadarController && typeof global.RadarController.regenerateFrames === "function") {
+      if (
+        global.RadarController &&
+        typeof global.RadarController.regenerateFrames === "function"
+      ) {
         global.RadarController.regenerateFrames();
       }
 
