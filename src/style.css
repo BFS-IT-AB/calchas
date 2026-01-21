@@ -8259,7 +8259,7 @@ body.dark-mode .source-compare-card {
   width: 100%;
   position: relative;
   z-index: 1;
-  margin-top: 0;
+  margin-top: 8px;
   margin-bottom: 0;
   overflow: hidden;
   border-radius: 24px;
