@@ -490,15 +490,21 @@
           <div class="hv-comparison__header">
             <h2 class="hv-comparison__title">Temperaturabweichung vs Jahresdurchschnitt</h2>
             <div class="hv-comparison__selectors">
-              <div class="hv-select-wrap">
-                <select class="hv-select" id="month1-select">
-                  ${this._renderMonthOptions(this.comparisonMonth1)}
-                </select>
+              <div class="hv-month-selector">
+                <label class="hv-month-selector__label">Monat 1</label>
+                <div class="hv-month-buttons">
+                  <button class="hv-month-btn hv-month-btn--prev" data-selector="month1-prev">←</button>
+                  <span class="hv-month-display" id="month1-display">${this._formatMonthDisplay(this.comparisonMonth1)}</span>
+                  <button class="hv-month-btn hv-month-btn--next" data-selector="month1-next">→</button>
+                </div>
               </div>
-              <div class="hv-select-wrap">
-                <select class="hv-select" id="month2-select">
-                  ${this._renderMonthOptions(this.comparisonMonth2)}
-                </select>
+              <div class="hv-month-selector">
+                <label class="hv-month-selector__label">Monat 2</label>
+                <div class="hv-month-buttons">
+                  <button class="hv-month-btn hv-month-btn--prev" data-selector="month2-prev">←</button>
+                  <span class="hv-month-display" id="month2-display">${this._formatMonthDisplay(this.comparisonMonth2)}</span>
+                  <button class="hv-month-btn hv-month-btn--next" data-selector="month2-next">→</button>
+                </div>
               </div>
             </div>
           </div>
@@ -584,8 +590,11 @@
     }
 
     _renderMonthOptions(selected) {
-      const options = [];
-      const now = new Date();
+      // This function is deprecated - use _formatMonthDisplay instead
+      return "";
+    }
+
+    _formatMonthDisplay(monthObj) {
       const monthNames = [
         "Januar",
         "Februar",
@@ -600,19 +609,25 @@
         "November",
         "Dezember",
       ];
+      return `${monthNames[monthObj.month]} ${monthObj.year}`;
+    }
 
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const value = `${d.getFullYear()}-${d.getMonth()}`;
-        const isSelected =
-          d.getFullYear() === selected.year && d.getMonth() === selected.month;
-        options.push(
-          `<option value="${value}" ${isSelected ? "selected" : ""}>${
-            monthNames[d.getMonth()]
-          } ${d.getFullYear()}</option>`
-        );
+    _changeMonth(selector, direction) {
+      const monthObj = selector === "month1"
+        ? this.comparisonMonth1
+        : this.comparisonMonth2;
+
+      const newDate = new Date(monthObj.year, monthObj.month + direction, 1);
+      const newMonth = {
+        year: newDate.getFullYear(),
+        month: newDate.getMonth(),
+      };
+
+      if (selector === "month1") {
+        this.comparisonMonth1 = newMonth;
+      } else {
+        this.comparisonMonth2 = newMonth;
       }
-      return options.join("");
     }
 
     _renderDeviationChart(month1Data, month2Data, avgData, m1Label, m2Label) {
@@ -622,42 +637,54 @@
       const chartW = width - padding.left - padding.right;
       const chartH = height - padding.top - padding.bottom;
 
-      // Aggregate data by day of month
+      // Aggregate data by day of month - choose metric
       const maxDays = 31;
-      const m1Temps = this._aggregateByDay(month1Data);
-      const m2Temps = this._aggregateByDay(month2Data);
-      const avgTemp = avgData.avgTemp;
+      let m1Values, m2Values, avgValue, yLabel, unit, minVal, maxVal;
 
-      const allTemps = [...m1Temps, ...m2Temps].filter((t) => t != null);
-      if (allTemps.length === 0) {
+      if (this.comparisonMetric === "precipitation") {
+        m1Values = this._aggregatePrecipByDay(month1Data);
+        m2Values = this._aggregatePrecipByDay(month2Data);
+        avgValue = avgData.avgPrecip || 0;
+        yLabel = "Niederschlag (mm)";
+        unit = "mm";
+      } else {
+        m1Values = this._aggregateByDay(month1Data);
+        m2Values = this._aggregateByDay(month2Data);
+        avgValue = avgData.avgTemp;
+        yLabel = "Temperatur (°C)";
+        unit = "°";
+      }
+
+      const allValues = [...m1Values, ...m2Values].filter((v) => v != null);
+      if (allValues.length === 0) {
         return `<div class="hv-chart-empty">Keine Daten für den Vergleich</div>`;
       }
 
-      const minT = Math.floor(Math.min(...allTemps, avgTemp) - 3);
-      const maxT = Math.ceil(Math.max(...allTemps, avgTemp) + 3);
-      const range = maxT - minT || 10;
+      minVal = Math.floor(Math.min(...allValues, avgValue) - 3);
+      maxVal = Math.ceil(Math.max(...allValues, avgValue) + 3);
+      const range = maxVal - minVal || 10;
 
       const xScale = (i) => padding.left + (i / (maxDays - 1)) * chartW;
       const yScale = (v) =>
-        padding.top + chartH - ((v - minT) / range) * chartH;
+        padding.top + chartH - ((v - minVal) / range) * chartH;
 
       // Build line paths
       let m1Line = "";
       let m2Line = "";
 
       for (let i = 0; i < maxDays; i++) {
-        if (m1Temps[i] != null) {
+        if (m1Values[i] != null) {
           m1Line +=
-            (m1Line ? " L" : "M") + `${xScale(i)},${yScale(m1Temps[i])}`;
+            (m1Line ? " L" : "M") + `${xScale(i)},${yScale(m1Values[i])}`;
         }
-        if (m2Temps[i] != null) {
+        if (m2Values[i] != null) {
           m2Line +=
-            (m2Line ? " L" : "M") + `${xScale(i)},${yScale(m2Temps[i])}`;
+            (m2Line ? " L" : "M") + `${xScale(i)},${yScale(m2Values[i])}`;
         }
       }
 
       // Average line
-      const avgY = yScale(avgTemp);
+      const avgY = yScale(avgValue);
 
       return `
         <svg class="hv-chart hv-chart--comparison" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
@@ -687,12 +714,12 @@
           <path d="${m2Line}" fill="none" stroke="#4ECDC4" stroke-width="2.5" stroke-linecap="round"/>
 
           <!-- Y axis labels -->
-          ${[minT, minT + range / 2, maxT]
+          ${[minVal, minVal + range / 2, maxVal]
             .map(
               (v) =>
                 `<text x="${padding.left - 8}" y="${
                   yScale(v) + 4
-                }" class="hv-chart-label">${Math.round(v)}°</text>`
+                }" class="hv-chart-label">${Math.round(v)}${unit}</text>`
             )
             .join("")}
 
@@ -969,7 +996,13 @@
       const temps = this.historyData
         .flatMap((d) => [d.temp_min, d.temp_max])
         .filter((t) => t != null);
-      return { avgTemp: this._average(temps) };
+      const precips = this.historyData
+        .map((d) => d.precip || 0)
+        .filter((p) => p != null);
+      return {
+        avgTemp: this._average(temps),
+        avgPrecip: this._average(precips),
+      };
     }
 
     _aggregateByDay(data) {
@@ -979,6 +1012,17 @@
         if (day >= 0 && day < 31) {
           const avg = ((d.temp_max || 0) + (d.temp_min || 0)) / 2;
           byDay[day] = avg;
+        }
+      });
+      return byDay;
+    }
+
+    _aggregatePrecipByDay(data) {
+      const byDay = new Array(31).fill(null);
+      data.forEach((d) => {
+        const day = new Date(d.date).getDate() - 1;
+        if (day >= 0 && day < 31) {
+          byDay[day] = d.precip || 0;
         }
       });
       return byDay;
@@ -1097,24 +1141,19 @@
         });
       }
 
-      // Month selectors (Comparison view)
-      const month1Select = container.querySelector("#month1-select");
-      if (month1Select) {
-        month1Select.addEventListener("change", (e) => {
-          const [year, month] = e.target.value.split("-").map(Number);
-          this.comparisonMonth1 = { year, month };
-          this._renderView(container);
-        });
-      }
+      // Month selector buttons (Comparison view)
+      const monthButtons = container.querySelectorAll(".hv-month-btn");
+      monthButtons.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const selector = e.currentTarget.dataset.selector;
+          const [month, direction] = selector.includes("prev")
+            ? [selector.replace("-prev", ""), -1]
+            : [selector.replace("-next", ""), 1];
 
-      const month2Select = container.querySelector("#month2-select");
-      if (month2Select) {
-        month2Select.addEventListener("change", (e) => {
-          const [year, month] = e.target.value.split("-").map(Number);
-          this.comparisonMonth2 = { year, month };
+          this._changeMonth(month, direction);
           this._renderView(container);
         });
-      }
+      });
 
       // Metric toggle
       const metricToggle = container.querySelector("#metric-toggle");

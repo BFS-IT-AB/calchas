@@ -21,7 +21,7 @@ class MapComponent {
     this.overlays = {}; // Store overlay layers for management
     // visual anchor offset in pixels: panBy([x,y]) applied after centering
     // default shifts map content left and down (left: negative x, down: positive y)
-    this.anchorOffset = { x: 150, y: 200 };
+    this.anchorOffset = { x: 10, y: 10 };
 
     // --- RainViewer Integration ---
     this.rainViewerCache = [];
