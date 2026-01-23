@@ -2771,6 +2771,27 @@ body.mobile-app #legacy-content {
   margin: 0;
 }
 
+.hv-calendar__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text, #f1f3f6);
+  margin: 0;
+}
+
+.hv-calendar__add {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 8px;
+  color: var(--color-text, #f1f3f6);
+  font-size: 20px;
+  cursor: pointer;
+}
+
 .hv-calendar__nav {
   display: flex;
   justify-content: space-between;
@@ -7592,8 +7613,9 @@ body.dark-mode .source-compare-card {
 
 .hourly-card__scroll {
   display: flex;
-  gap: var(--space-m);
+  gap: 13px;
   overflow-x: auto;
+  padding: var(--space-s) 10px;
   padding-bottom: var(--space-s);
   padding-top: var(--space-s);
   scroll-snap-type: x mandatory;
@@ -7614,7 +7636,7 @@ body.dark-mode .source-compare-card {
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  flex: 0 0 calc(33.333% - (2 * var(--space-m) / 3));
+  flex: 0 0 calc(28.333% - (2 * var(--space-m) / 3));
   scroll-snap-align: start;
   /* Liquid Glass Design */
   background: linear-gradient(
