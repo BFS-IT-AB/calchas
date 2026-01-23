@@ -2765,24 +2765,10 @@ body.mobile-app #legacy-content {
 }
 
 .hv-calendar__title {
-  font-size: 18px;
+  font-size: 35px;
   font-weight: 600;
   color: var(--color-text, #f1f3f6);
   margin: 0;
-}
-
-.hv-calendar__add {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  border-radius: 8px;
-  color: var(--color-text, #f1f3f6);
-  font-size: 20px;
-  cursor: pointer;
 }
 
 .hv-calendar__nav {

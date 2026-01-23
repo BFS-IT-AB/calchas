@@ -807,7 +807,6 @@
         <div class="hv-calendar">
           <div class="hv-calendar__header">
             <h2 class="hv-calendar__title">Visualisierung</h2>
-            <button class="hv-calendar__add">+</button>
           </div>
 
           <div class="hv-calendar__nav">
