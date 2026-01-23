@@ -380,7 +380,7 @@
           <span class="hourly-card__icon">🕐</span>
           <h2 class="hourly-card__title">Stündliche Vorhersage</h2>
         </div>
-        <div class="hourly-card__scroll">
+        <div class="hourly-card__scroll" style="margin-left: 10px;">
           ${items}
         </div>
       </div>
