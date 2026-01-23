@@ -7778,9 +7778,14 @@ body.dark-mode .source-compare-card {
 
 .daily-card__grid {
   display: flex;
-  gap: var(--space-s);
+  gap: 17px;
   overflow-x: auto;
   padding-bottom: var(--space-s);
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-left: calc(50% - 96px);
+  padding-right: calc(50% - 116px);
+  scroll-padding: 50% - 96px;
 }
 
 .daily-item {
@@ -7790,6 +7795,8 @@ body.dark-mode .source-compare-card {
   gap: 6px;
   min-width: 64px;
   padding: var(--space-m) var(--space-s);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
   /* Liquid Glass Design */
   background: linear-gradient(
     135deg,
