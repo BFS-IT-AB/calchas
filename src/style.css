@@ -1345,10 +1345,15 @@ body.dark-mode a {
 /* Andere Views bekommen Padding */
 [data-view="health"],
 [data-view="radar"],
-[data-view="history"],
 [data-view="settings"] {
   padding: 0 var(--space-l);
   background: var(--theme-bg);
+}
+
+/* History View - kein Padding, kein globaler Background (wird in history.css gehandhabt) */
+[data-view="history"] {
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 [data-view="settings"] {

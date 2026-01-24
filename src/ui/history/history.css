@@ -5,6 +5,44 @@
  */
 
 /* ============================================
+   FORCE HIDE HOME PAGE BACKGROUND FIELDS
+============================================ */
+/* Verstecke alle fields-transition-Elemente auf der History-Seite */
+[data-view="history"] .fields-ground-transition,
+[data-view="history"] .fields-sky-transition,
+[data-view="history"] .fields-side-transition-left,
+[data-view="history"] .fields-side-transition-right,
+.history-page .fields-ground-transition,
+.history-page .fields-sky-transition,
+.history-page .fields-side-transition-left,
+.history-page .fields-side-transition-right {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Verstecke komplett den Weather Hero und seine Scene auf der History-Seite */
+[data-view="history"] .weather-hero,
+[data-view="history"] .weather-hero__scene,
+[data-view="history"] .frog-hero-pond,
+[data-view="history"] #weather-hero,
+.history-page .weather-hero,
+.history-page .weather-hero__scene,
+.history-page .frog-hero-pond,
+.history-page #weather-hero {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* KRITISCH: Überschreibe ALLE dynamischen CSS-Variablen von der Home-Seite */
+[data-view="history"],
+[data-view="history"] *,
+[data-view="history"] .app-view,
+[data-view="history"] .app-view__content,
+
+/* ============================================
    CSS VARIABLES - Native App Design System
 ============================================ */
 :root {
@@ -138,8 +176,8 @@
 
   /* Glass morphism effect */
   background: var(--history-surface-glass);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 
   /* Subtle bottom border */
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -233,8 +271,8 @@
 
   /* Glass effect matching top bar */
   background: var(--history-surface-glass);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
   box-sizing: border-box;
@@ -1164,8 +1202,8 @@
     rgba(20, 25, 35, 0.98) 0%,
     rgba(15, 20, 30, 0.99) 100%
   );
-  backdrop-filter: blur(24px) saturate(1.5);
-  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-top-left-radius: var(--history-radius-xl);
   border-top-right-radius: var(--history-radius-xl);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
