@@ -44,8 +44,8 @@ class WeatherDisplayComponent {
         const primarySeries = filteredHourly.length
           ? filteredHourly
           : openHourly.length
-          ? openHourly
-          : brightHourly;
+            ? openHourly
+            : brightHourly;
         currentHour = primarySeries[0];
       }
 
@@ -75,7 +75,7 @@ class WeatherDisplayComponent {
           : daySnapshot?.summary?.humidityAvg;
       const precipitationSum = daySnapshot?.summary?.precipitationSum;
       const precipitationProb = Array.isArray(
-        daySnapshot?.precipitationTimeline
+        daySnapshot?.precipitationTimeline,
       )
         ? daySnapshot.precipitationTimeline.reduce((acc, slot) => {
             if (typeof slot?.probability !== "number") return acc;
@@ -137,18 +137,18 @@ class WeatherDisplayComponent {
       const astroPanel = this._renderLocationAstro(
         weatherData.locationDetails,
         weatherData.sunEvents,
-        weatherData.moonPhase
+        weatherData.moonPhase,
       );
 
       const heroBadges = [];
       if (typeof daySnapshot?.summary?.tempMax === "number") {
         heroBadges.push(
-          `⬆️ Max ${this._formatTempValue(daySnapshot.summary.tempMax)}`
+          `⬆️ Max ${this._formatTempValue(daySnapshot.summary.tempMax)}`,
         );
       }
       if (typeof daySnapshot?.summary?.tempMin === "number") {
         heroBadges.push(
-          `⬇️ Min ${this._formatTempValue(daySnapshot.summary.tempMin)}`
+          `⬇️ Min ${this._formatTempValue(daySnapshot.summary.tempMin)}`,
         );
       }
       if (typeof precipitationProb === "number" && precipitationProb > 0) {
@@ -161,13 +161,13 @@ class WeatherDisplayComponent {
         heroBadges.push(
           `🫧 AQI ${Math.round(airQuality.european.value)} · ${
             airQuality.european.label || ""
-          }`
+          }`,
         );
       } else if (airQuality?.us?.value) {
         heroBadges.push(
           `🫧 AQI ${Math.round(airQuality.us.value)} · ${
             airQuality.us.label || ""
-          }`
+          }`,
         );
       }
 
@@ -185,7 +185,7 @@ class WeatherDisplayComponent {
               <strong>${metric.value || "--"}</strong>
               <small>${metric.hint || ""}</small>
             </article>
-          `
+          `,
         )
         .join("");
 
@@ -208,11 +208,11 @@ class WeatherDisplayComponent {
             <div class="location-header">
               <h2 class="location-name">${this._escapeHtml(city)}</h2>
               <button id="favoriteToggle" class="btn-icon favorite-toggle" data-city="${this._escapeHtml(
-                city
+                city,
               )}" aria-label="Favorit setzen">☆</button>
             </div>
             <p class="hero-temperature" id="current-temp">${this._formatTempValue(
-              currentHour.temperature
+              currentHour.temperature,
             )}</p>
             <div class="hero-meta">
               <span id="current-desc">${this._escapeHtml(description)}</span>
@@ -234,13 +234,13 @@ class WeatherDisplayComponent {
           <div class="detail-item">
             <span class="detail-label">💨 Wind</span>
             <span class="detail-value" id="wind-speed">${this._formatWindValue(
-              currentHour.windSpeed
+              currentHour.windSpeed,
             )}${windDirection ? ` · ${windDirection}` : ""}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">💧 Luftfeuchte</span>
             <span class="detail-value" id="humidity">${this._formatPercentValue(
-              humidity
+              humidity,
             )}</span>
           </div>
           <div class="detail-item">
@@ -261,7 +261,7 @@ class WeatherDisplayComponent {
       } catch (panelError) {
         console.warn(
           "Tagesübersicht konnte nicht gerendert werden",
-          panelError
+          panelError,
         );
       }
 
@@ -270,7 +270,7 @@ class WeatherDisplayComponent {
       } catch (climateError) {
         console.warn(
           "Klima-Panels konnten nicht gerendert werden",
-          climateError
+          climateError,
         );
       }
 
@@ -286,7 +286,7 @@ class WeatherDisplayComponent {
       } catch (insightError) {
         console.warn(
           "Daily Insights Panel konnte nicht gerendert werden",
-          insightError
+          insightError,
         );
       }
       this._updateCurrentTime();
@@ -325,10 +325,10 @@ class WeatherDisplayComponent {
     if (!descriptor) {
       return `
         <span class="${classes.join(
-          " "
+          " ",
         )}" role="img" aria-label="${this._escapeHtml(
-        options.fallbackLabel || "Wetter Symbol"
-      )}">
+          options.fallbackLabel || "Wetter Symbol",
+        )}">
           ${this._escapeHtml(fallbackEmoji)}
         </span>
       `;
@@ -346,7 +346,7 @@ class WeatherDisplayComponent {
     if (descriptor.lottie) {
       return `
         <span class="${classes.join(
-          " "
+          " ",
         )}" role="img" aria-label="${this._escapeHtml(ariaLabel)}">
           <lottie-player
             src="${descriptor.lottie[theme] || descriptor.lottie.light}"
@@ -372,7 +372,7 @@ class WeatherDisplayComponent {
 
     return `
       <span class="${classes.join(
-        " "
+        " ",
       )}" role="img" aria-label="${this._escapeHtml(ariaLabel)}">
         ${this._escapeHtml(fallbackEmoji)}
       </span>
@@ -544,7 +544,7 @@ class WeatherDisplayComponent {
       options.fallbackLabel,
     ];
     const found = keywordSources.find(
-      (value) => typeof value === "string" && value.trim().length
+      (value) => typeof value === "string" && value.trim().length,
     );
     return found ? found.trim() : "";
   }
@@ -687,7 +687,7 @@ class WeatherDisplayComponent {
       `;
 
       const existingBlock = target.querySelector(
-        `[data-hourly-source="${source || "primär"}"]`
+        `[data-hourly-source="${source || "primär"}"]`,
       );
       if (existingBlock) {
         existingBlock.outerHTML = hourlyHtml;
@@ -696,7 +696,7 @@ class WeatherDisplayComponent {
       }
 
       const updatedBlock = target.querySelector(
-        `[data-hourly-source="${source || "primär"}"]`
+        `[data-hourly-source="${source || "primär"}"]`,
       );
       this._setupHourlyScroll(updatedBlock || target);
     } catch (error) {
@@ -740,7 +740,7 @@ class WeatherDisplayComponent {
           this._renderForecastPill(day, {
             index,
             isActive: index === todayIndex,
-          })
+          }),
         )
         .join("");
 
@@ -752,7 +752,7 @@ class WeatherDisplayComponent {
               <h2>Die nächsten Tage</h2>
             </div>
             <div class="forecast-pill-meta">${this._buildForecastMeta(
-              normalizedDays.length
+              normalizedDays.length,
             )}</div>
           </div>
           <div class="forecast-pill-list" role="list">
@@ -800,8 +800,8 @@ class WeatherDisplayComponent {
             typeof slot.hour === "number"
               ? slot.hour
               : dt && !Number.isNaN(dt.getTime())
-              ? dt.getHours()
-              : null;
+                ? dt.getHours()
+                : null;
           const precipProb =
             slot.precipitationProbability ?? slot.precipProb ?? null;
           return {
@@ -822,7 +822,7 @@ class WeatherDisplayComponent {
 
     const temps = hourGrid
       .map((slot) =>
-        typeof slot.temperature === "number" ? slot.temperature : null
+        typeof slot.temperature === "number" ? slot.temperature : null,
       )
       .filter((value) => value !== null);
     const summaryBase = {
@@ -830,14 +830,14 @@ class WeatherDisplayComponent {
         typeof day.tempMax === "number"
           ? day.tempMax
           : temps.length
-          ? Math.max(...temps)
-          : null,
+            ? Math.max(...temps)
+            : null,
       tempMin:
         typeof day.tempMin === "number"
           ? day.tempMin
           : temps.length
-          ? Math.min(...temps)
-          : null,
+            ? Math.min(...temps)
+            : null,
       humidityAvg: this._averageField(hourGrid, "humidity"),
       precipitationSum:
         typeof day.precipitationSum === "number"
@@ -916,8 +916,8 @@ class WeatherDisplayComponent {
     }
     return `
       <button type="button" class="${classes.join(" ")}" data-day-index="${
-      options.index
-    }" data-day-id="${day?.date || ""}" role="listitem">
+        options.index
+      }" data-day-id="${day?.date || ""}" role="listitem">
         <div class="forecast-pill-temps">
           <strong>${temps.max}</strong>
           <span>${temps.min}</span>
@@ -1023,7 +1023,7 @@ class WeatherDisplayComponent {
     const prevBtn = this.forecastContainer.querySelector(".forecast-nav-prev");
     const nextBtn = this.forecastContainer.querySelector(".forecast-nav-next");
     const indicator = this.forecastContainer.querySelector(
-      ".forecast-carousel-indicator"
+      ".forecast-carousel-indicator",
     );
 
     if (!track || !prevBtn || !nextBtn) {
@@ -1189,14 +1189,14 @@ class WeatherDisplayComponent {
     const precipBars = this._renderPrecipBars(day?.precipitationTimeline);
     const windCompass = this._renderWindCompass(
       day?.summary?.wind?.directionDeg,
-      day?.summary?.wind?.cardinal
+      day?.summary?.wind?.cardinal,
     );
     const hourlyPreview = this._renderInlineHourGrid(day?.hourGrid);
 
     return `
       <article class="forecast-card advanced" data-day-index="${idx}" tabindex="0" aria-label="Vorhersage für ${
-      day?.label
-    }">
+        day?.label
+      }">
         <header class="forecast-card-header">
           <div>
             <p class="forecast-date">${day?.label || ""}</p>
@@ -1322,7 +1322,7 @@ class WeatherDisplayComponent {
       typeof details.longitude === "number"
     ) {
       const coords = `${details.latitude.toFixed(
-        2
+        2,
       )}°, ${details.longitude.toFixed(2)}°`;
       infoItems.push(`📌 ${this._escapeHtml(coords)}`);
     }
@@ -1377,11 +1377,11 @@ class WeatherDisplayComponent {
       }
       const nauticalDawn = this._formatTimeLabel(
         sunEvents.nautical?.dawn,
-        timeZone
+        timeZone,
       );
       const nauticalDusk = this._formatTimeLabel(
         sunEvents.nautical?.dusk,
-        timeZone
+        timeZone,
       );
       if (nauticalDawn || nauticalDusk) {
         rows.push(`
@@ -1389,8 +1389,8 @@ class WeatherDisplayComponent {
             <span class="astro-label">🌊 Nautisch</span>
             <div class="astro-value">
               <small>${nauticalDawn || "--:--"} · ${
-          nauticalDusk || "--:--"
-        }</small>
+                nauticalDusk || "--:--"
+              }</small>
             </div>
           </div>
         `);
@@ -1411,7 +1411,7 @@ class WeatherDisplayComponent {
       rows.push(`
         <div class="astro-row">
           <span class="astro-label">🌙 ${this._escapeHtml(
-            moonPhase.phase || "Mondphase"
+            moonPhase.phase || "Mondphase",
           )}</span>
           <div class="astro-value">
             <strong>${illumination || "--"}</strong>
@@ -1460,7 +1460,7 @@ class WeatherDisplayComponent {
             const classes = ["precip-bar"];
             if (slot.isDay === 0) classes.push("is-night");
             return `<span class="${classes.join(
-              " "
+              " ",
             )}" style="--precip-height:${height}%;" title="${
               slot.hour
             }:00 · ${amount.toFixed(1)}mm ${prob}"></span>`;
@@ -1490,7 +1490,7 @@ class WeatherDisplayComponent {
           fallbackLabel: slot?.description,
         });
         return `<span class="${classes.join(
-          " "
+          " ",
         )}"><strong>${hourLabel}</strong>${icon}<span>${temp}</span></span>`;
       })
       .join("");
@@ -1514,7 +1514,7 @@ class WeatherDisplayComponent {
       label = "mittel";
     }
     return `<span class="uv-chip uv-${severity}">UV ${value.toFixed(
-      1
+      1,
     )} · ${label}</span>`;
   }
 
@@ -1607,7 +1607,7 @@ class WeatherDisplayComponent {
     const bullets = this._buildDailyOverviewBullets(
       day,
       currentHour,
-      airQuality
+      airQuality,
     );
     container.innerHTML = `
       <div class="overview-shell">
@@ -1625,7 +1625,7 @@ class WeatherDisplayComponent {
   _buildDailyOverviewBullets(day, currentHour, airQuality) {
     const bullets = [];
     const humidity = Math.round(
-      day.summary?.humidityAvg ?? currentHour?.humidity ?? 0
+      day.summary?.humidityAvg ?? currentHour?.humidity ?? 0,
     );
     const dewPoint =
       typeof day.summary?.dewPointAvg === "number"
@@ -1644,8 +1644,8 @@ class WeatherDisplayComponent {
     ) {
       bullets.push(
         `Erwarte einen Temperaturbereich von ${this._formatTempValue(
-          day.summary.tempMin
-        )} bis ${this._formatTempValue(day.summary.tempMax)}.`
+          day.summary.tempMin,
+        )} bis ${this._formatTempValue(day.summary.tempMax)}.`,
       );
     }
     const precipSum = day.summary?.precipitationSum;
@@ -1661,7 +1661,7 @@ class WeatherDisplayComponent {
           ? ` · ${Math.round(precipProb)}% Wahrscheinlichkeit`
           : "";
       bullets.push(
-        `${precipSum.toFixed(1)} mm Niederschlag im Tagesverlauf${probText}.`
+        `${precipSum.toFixed(1)} mm Niederschlag im Tagesverlauf${probText}.`,
       );
     }
     const daylightMinutes = day.sun?.daylightMinutes;
@@ -1669,7 +1669,7 @@ class WeatherDisplayComponent {
       const hours = Math.floor(daylightMinutes / 60);
       const minutes = daylightMinutes % 60;
       bullets.push(
-        `Tageslänge: ${hours} Std ${minutes.toString().padStart(2, "0")} Min.`
+        `Tageslänge: ${hours} Std ${minutes.toString().padStart(2, "0")} Min.`,
       );
     }
     const airQualityLabel = this._resolveAirQualityLabel(airQuality);
@@ -1686,7 +1686,7 @@ class WeatherDisplayComponent {
     if (!airQuality) return null;
     if (airQuality.european?.value !== null && airQuality.european?.label) {
       return `Luftqualität: ${airQuality.european.label} (EU AQI ${Math.round(
-        airQuality.european.value
+        airQuality.european.value,
       )}).`;
     }
     if (airQuality.us?.value !== null && airQuality.us?.label) {
@@ -1767,8 +1767,8 @@ class WeatherDisplayComponent {
           typeof day?.summary?.uvIndexMax === "number"
             ? day.summary.uvIndexMax.toFixed(1)
             : typeof currentHour.uvIndex === "number"
-            ? currentHour.uvIndex.toFixed(1)
-            : "--",
+              ? currentHour.uvIndex.toFixed(1)
+              : "--",
         detail: "Peak heute",
         accent: "amber",
         icon: "☀️",
@@ -1780,9 +1780,9 @@ class WeatherDisplayComponent {
           airQuality?.european?.value !== undefined
             ? airQuality.european.value.toFixed(0)
             : airQuality?.us?.value !== null &&
-              airQuality?.us?.value !== undefined
-            ? airQuality.us.value.toFixed(0)
-            : "--",
+                airQuality?.us?.value !== undefined
+              ? airQuality.us.value.toFixed(0)
+              : "--",
         detail:
           airQuality?.european?.label || airQuality?.us?.label || "Keine Daten",
         accent: "plum",
@@ -1800,7 +1800,7 @@ class WeatherDisplayComponent {
               <strong>${card.value || "--"}</strong>
               <small>${card.title}</small>
               ${card.detail ? `<small>${card.detail}</small>` : ""}
-            </article>`
+            </article>`,
           )
           .join("")}
       </div>
@@ -1826,25 +1826,25 @@ class WeatherDisplayComponent {
 
     const hourGrid = Array.isArray(day.hourGrid) ? day.hourGrid : [];
     const dewSeries = hourGrid.map((slot) =>
-      typeof slot?.dewPoint === "number" ? slot.dewPoint : null
+      typeof slot?.dewPoint === "number" ? slot.dewPoint : null,
     );
     const humiditySeries = hourGrid.map((slot) =>
-      typeof slot?.humidity === "number" ? slot.humidity : null
+      typeof slot?.humidity === "number" ? slot.humidity : null,
     );
     const windDirectionSeries = hourGrid.map((slot) =>
-      typeof slot?.windDirection === "number" ? slot.windDirection : null
+      typeof slot?.windDirection === "number" ? slot.windDirection : null,
     );
     const precipSeries = (day.precipitationTimeline || []).map((slot) =>
-      typeof slot?.amount === "number" ? slot.amount : 0
+      typeof slot?.amount === "number" ? slot.amount : 0,
     );
     const precipProbabilities = (day.precipitationTimeline || []).map((slot) =>
-      typeof slot?.probability === "number" ? slot.probability : 0
+      typeof slot?.probability === "number" ? slot.probability : 0,
     );
     const uvSeries = (day.uvTimeline || []).map((slot) =>
-      typeof slot?.value === "number" ? slot.value : null
+      typeof slot?.value === "number" ? slot.value : null,
     );
     const sunSeries = hourGrid.map((slot) =>
-      typeof slot?.isDay === "number" ? slot.isDay : slot?.isDay ? 1 : 0
+      typeof slot?.isDay === "number" ? slot.isDay : slot?.isDay ? 1 : 0,
     );
     const daylightMinutes = day.sun?.daylightMinutes ?? null;
     const daylightLabel =
@@ -1886,8 +1886,8 @@ class WeatherDisplayComponent {
               typeof value === "number" && (acc === null || value > acc)
                 ? value
                 : acc,
-            null
-          )
+            null,
+          ),
         ),
       }),
       this._renderInsightCard({
@@ -1912,8 +1912,8 @@ class WeatherDisplayComponent {
               typeof value === "number" && (acc === null || value < acc)
                 ? value
                 : acc,
-            null
-          )
+            null,
+          ),
         ),
       }),
       this._renderInsightCard({
@@ -2021,7 +2021,7 @@ class WeatherDisplayComponent {
     if (this._forecastDetailHandlers) {
       this.forecastContainer.removeEventListener(
         "click",
-        this._forecastDetailHandlers.click
+        this._forecastDetailHandlers.click,
       );
       this._forecastDetailHandlers = null;
     }
@@ -2075,6 +2075,7 @@ class WeatherDisplayComponent {
         <div class="day-detail-body detail-theme detail-shell">${detailMarkup}</div>
       </div>
     `;
+    modal.hidden = false;
     modal.classList.add("is-visible");
     const closeBtn = modal.querySelector(".day-detail-close");
     if (closeBtn) {
@@ -2103,6 +2104,7 @@ class WeatherDisplayComponent {
     const modal = document.getElementById("day-detail-modal");
     if (modal) {
       modal.classList.remove("is-visible");
+      modal.hidden = true;
       modal.innerHTML = "";
     }
     if (this._detailEscapeHandler) {
@@ -2150,7 +2152,7 @@ class WeatherDisplayComponent {
             <span>${entry.label}</span>
             <strong>${entry.value}</strong>
           </article>
-        `
+        `,
       )
       .join("");
 
@@ -2160,7 +2162,7 @@ class WeatherDisplayComponent {
         primary: this._formatPercentValue(day?.summary?.humidityAvg),
         sparkline: this._buildSparkline(
           (day.hourGrid || []).map((slot) => slot?.humidity ?? null),
-          { area: true }
+          { area: true },
         ),
       }),
       this._renderInsightCard({
@@ -2171,7 +2173,7 @@ class WeatherDisplayComponent {
             : "--",
         sparkline: this._buildSparkline(
           (day.precipitationTimeline || []).map((slot) => slot?.amount ?? 0),
-          { area: true }
+          { area: true },
         ),
       }),
       this._renderInsightCard({
@@ -2181,7 +2183,7 @@ class WeatherDisplayComponent {
         }`,
         sparkline: this._buildSparkline(
           (day.hourGrid || []).map((slot) => slot?.windDirection ?? null),
-          { min: 0, max: 360 }
+          { min: 0, max: 360 },
         ),
       }),
       this._renderInsightCard({
@@ -2192,7 +2194,7 @@ class WeatherDisplayComponent {
             : "--",
         sparkline: this._buildSparkline(
           (day.uvTimeline || []).map((slot) => slot?.value ?? null),
-          { area: true }
+          { area: true },
         ),
       }),
     ].join("");
@@ -2313,7 +2315,7 @@ class WeatherDisplayComponent {
           sourceMeta.find(
             (entry) =>
               typeof entry?.name === "string" &&
-              entry.name.toLowerCase().includes(label.toLowerCase())
+              entry.name.toLowerCase().includes(label.toLowerCase()),
           ) || null
         );
       };
@@ -2366,20 +2368,20 @@ class WeatherDisplayComponent {
             typeof sourceSample.temperature === "number"
               ? sourceSample.temperature
               : typeof sourceSample.temp === "number"
-              ? sourceSample.temp
-              : null;
+                ? sourceSample.temp
+                : null;
           result.wind =
             typeof sourceSample.windSpeed === "number"
               ? sourceSample.windSpeed
               : typeof sourceSample.wind === "number"
-              ? sourceSample.wind
-              : null;
+                ? sourceSample.wind
+                : null;
           result.humidity =
             typeof sourceSample.humidity === "number"
               ? sourceSample.humidity
               : typeof sourceSample.relativeHumidity === "number"
-              ? sourceSample.relativeHumidity
-              : null;
+                ? sourceSample.relativeHumidity
+                : null;
           result.emoji = sourceSample.emoji || "";
           result.icon = this._renderIcon(sourceSample, {
             className: "source-icon",
@@ -2440,8 +2442,8 @@ class WeatherDisplayComponent {
                 ${headerMeta ? `<small>${headerMeta}</small>` : ""}
               </div>
               <span class="source-status ${statusClass}">${
-          payload.statusText
-        }</span>
+                payload.statusText
+              }</span>
             </header>
             ${cardBody}
           </article>
@@ -2484,7 +2486,7 @@ class WeatherDisplayComponent {
 
       const summary = deltaParts.length
         ? `<div class="source-comparison-summary">Δ ${deltaParts.join(
-            " · "
+            " · ",
           )}</div>`
         : "";
 

@@ -6381,10 +6381,12 @@ body.dark-mode .settings-card {
   backdrop-filter: blur(26px);
   z-index: 1100;
   padding: 1.5rem;
+  pointer-events: none;
 }
 
 .settings-subview-overlay.active {
   display: flex;
+  pointer-events: auto;
 }
 
 .settings-subview-layer {
@@ -11080,6 +11082,12 @@ body.dark-mode .error-alert.error-success {
   bottom: 0;
   background: rgba(2, 4, 12, 0.82);
   z-index: 999;
+  pointer-events: none;
+}
+
+.modal-overlay.active {
+  display: block;
+  pointer-events: auto;
 }
 
 .modal {
@@ -13150,12 +13158,14 @@ body.dark-mode .modal-header {
   justify-content: center;
   padding: var(--spacing-xl);
   z-index: 500;
-  pointer-events: none;
+  pointer-events: none !important;
+  visibility: hidden;
 }
 
 .day-detail-modal.is-visible {
   display: flex;
-  pointer-events: auto;
+  pointer-events: auto !important;
+  visibility: visible;
 }
 
 .day-detail-panel {
@@ -17712,6 +17722,15 @@ body.dark-mode .map-inspector {
 /* Hide elements with hidden attribute */
 [hidden] {
   display: none !important;
+  pointer-events: none !important;
+}
+
+/* Ensure all overlay elements without .active class don't block clicks */
+.modal-overlay:not(.active),
+.day-detail-modal:not(.is-visible),
+.settings-subview-overlay:not(.active),
+.bottom-sheet-overlay:not([aria-hidden="false"]) {
+  pointer-events: none !important;
 }
 
 /* Toast stack should pass through clicks */
