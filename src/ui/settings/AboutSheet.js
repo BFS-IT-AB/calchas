@@ -57,42 +57,42 @@
             "Lizenzen",
             "MIT Licence",
             "#5c6bc0",
-            "license"
+            "license",
           )}
           ${renderAboutRow(
             "email",
             "E-Mail",
             "Noch keine E-Mail verfügbar",
             "#5c6bc0",
-            "email"
+            "email",
           )}
           ${renderAboutRow(
             "code",
             "Quellcode",
             "Auf GitHub",
             "#5c6bc0",
-            "sourcecode"
+            "sourcecode",
           )}
           ${renderAboutRow(
             "bug",
             "Problem melden",
             "Auf GitHub",
             "#5c6bc0",
-            "bugreport"
+            "bugreport",
           )}
           ${renderAboutRow(
             "heart",
             "Mitwirkende",
             null,
             "#5c6bc0",
-            "contributors"
+            "contributors",
           )}
           ${renderAboutRow(
             "discord",
             "Discord",
             "Community beitreten",
             "#5865f2",
-            "discord"
+            "discord",
           )}
         </div>
 
@@ -103,21 +103,21 @@
             "Lizenzen von Drittanbietern",
             null,
             "#5c6bc0",
-            "thirdparty"
+            "thirdparty",
           )}
           ${renderAboutRow(
             "terms",
             "Nutzungsbedingungen",
             null,
             "#5c6bc0",
-            "terms"
+            "terms",
           )}
           ${renderAboutRow(
             "privacy",
             "Datenschutzerklärung",
             null,
             "#5c6bc0",
-            "privacy"
+            "privacy",
           )}
         </div>
       </div>
@@ -167,7 +167,7 @@
       case "email":
         showInfoModal(
           "E-Mail",
-          "Es ist noch keine Kontakt-E-Mail verfügbar. Bitte nutze GitHub für Anfragen."
+          "Es ist noch keine Kontakt-E-Mail verfügbar. Bitte nutze GitHub für Anfragen.",
         );
         break;
       case "sourcecode":
@@ -177,7 +177,7 @@
         window.open(
           "https://github.com/wetter-app-bfsit/wetter-app/issues",
           "_blank",
-          "noopener,noreferrer"
+          "noopener,noreferrer",
         );
         break;
       case "contributors":
@@ -244,7 +244,7 @@
     createModal(
       "about-info-modal",
       title,
-      `<p class="about-modal__text">${message}</p>`
+      `<p class="about-modal__text">${message}</p>`,
     );
   }
 
@@ -320,11 +320,11 @@
       <li class="changelog-item">
         <span class="changelog-item__emoji">${change.emoji}</span>
         <span class="changelog-item__type changelog-item__type--${change.type.toLowerCase()}">${
-            change.type
-          }:</span>
+          change.type
+        }:</span>
         <span class="changelog-item__text">${change.text}</span>
       </li>
-    `
+    `,
         )
         .join("") || "";
 
@@ -394,17 +394,17 @@
             <li class="changelog-item">
               <span class="changelog-item__emoji">${change.emoji}</span>
               <span class="changelog-item__type changelog-item__type--${change.type.toLowerCase()}">${
-                  change.type
-                }:</span>
+                change.type
+              }:</span>
               <span class="changelog-item__text">${change.text}</span>
             </li>
-          `
+          `,
               )
               .join("") || ""
           }
         </ul>
       </div>
-    `
+    `,
       )
       .join("");
 
@@ -430,23 +430,53 @@
     const modal = createModal("contributors-modal", "Mitwirkende", content);
 
     try {
-      const response = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/contributors`
-      );
-      if (!response.ok) throw new Error("GitHub API Fehler");
+      const [contributorsResponse, statsResponse] = await Promise.all([
+        fetch(`https://api.github.com/repos/${GITHUB_REPO}/contributors`),
+        fetch(`https://api.github.com/repos/${GITHUB_REPO}/stats/contributors`),
+      ]);
 
-      const contributors = await response.json();
+      if (!contributorsResponse.ok) throw new Error("GitHub API Fehler");
+
+      const contributors = await contributorsResponse.json();
+      let stats = {};
+
+      // Wenn statsResponse 200 OK ist, verarbeiten wir die Statistiken.
+      // Bei 202 (Processing) sind die Daten noch nicht bereit, dann bleibt stats leer.
+      if (statsResponse.ok && statsResponse.status === 200) {
+        try {
+          const statsData = await statsResponse.json();
+          if (Array.isArray(statsData)) {
+            statsData.forEach((item) => {
+              if (item.author && item.weeks) {
+                const additions = item.weeks.reduce((acc, w) => acc + w.a, 0);
+                const deletions = item.weeks.reduce((acc, w) => acc + w.d, 0);
+                stats[item.author.login] = {
+                  insertions: additions,
+                  deletions: deletions,
+                };
+              }
+            });
+          }
+        } catch (e) {
+          console.warn("Fehler beim Verarbeiten der GitHub-Statistiken", e);
+        }
+      }
 
       const contributorsHtml = contributors
-        .map(
-          (c) => `
+        .map((c) => {
+          const s = stats[c.login] || { insertions: 0, deletions: 0 };
+          return `
         <a href="${c.html_url}" target="_blank" rel="noopener noreferrer" class="contributor-card">
           <img src="${c.avatar_url}" alt="${c.login}" class="contributor-card__avatar" loading="lazy"/>
           <span class="contributor-card__name">${c.login}</span>
           <span class="contributor-card__commits">${c.contributions} Beiträge</span>
+          <span class="contributor-card__stats">
+            <span class="contributor-card__insertions">+${s.insertions.toLocaleString()} <span class="contributor-card__plus">++</span></span><br>
+            <span class="contributor-card__deletions">-${s.deletions.toLocaleString()} <span class="contributor-card__minus">--</span></span>
+          </span>
         </a>
-      `
-        )
+      `;
+        })
         .join("");
 
       modal.querySelector(".contributors-content").innerHTML = `
