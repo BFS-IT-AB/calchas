@@ -20,8 +20,8 @@
 
   // GitHub Repo Contributors
   const GITHUB_REPO = "wetter-app-bfsit/wetter-app";
-  const GITHUB_URL = "https://github.com/wetter-app-bfsit/wetter-app.git";
-  const DISCORD_URL = "https://discord.gg/bjFM6zCZ";
+  const GITHUB_URL = "https://github.com/BFS-IT-AB/calchas.git";
+  const DISCORD_URL = "https://discord.gg/KaeDPazvck";
   const WEBSITE_URL = "https://calchas.dev";
 
   function renderAboutSheet() {
@@ -31,7 +31,10 @@
       return;
     }
 
-    const version = global.APP_VERSION || "1.0.0";
+    const latestRelease = global.CHANGELOG?.[0];
+    const version = latestRelease
+      ? latestRelease.version
+      : global.APP_VERSION || "1.0.0";
 
     container.innerHTML = `
       <div class="about-settings">
@@ -44,9 +47,9 @@
             <h2 class="about-header__name">Calchas</h2>
             <div class="about-header__badges">
               <span class="about-badge about-badge--version">v${version}</span>
-              <span class="about-badge about-badge--refresh">${
+              <button class="about-badge about-badge--refresh" type="button" data-action="refresh" title="Nach Updates suchen">${
                 ICONS.refresh
-              }</span>
+              }</button>
               <button class="about-badge about-badge--changelog" type="button" data-action="changelog">Was ist neu</button>
             </div>
           </div>
@@ -159,6 +162,13 @@
       .querySelector('[data-action="changelog"]')
       ?.addEventListener("click", showChangelog);
 
+    // Refresh button
+    container
+      .querySelector('[data-action="refresh"]')
+      ?.addEventListener("click", () => {
+        window.location.reload();
+      });
+
     // Row actions
     container.querySelectorAll("[data-about-action]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -174,8 +184,22 @@
         showLicenseModal();
         break;
       case "email":
-        window.location.href = "mailto:team@calchas.dev";
+        showEmailModal();
         break;
+        // ============ EMAIL MODAL ============
+
+        function showEmailModal() {
+          const content = `
+            <div class="email-modal__content">
+              <p>Für Kontaktanfragen, Feedback oder Support erreichst du uns unter:</p>
+              <div class="email-modal__address">
+                <a href="mailto:team@calchas.dev">team@calchas.dev</a>
+              </div>
+              <p class="email-modal__hint">Wir freuen uns auf deine Nachricht!</p>
+            </div>
+          `;
+          createModal("about-email-modal", "Kontakt – Calchas Team", content);
+        }
       case "website":
         window.open(WEBSITE_URL, "_blank", "noopener,noreferrer");
         break;
@@ -308,72 +332,76 @@
   // ============ CHANGELOG MODAL ============
 
   function showChangelog() {
-    const changelog = global.CHANGELOG || [];
-    const latest = changelog.find((c) => c.isLatest) ||
-      changelog[0] || {
-        version: global.APP_VERSION || "1.0.0",
-        title: "🎉 Erster Release",
-        changes: [
-          {
-            emoji: "🚀",
-            type: "Added",
-            text: "Calchas v1.0 wurde veröffentlicht!",
-          },
-        ],
-      };
+    let changelog = global.CHANGELOG || [];
 
-    const changesHtml =
-      latest.changes
-        ?.map(
-          (change) => `
+    // Fallback if empty
+    if (changelog.length === 0) {
+      changelog = [
+        {
+          version: global.APP_VERSION || "1.0.0",
+          title: "🎉 Erster Release",
+          isLatest: true,
+          changes: [
+            {
+              emoji: "🚀",
+              type: "Added",
+              text: "Calchas v1.0 wurde veröffentlicht!",
+            },
+          ],
+        },
+      ];
+    }
+
+    // Render all releases
+    const allChangesHtml = changelog
+      .map((release) => {
+        const changesHtml =
+          release.changes
+            ?.map(
+              (change) => `
       <li class="changelog-item">
         <span class="changelog-item__emoji">${change.emoji}</span>
         <span class="changelog-item__type changelog-item__type--${change.type.toLowerCase()}">${
           change.type
-        }:</span>
+        }</span>
         <span class="changelog-item__text">${change.text}</span>
       </li>
     `,
-        )
-        .join("") || "";
+            )
+            .join("") || "";
+
+        return `
+        <div class="changelog-release-block">
+          <div class="changelog-version-header">
+            <div class="changelog-version-badges">
+              <span class="changelog-badge changelog-badge--version">v${
+                release.version
+              }</span>
+              ${
+                release.isLatest
+                  ? '<span class="changelog-badge changelog-badge--latest">Latest</span>'
+                  : ""
+              }
+            </div>
+            <h4 class="changelog-title">${release.title}</h4>
+          </div>
+          <ul class="changelog-list">
+            ${changesHtml}
+          </ul>
+        </div>
+      `;
+      })
+      .join("");
 
     const content = `
       <div class="changelog-content">
-        <div class="changelog-version-badges">
-          <span class="changelog-badge changelog-badge--version">v${
-            latest.version
-          }</span>
-          ${
-            latest.isLatest
-              ? '<span class="changelog-badge changelog-badge--latest">Latest</span>'
-              : ""
-          }
-        </div>
-        <h4 class="changelog-title">${latest.title}</h4>
-        <ul class="changelog-list">
-          ${changesHtml}
-        </ul>
-        ${
-          changelog.length > 1
-            ? `
-          <button type="button" class="changelog-show-all" data-action="show-all-changelog">
-            Alle Versionen anzeigen (${changelog.length})
-          </button>
-        `
-            : ""
-        }
+        ${allChangesHtml}
       </div>
     `;
 
-    const modal = createModal("changelog-modal", "Was ist neu", content, {
+    createModal("changelog-modal", "Was ist neu", content, {
       changelog: true,
     });
-
-    modal
-      .querySelector('[data-action="show-all-changelog"]')
-      ?.addEventListener("click", () => {
-        showAllChangelog();
-      });
   }
 
   function showAllChangelog() {
@@ -606,10 +634,10 @@
       <div class="legal-modal-content">
         <p class="legal-date">Stand: 15.11.2025</p>
 
-        <p>Calchas ist ein reines Lern- und Demonstrationsprojekt. Es werden nur die Daten verarbeitet, die für die angefragten Funktionen unbedingt notwendig sind.</p>
+        <p>Calchas ist ein reines OpenSource Projekt. Es werden nur die Daten verarbeitet, die für die angefragten Funktionen unbedingt notwendig sind.</p>
 
         <h4>1. Verantwortlich</h4>
-        <p>Projektteam BFS IT (Schulprojekt)</p>
+        <p>Projektteam BFS IT - Felix, Robin, Yannik, Max (Schulprojekt)</p>
 
         <h4>2. Verarbeitete Daten</h4>
         <div class="privacy-table-wrapper">

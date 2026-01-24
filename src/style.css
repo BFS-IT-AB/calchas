@@ -4372,8 +4372,70 @@ body.mobile-app #legacy-content {
 }
 
 .about-modal__container--changelog .about-modal__body {
-  padding: 18px 22px 24px;
+  padding: 20px 20px 100px 20px;
   max-height: calc(85vh - 60px);
+  background: transparent;
+}
+
+.about-modal__container--changelog .changelog-content {
+  gap: 20px;
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  background: transparent;
+  border-radius: 0;
+  transform: none;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.about-modal__container--changelog .changelog-release-block {
+  padding-bottom: 0;
+  background: #1a1f2e;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+/* Light Theme Support for cards */
+[data-theme="light"]
+  .about-modal__container--changelog
+  .changelog-release-block {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.about-modal__container--changelog .changelog-version-header {
+  padding: 18px 22px 14px;
+  background: rgba(26, 31, 46, 0.95);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"]
+  .about-modal__container--changelog
+  .changelog-version-header {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.about-modal__container--changelog .changelog-list {
+  gap: 0;
+}
+
+.about-modal__container--changelog .changelog-item {
+  border-radius: 0;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 22px;
 }
 
 .about-modal--visible .about-modal__container {
@@ -4418,7 +4480,9 @@ body.mobile-app #legacy-content {
 .about-modal__body {
   padding: 20px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   max-height: calc(80vh - 70px);
+  overscroll-behavior: contain; /* Prevent body scroll chaining */
 }
 
 .about-modal__container--large .about-modal__body {
@@ -4437,6 +4501,7 @@ body.mobile-app #legacy-content {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding-bottom: 100px;
 }
 
 .license-badge {
@@ -4810,6 +4875,7 @@ body.mobile-app #legacy-content {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding-bottom: 100px;
 }
 
 .thirdparty-intro {
@@ -4859,6 +4925,7 @@ body.mobile-app #legacy-content {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.85);
   line-height: 1.65;
+  padding-bottom: 100px;
 }
 
 .legal-modal-content h4 {
@@ -17816,6 +17883,5 @@ body.dark-mode .map-inspector {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.9);
   font-weight: bold;
-  font-family: 'Consolas', monospace;
+  font-family: "Consolas", monospace;
 }
-

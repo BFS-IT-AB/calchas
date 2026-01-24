@@ -44,54 +44,49 @@
 
     container.innerHTML = `
       <div class="settings-home">
-        ${renderRow(
-          "appearance",
-          "Aussehen",
-          "Theme",
-          "sheet-settings-theme"
-        )}
+        ${renderRow("appearance", "Aussehen", "Theme", "sheet-settings-theme")}
         ${renderRow("home", "Heimatort", homeLocation, "sheet-settings-home")}
         ${renderRow(
           "units",
           "Einheiten",
           "Temperatur, Wind, Luftdruck, Sichtweite, Niederschlag, Tageszeit, Luftqualitätsindex",
-          "sheet-settings-units"
+          "sheet-settings-units",
         )}
         ${renderRow(
           "background",
           "Hintergrundaktualisierungen",
           "Update-Intervall, geplante Updates & Benachrichtigungen",
-          "sheet-settings-background"
+          "sheet-settings-background",
         )}
         ${renderRow(
           "models",
           "Wettermodelle",
           "API-Schlüssel-Verwaltung & API-Status",
-          "sheet-settings-models"
+          "sheet-settings-models",
         )}
         ${renderRow(
           "language",
           "Sprache",
           currentLang,
-          "sheet-settings-language"
+          "sheet-settings-language",
         )}
         ${renderRow(
           "export",
           "Daten exportieren",
           null,
-          "sheet-settings-export"
+          "sheet-settings-export",
         )}
         ${renderRow(
           "import",
           "Daten importieren",
           null,
-          "sheet-settings-import"
+          "sheet-settings-import",
         )}
         ${renderRow(
           "about",
-          "Über WeatherMaster",
+          "Über Calchas",
           "Änderungsprotokoll, Version, Lizenzen und mehr",
-          "sheet-settings-about"
+          "sheet-settings-about",
         )}
       </div>
     `;

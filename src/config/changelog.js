@@ -1,24 +1,25 @@
 /**
  * changelog.js - Changelog-Konfiguration für "Was ist neu" Modal
  *
- * ANLEITUNG ZUM BEARBEITEN:
- * -------------------------
- * 1. Um eine neue Version hinzuzufügen, füge ein neues Objekt am ANFANG des CHANGELOG Arrays hinzu
- * 2. Die neueste Version sollte immer zuerst stehen
- * 3. Jede Version hat: version, date, isLatest (nur bei der neuesten true), title, und changes Array
- * 4. Jeder change hat: emoji, type (Added/Fixed/Changed/Removed), und text
- *
- * Beispiel zum Hinzufügen einer neuen Version:
- * {
- *   version: "1.1.0",
- *   date: "2025-01-15",
- *   isLatest: true,  // Setze isLatest bei der vorherigen Version auf false!
- *   title: "Neues Feature Release",
- *   changes: [
- *     { emoji: "✨", type: "Added", text: "Neue Funktion XY" },
- *     { emoji: "🐛", type: "Fixed", text: "Bug in Feature Z behoben" }
- *   ]
- * }
+ * ANLEITUNG: BACKLOG/UPDATE-KARTEN ERSTELLEN
+ * ------------------------------------------
+ * Um eine neue Release-Karte (Backlog-Item) hinzuzufügen:
+ * 1. Öffne das Array `CHANGELOG`.
+ * 2. Füge ein neues Objekt an den ANFANG des Arrays (Index 0).
+ * 3. Struktur:
+ *    {
+ *      version: "1.X.X",       // Neue Versionsnummer
+ *      date: "DD.MM.YYYY",     // Release-Datum
+ *      isLatest: true,         // WICHTIG: Auf true setzen! (Bei alter Version auf false ändern)
+ *      title: "Titel...",      // Kurzer, prägnanter Titel des Updates
+ *      changes: [              // Liste der Änderungen
+ *        {
+ *          emoji: "✨",        // Passendes Emoji
+ *          type: "Added",      // Typ: Added, Fixed, Changed, Removed
+ *          text: "Beschreibung..."
+ *        }
+ *      ]
+ *    }
  */
 
 (function (global) {
@@ -29,63 +30,54 @@
   const CHANGELOG = [
     {
       version: "1.0.0",
-      date: "27.01.2026",
+      date: "24.01.2026",
       isLatest: true,
       title: "🎉 Erster offizieller Release von Calchas - BFS-IT OpenDay 2026",
       changes: [
         {
-          emoji: "🌤️",
+          emoji: "🚀",
           type: "Added",
-          text: "Aktuelle Wetterdaten mit Open-Meteo & BrightSky & mehr",
+          text: "Launch von Calchas v1.0: Die moderne PWA für präzise Wetterdaten.",
         },
-        { emoji: "📍", type: "Added", text: "Standortbasierte Wetterabfrage" },
         {
-          emoji: "⭐",
+          emoji: "📡",
           type: "Added",
-          text: "Favoriten und Heimatort-Funktion",
+          text: "Dual-API System: Zuverlässige Daten durch Open-Meteo & BrightSky Fallback.",
         },
         {
           emoji: "🗺️",
           type: "Added",
-          text: "Interaktive Wetterkarte mit Radar",
+          text: "Interaktives Wetter-Radar mit Zeitsteuerung und verschiedenen Kartenebenen.",
+        },
+        {
+          emoji: "❤️",
+          type: "Added",
+          text: "Health & Safety Center: Windchill-Berechnung, Luftqualität und Gesundheitsindex.",
         },
         {
           emoji: "📊",
           type: "Added",
-          text: "7-Tage Vorhersage mit Detailansicht",
+          text: "Umfangreiche Historie: Wetterdaten-Rückblick und Trend-Analysen.",
         },
         {
-          emoji: "🌡️",
+          emoji: "📱",
           type: "Added",
-          text: "Anpassbare Einheiten (Temperatur, Wind, etc.)",
+          text: "PWA-Support: Offline-Modus, installierbar als App und Push-Benachrichtigungen.",
         },
-        { emoji: "🎨",
+        {
+          emoji: "🎨",
           type: "Added",
-          text: "Dunkles & helles Theme" },
+          text: "Personalisierung: Dark/Light Mode, anpassbare Einheiten und Favoriten-Manager.",
+        },
+        {
+          emoji: "🔒",
+          type: "Added",
+          text: "Privacy First: Alle Daten bleiben lokal auf deinem Gerät.",
+        },
         {
           emoji: "🌍",
           type: "Added",
           text: "Deutsch & Englisch Sprachunterstützung",
-        },
-        {
-          emoji: "💾",
-          type: "Added",
-          text: "Offline-Caching der letzten Wetterdaten",
-        },
-        {
-          emoji: "📊",
-          type: "Added",
-          text: "Historische Wetterdaten Ansicht + Statistiken",
-        },
-        {
-          emoji: "♥️",
-          type: "Added",
-          text: "Helth - Gesundheitsbezogene Wetterinformationen",
-        },
-        {
-          emoji: "📰",
-          type: "Added",
-          text: "Einsichten und Tagesübersicht",
         },
         {
           emoji: "🌿",

@@ -190,6 +190,7 @@ _Zuletzt aktualisiert: 24.01.2026 – Bereinigt und um praxisnahe Guidelines erw
 - **Commits:** Nutze Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`). Kurze präzise Messages.
 - **Pull Requests:** Klein halten (< ~300 LoC), Tests & Lint müssen grün sein. PR-Checkliste siehe unten.
 - **Reviews:** Mind. 1 Review, Fokus auf Lesbarkeit, Tests, Sicherheitsaspekte.
+- **Changelog:** Änderungen und Versionen werden in `src/config/changelog.js` gepflegt. Eine detaillierte Anleitung zum Erstellen neuer Backlog/Updatekarten befindet sich direkt im Header dieser Datei.
 
 ---
 
@@ -257,6 +258,6 @@ _Zuletzt aktualisiert: 24.01.2026 – Bereinigt und um praxisnahe Guidelines erw
 
 ## 18. Ownership & Kontakt
 
-- Maintainer: Team Calchas.
+- Maintainer: felixontv, MaxBexa4, Robink53, yannickraabe4-stack
 - Rechtliches: Siehe `legal/privacy.html` und `legal/terms.html`.
 - Fragen/Issues: bitte im Repo als Issue anlegen.
