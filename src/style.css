@@ -5500,19 +5500,13 @@ body.mobile-app #legacy-content {
     backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Wenn Overlay sichtbar ist, sollen Klicks gefangen werden */
-.bottom-sheet-overlay[aria-hidden="false"] {
-  display: flex;
-  pointer-events: auto;
+/* Wenn Overlay sichtbar ist (via .is-open Klasse), sollen Klicks gefangen werden */
+.bottom-sheet-overlay.is-open {
+  display: flex !important;
+  pointer-events: auto !important;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
-}
-
-/* Browser setzt bei hidden das Attribut, wir erzwingen vollständiges Deaktivieren */
-#bottom-sheet-overlay[hidden] {
-  display: none !important;
-  pointer-events: none !important;
 }
 
 .bottom-sheet {
@@ -5520,7 +5514,7 @@ body.mobile-app #legacy-content {
   max-width: 100%;
   max-height: 85vh;
   /* Solid surface to avoid semi-transparent gray on dark backgrounds */
-  background: var(--theme-surface);
+  background: var(--theme-surface, #1a1a2e);
   border-radius: 24px 24px 0 0;
   display: none;
   padding: 20px;
@@ -17725,12 +17719,31 @@ body.dark-mode .map-inspector {
   pointer-events: none !important;
 }
 
-/* Ensure all overlay elements without .active class don't block clicks */
+/* Ensure all overlay elements without active class don't block clicks */
 .modal-overlay:not(.active),
 .day-detail-modal:not(.is-visible),
 .settings-subview-overlay:not(.active),
-.bottom-sheet-overlay:not([aria-hidden="false"]) {
+.bottom-sheet-overlay:not(.is-open) {
   pointer-events: none !important;
+}
+
+/* KRITISCH: Wenn Overlay offen ist, MUSS es sichtbar sein und Klicks fangen */
+.bottom-sheet-overlay.is-open {
+  display: flex !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* KRITISCH: Wenn Sheet sichtbar ist, MUSS es sichtbar sein */
+.bottom-sheet-overlay.is-open .bottom-sheet--visible,
+.bottom-sheet.bottom-sheet--visible {
+  display: flex !important;
+  flex-direction: column !important;
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* Toast stack should pass through clicks */

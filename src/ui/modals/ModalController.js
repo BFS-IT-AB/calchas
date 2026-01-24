@@ -557,8 +557,10 @@
     renderSheetContent(resolvedId);
 
     console.log(`[ModalController.openSheet] Setting overlay visible...`);
-    overlay.hidden = false;
+    // WICHTIG: Alle visibility-relevanten Attribute und Klassen setzen
+    overlay.removeAttribute("hidden");
     overlay.setAttribute("aria-hidden", "false");
+    overlay.classList.add("is-open"); // Neue Klasse für CSS
     sheet.classList.add("bottom-sheet--visible");
     activeSheetId = resolvedId;
 
@@ -584,8 +586,8 @@
     if (activeSheet) {
       activeSheet.classList.remove("bottom-sheet--visible");
     }
+    overlay.classList.remove("is-open"); // Klasse entfernen
     overlay.setAttribute("aria-hidden", "true");
-    overlay.hidden = true;
     activeSheetId = null;
   }
 
