@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="ui/radar_fixes.css" />
     <link rel="stylesheet" href="day-detail.css" />
+    <link rel="stylesheet" href="ui/history/history.css" />
     <link rel="stylesheet" href="mobile.css" media="(max-width: 768px)" />
     <title>Calchas - Aktuelle Wetterdaten</title>
   </head>
@@ -208,14 +209,11 @@
         <section
           data-view="history"
           id="history-section"
-          class="app-view"
+          class="app-view app-view--no-header"
           aria-label="Historische Daten"
           hidden
         >
-          <div class="app-view__header">
-            <h2>Wetter-Historie</h2>
-          </div>
-          <div class="app-view__content">
+          <div class="app-view__content app-view__content--full">
             <div id="history-container"></div>
           </div>
         </section>
