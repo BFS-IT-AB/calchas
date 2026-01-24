@@ -430,9 +430,29 @@
     const modal = createModal("contributors-modal", "Mitwirkende", content);
 
     try {
-      const [contributorsResponse, statsResponse] = await Promise.all([
+      // Fetch stats with retry logic (as GitHub API returns 202 while calculating)
+      const fetchStats = async () => {
+        for (let i = 0; i < 5; i++) {
+          try {
+            const res = await fetch(
+              `https://api.github.com/repos/${GITHUB_REPO}/stats/contributors?t=${Date.now()}`,
+            );
+            if (res.status === 200) return await res.json();
+            if (res.status === 202) {
+              await new Promise((r) => setTimeout(r, 1000));
+              continue;
+            }
+            return [];
+          } catch (e) {
+            return [];
+          }
+        }
+        return [];
+      };
+
+      const [contributorsResponse, statsData] = await Promise.all([
         fetch(`https://api.github.com/repos/${GITHUB_REPO}/contributors`),
-        fetch(`https://api.github.com/repos/${GITHUB_REPO}/stats/contributors`),
+        fetchStats(),
       ]);
 
       if (!contributorsResponse.ok) throw new Error("GitHub API Fehler");
@@ -440,33 +460,25 @@
       const contributors = await contributorsResponse.json();
       let stats = {};
 
-      // Wenn statsResponse 200 OK ist, verarbeiten wir die Statistiken.
-      // Bei 202 (Processing) sind die Daten noch nicht bereit, dann bleibt stats leer.
-      if (statsResponse.ok && statsResponse.status === 200) {
-        try {
-          const statsData = await statsResponse.json();
-          if (Array.isArray(statsData)) {
-            statsData.forEach((item) => {
-              if (item.author && item.weeks) {
-                const additions = item.weeks.reduce((acc, w) => acc + w.a, 0);
-                const deletions = item.weeks.reduce((acc, w) => acc + w.d, 0);
-                stats[item.author.login] = {
-                  insertions: additions,
-                  deletions: deletions,
-                };
-              }
-            });
+      if (Array.isArray(statsData)) {
+        statsData.forEach((item) => {
+          if (item.author && item.weeks) {
+            const additions = item.weeks.reduce((acc, w) => acc + w.a, 0);
+            const deletions = item.weeks.reduce((acc, w) => acc + w.d, 0);
+            stats[item.author.login] = {
+              insertions: additions,
+              deletions: deletions,
+            };
           }
-        } catch (e) {
-          console.warn("Fehler beim Verarbeiten der GitHub-Statistiken", e);
-        }
+        });
       }
 
       const contributorsHtml = contributors
-        .map((c) => {
+        .map((c, index) => {
           const s = stats[c.login] || { insertions: 0, deletions: 0 };
           return `
         <a href="${c.html_url}" target="_blank" rel="noopener noreferrer" class="contributor-card">
+          <div class="contributor-card__rank">#${index + 1}</div>
           <img src="${c.avatar_url}" alt="${c.login}" class="contributor-card__avatar" loading="lazy"/>
           <span class="contributor-card__name">${c.login}</span>
           <span class="contributor-card__commits">${c.contributions} Beiträge</span>

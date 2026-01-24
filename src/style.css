@@ -17801,3 +17801,21 @@ body.dark-mode .map-inspector {
 .radar-view__top-controls > * {
   pointer-events: auto;
 }
+
+.contributor-card {
+  position: relative;
+}
+
+.contributor-card__rank {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+  font-family: 'Consolas', monospace;
+}
+

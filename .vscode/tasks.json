@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "append_styles",
+			"type": "shell",
+			"command": "Add-Content -Path \"c:\\Users\\wifel\\Desktop\\Assets\\BFS IT\\Projekt\\wetter-app\\src\\style.css\" -Value \"`n.contributor-card {`n  position: relative;`n}`n`n.contributor-card__rank {`n  position: absolute;`n  top: 8px;`n  right: 8px;`n  background: rgba(255, 255, 255, 0.15);`n  border-radius: 12px;`n  padding: 2px 6px;`n  font-size: 10px;`n  color: rgba(255, 255, 255, 0.9);`n  font-weight: bold;`n  font-family: 'Consolas', monospace;`n}`n\"",
+			"args": [],
+			"group": "none"
+		}
+	]
+}
