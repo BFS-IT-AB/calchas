@@ -62,22 +62,17 @@
         {
           emoji: "📱",
           type: "Added",
-          text: "PWA-Support: Offline-Modus, installierbar als App und Push-Benachrichtigungen.",
+          text: "PWA-Support: Offline-Modus, installierbar als App.",
         },
         {
           emoji: "🎨",
           type: "Added",
-          text: "Personalisierung: Dark/Light Mode, anpassbare Einheiten und Favoriten-Manager.",
+          text: "Favoriten-Manager.",
         },
         {
           emoji: "🔒",
           type: "Added",
           text: "Privacy First: Alle Daten bleiben lokal auf deinem Gerät.",
-        },
-        {
-          emoji: "🌍",
-          type: "Added",
-          text: "Deutsch & Englisch Sprachunterstützung",
         },
         {
           emoji: "🌿",
