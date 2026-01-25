@@ -93,14 +93,14 @@ class AppState {
 
     // Prüfe ob schon vorhanden
     const exists = this.favorites.some(
-      (f) => f.city.toLowerCase() === city.toLowerCase()
+      (f) => f.city.toLowerCase() === city.toLowerCase(),
     );
     if (!exists) {
       this.favorites.push(favorite);
       try {
         localStorage.setItem(
           "wetter_favorites",
-          JSON.stringify(this.favorites)
+          JSON.stringify(this.favorites),
         );
       } catch (e) {
         console.warn("Fehler beim Speichern von Favoriten:", e);
@@ -110,7 +110,7 @@ class AppState {
 
   removeFavorite(city) {
     this.favorites = this.favorites.filter(
-      (f) => f.city.toLowerCase() !== city.toLowerCase()
+      (f) => f.city.toLowerCase() !== city.toLowerCase(),
     );
     try {
       localStorage.setItem("wetter_favorites", JSON.stringify(this.favorites));
@@ -129,7 +129,7 @@ class AppState {
 
   isFavorite(city) {
     return this.favorites.some(
-      (f) => f.city.toLowerCase() === city.toLowerCase()
+      (f) => f.city.toLowerCase() === city.toLowerCase(),
     );
   }
 
@@ -180,7 +180,7 @@ class AppState {
     try {
       localStorage.setItem(
         "wetter_home_location",
-        JSON.stringify(this.homeLocation)
+        JSON.stringify(this.homeLocation),
       );
     } catch (e) {
       console.warn("Fehler beim Speichern des Heimatortes:", e);
@@ -324,7 +324,7 @@ function setupMobileViewportWatcher() {
   const target = document.body;
   if (!target) {
     document.addEventListener("DOMContentLoaded", () =>
-      setupMobileViewportWatcher()
+      setupMobileViewportWatcher(),
     );
     return;
   }
@@ -351,61 +351,7 @@ function setupMobileViewportWatcher() {
   }
 }
 
-/**
- * Versteckt die App-Bar beim Runterscrollen und zeigt sie beim Hochscrollen
- */
-function setupAppBarScrollBehavior() {
-  const appBar = document.getElementById("app-bar");
-  const scrollContainer = document.querySelector(".app-main-views");
-
-  if (!appBar || !scrollContainer) return;
-
-  let lastScrollTop = 0;
-  let ticking = false;
-  const scrollThreshold = 10; // Mindest-Scroll-Distanz vor Reaktion
-
-  scrollContainer.addEventListener(
-    "scroll",
-    () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollTop = scrollContainer.scrollTop;
-          const scrollDelta = currentScrollTop - lastScrollTop;
-
-          // Nur reagieren wenn Scroll-Distanz größer als Schwellenwert
-          if (Math.abs(scrollDelta) > scrollThreshold) {
-            if (scrollDelta > 0 && currentScrollTop > 60) {
-              // Runterscrollen - verstecken
-              appBar.classList.add("app-bar--hidden");
-            } else if (scrollDelta < 0) {
-              // Hochscrollen - zeigen
-              appBar.classList.remove("app-bar--hidden");
-            }
-
-            // Scrolled-State für Styling (z.B. solider Hintergrund)
-            if (currentScrollTop > 10) {
-              appBar.classList.add("app-bar--scrolled");
-            } else {
-              appBar.classList.remove("app-bar--scrolled");
-            }
-
-            lastScrollTop = currentScrollTop;
-          }
-
-          // Am Anfang der Seite immer zeigen
-          if (currentScrollTop <= 10) {
-            appBar.classList.remove("app-bar--hidden");
-            appBar.classList.remove("app-bar--scrolled");
-          }
-
-          ticking = false;
-        });
-        ticking = true;
-      }
-    },
-    { passive: true }
-  );
-}
+/* setupAppBarScrollBehavior wurde entfernt - App-Bar bleibt permanent sichtbar */
 
 /**
  * Pull-to-Refresh mit Rate-Limiting (5 Minuten Cooldown)
@@ -491,7 +437,7 @@ function setupPullToRefresh() {
         isPulling = true;
       }
     },
-    { passive: true }
+    { passive: true },
   );
 
   scrollContainer.addEventListener(
@@ -517,7 +463,7 @@ function setupPullToRefresh() {
         }
       }
     },
-    { passive: true }
+    { passive: true },
   );
 
   scrollContainer.addEventListener(
@@ -544,13 +490,13 @@ function setupPullToRefresh() {
             showPullRefreshIndicator(
               `⏳ Bitte warte noch ${minutesLeft} Min.`,
               "warning",
-              2500
+              2500,
             );
           } else {
             showPullRefreshIndicator(
               "✓ Bereits auf dem neuesten Stand",
               "info",
-              2000
+              2000,
             );
           }
           return;
@@ -569,13 +515,13 @@ function setupPullToRefresh() {
           showPullRefreshIndicator(
             "✗ Fehler beim Aktualisieren",
             "warning",
-            2500
+            2500,
           );
           console.error("Pull-to-Refresh Fehler:", e);
         }
       }
     },
-    { passive: true }
+    { passive: true },
   );
 }
 
@@ -621,7 +567,7 @@ async function initAppShell(appState) {
     } catch (e) {
       console.warn(
         "LocationPickerController Initialisierung fehlgeschlagen",
-        e
+        e,
       );
     }
   }
@@ -828,25 +774,25 @@ async function initAppShell(appState) {
       if (window.RadarLayer) {
         window.MapLayerManager.registerLayer(
           "radar",
-          new window.RadarLayer({ id: "radar" })
+          new window.RadarLayer({ id: "radar" }),
         );
       }
       if (window.SatelliteLayer) {
         window.MapLayerManager.registerLayer(
           "satellite",
-          new window.SatelliteLayer({ id: "satellite" })
+          new window.SatelliteLayer({ id: "satellite" }),
         );
       }
       if (window.TemperatureLayer) {
         window.MapLayerManager.registerLayer(
           "temperature",
-          new window.TemperatureLayer({ id: "temperature" })
+          new window.TemperatureLayer({ id: "temperature" }),
         );
       }
       if (window.WindLayer) {
         window.MapLayerManager.registerLayer(
           "wind",
-          new window.WindLayer({ id: "wind" })
+          new window.WindLayer({ id: "wind" }),
         );
       }
     }
@@ -997,7 +943,7 @@ async function initAppShell(appState) {
             },
             (error) => {
               console.warn("Geolocation error:", error);
-            }
+            },
           );
         }
       });
@@ -1061,7 +1007,7 @@ async function initAppShell(appState) {
       document.addEventListener("fullscreenchange", handleFullscreenChange);
       document.addEventListener(
         "webkitfullscreenchange",
-        handleFullscreenChange
+        handleFullscreenChange,
       );
       document.addEventListener("msfullscreenchange", handleFullscreenChange);
     }
@@ -1086,7 +1032,7 @@ async function initAppShell(appState) {
           const today = new Date();
           // Load past 365 days for complete climate overview
           const oneYearAgo = new Date(
-            today.getTime() - 365 * 24 * 60 * 60 * 1000
+            today.getTime() - 365 * 24 * 60 * 60 * 1000,
           );
           const lat = appState?.currentCoordinates?.lat ?? 52.52;
           const lon = appState?.currentCoordinates?.lon ?? 13.405;
@@ -1097,7 +1043,7 @@ async function initAppShell(appState) {
             "[History] Loading historical data from",
             startDate,
             "to",
-            endDate
+            endDate,
           );
 
           historyData =
@@ -1105,7 +1051,7 @@ async function initAppShell(appState) {
               lat,
               lon,
               startDate,
-              endDate
+              endDate,
             )) || [];
 
           if (appState) {
@@ -1117,7 +1063,7 @@ async function initAppShell(appState) {
           console.log(
             "[History] Loaded",
             historyData.length,
-            "days of historical data"
+            "days of historical data",
           );
         } catch (loadErr) {
           console.warn("History data loading failed:", loadErr);
@@ -1249,7 +1195,7 @@ async function initAppShell(appState) {
       try {
         if (window.PrecipitationDetailSheet) {
           window.PrecipitationDetailSheet.renderPrecipitationDetailSheet(
-            homeState
+            homeState,
           );
         }
         if (window.WindDetailSheet) {
@@ -1263,7 +1209,7 @@ async function initAppShell(appState) {
         }
         if (window.TemperatureTrendDetailSheet) {
           window.TemperatureTrendDetailSheet.renderTemperatureTrendDetailSheet(
-            homeState
+            homeState,
           );
         }
         if (window.SunCloudDetailSheet) {
@@ -1571,7 +1517,7 @@ function renderDemoExperience(reason = "") {
       weatherDisplay.showSourcesComparison(
         demoData.openMeteo,
         null,
-        demoData.sources || []
+        demoData.sources || [],
       );
     } catch (e) {
       console.warn("Demo-Quellenvergleich fehlgeschlagen", e);
@@ -1583,7 +1529,7 @@ function renderDemoExperience(reason = "") {
         city: appState.currentCity,
         latitude: 49.97,
         longitude: 9.15,
-      }
+      },
     );
 
     if (reason && typeof window.showInfo === "function") {
@@ -1808,11 +1754,14 @@ function scheduleBackgroundRefresh() {
   if (!appState || !appState.currentCity) return;
   const intervalMinutes = parseInt(appState.backgroundRefresh, 10);
   if (!intervalMinutes || Number.isNaN(intervalMinutes)) return;
-  backgroundRefreshTimer = setInterval(() => {
-    if (appState?.currentCity) {
-      loadWeather(appState.currentCity, { silent: true });
-    }
-  }, intervalMinutes * 60 * 1000);
+  backgroundRefreshTimer = setInterval(
+    () => {
+      if (appState?.currentCity) {
+        loadWeather(appState.currentCity, { silent: true });
+      }
+    },
+    intervalMinutes * 60 * 1000,
+  );
 }
 
 function updateTopbarStatus(city, timestamp = Date.now()) {
@@ -1985,7 +1934,7 @@ function renderApiStatusPanel() {
           new Date(entry.updatedAt).toLocaleTimeString("de-DE", {
             hour: "2-digit",
             minute: "2-digit",
-          })
+          }),
         );
       }
       const meta = metaParts.filter(Boolean).join(" · ");
@@ -1995,7 +1944,7 @@ function renderApiStatusPanel() {
         : "";
       const stateBadge = entry.state
         ? `<span class="api-status-state state-${entry.state}">${stateLabelFor(
-            entry.state
+            entry.state,
           )}</span>`
         : "";
       const keyButtonId = providerKeyInputId(entry.id);
@@ -2021,8 +1970,8 @@ function renderApiStatusPanel() {
       }" data-provider="${entry.id || ""}">
         <div class="api-status-row">
           <span class="api-status-name">${icon} ${escapeHtml(
-        entry.name || ""
-      )}</span>
+            entry.name || "",
+          )}</span>
           <div class="api-status-row-meta">
             ${tagMarkup}
             ${stateBadge}
@@ -2234,7 +2183,7 @@ function buildRenderData(rawData, units) {
         acc.y += Math.sin(rad);
         return acc;
       },
-      { x: 0, y: 0 }
+      { x: 0, y: 0 },
     );
     const angle = (Math.atan2(sum.y, sum.x) * 180) / Math.PI;
     return (angle + 360) % 360;
@@ -2346,7 +2295,7 @@ function buildRenderData(rawData, units) {
     return Array.from({ length: 24 }, (_, hour) => {
       const slot = hourLookup.get(hour);
       const precipProb = toNumber(
-        slot?.precipitationProbability ?? slot?.precipProb
+        slot?.precipitationProbability ?? slot?.precipProb,
       );
       return {
         hour,
@@ -2362,7 +2311,7 @@ function buildRenderData(rawData, units) {
         dewPoint: toNumber(slot?.dewPoint),
         humidity: toNumber(slot?.humidity),
         isDay:
-          typeof slot?.isDay === "number" ? slot.isDay : slot?.isDay ?? null,
+          typeof slot?.isDay === "number" ? slot.isDay : (slot?.isDay ?? null),
       };
     });
   };
@@ -2396,8 +2345,8 @@ function buildRenderData(rawData, units) {
         typeof matchingDaily?.uvIndexMax === "number"
           ? matchingDaily.uvIndexMax
           : uvSeries.length
-          ? Math.max(...uvSeries)
-          : null;
+            ? Math.max(...uvSeries)
+            : null;
 
       const sunrise = matchingDaily?.sunrise || null;
       const sunset = matchingDaily?.sunset || null;
@@ -2440,14 +2389,14 @@ function buildRenderData(rawData, units) {
             typeof matchingDaily?.tempMax === "number"
               ? matchingDaily.tempMax
               : hourTemps.length
-              ? Math.max(...hourTemps)
-              : null,
+                ? Math.max(...hourTemps)
+                : null,
           tempMin:
             typeof matchingDaily?.tempMin === "number"
               ? matchingDaily.tempMin
               : hourTemps.length
-              ? Math.min(...hourTemps)
-              : null,
+                ? Math.min(...hourTemps)
+                : null,
           dewPointAvg: average(dewValues),
           humidityAvg: average(humidityValues),
           precipitationSum:
@@ -2501,15 +2450,15 @@ function buildRenderData(rawData, units) {
           tC === null
             ? null
             : units.temperature === "F"
-            ? (tC * 9) / 5 + 32
-            : tC;
+              ? (tC * 9) / 5 + 32
+              : tC;
         const dewPointRaw = typeof h.dewPoint === "number" ? h.dewPoint : null;
         const dewPoint =
           dewPointRaw === null
             ? null
             : units.temperature === "F"
-            ? (dewPointRaw * 9) / 5 + 32
-            : dewPointRaw;
+              ? (dewPointRaw * 9) / 5 + 32
+              : dewPointRaw;
         // Wind conversion: m/s -> km/h (multiply by 3.6) or m/s -> mph (multiply by 2.237)
         let wind = null;
         if (wind_mps !== null) {
@@ -2530,8 +2479,8 @@ function buildRenderData(rawData, units) {
           feelsC === null
             ? null
             : units.temperature === "F"
-            ? (feelsC * 9) / 5 + 32
-            : feelsC;
+              ? (feelsC * 9) / 5 + 32
+              : feelsC;
         return Object.assign({}, h, {
           temperature: temp,
           windSpeed: wind,
@@ -2547,14 +2496,14 @@ function buildRenderData(rawData, units) {
           max === null
             ? null
             : units.temperature === "F"
-            ? (max * 9) / 5 + 32
-            : max;
+              ? (max * 9) / 5 + 32
+              : max;
         const tMin =
           min === null
             ? null
             : units.temperature === "F"
-            ? (min * 9) / 5 + 32
-            : min;
+              ? (min * 9) / 5 + 32
+              : min;
         return Object.assign({}, d, {
           tempMax: tMax,
           tempMin: tMin,
@@ -2590,7 +2539,7 @@ function buildRenderData(rawData, units) {
       result.openMeteo.byDay = groupHourlyByDay(convertedHourly, 7);
       result.openMeteo.dayInsights = buildDayInsights(
         result.openMeteo.byDay,
-        convertedDaily
+        convertedDaily,
       );
     }
 
@@ -2603,8 +2552,8 @@ function buildRenderData(rawData, units) {
           tC === null
             ? null
             : units.temperature === "F"
-            ? (tC * 9) / 5 + 32
-            : tC;
+              ? (tC * 9) / 5 + 32
+              : tC;
         // Wind conversion: m/s -> km/h or m/s -> mph
         let wind = null;
         if (wind_mps !== null) {
@@ -2622,14 +2571,14 @@ function buildRenderData(rawData, units) {
             : computeFeelsLike(
                 tC,
                 h.relativeHumidity ?? h.humidity ?? null,
-                wind_mps
+                wind_mps,
               );
         const feels =
           feelsC === null
             ? null
             : units.temperature === "F"
-            ? (feelsC * 9) / 5 + 32
-            : feelsC;
+              ? (feelsC * 9) / 5 + 32
+              : feelsC;
         return Object.assign({}, h, {
           temperature: temp,
           windSpeed: wind,
@@ -2674,12 +2623,12 @@ function buildRenderData(rawData, units) {
           }); // en-CA gibt YYYY-MM-DD Format
           currentDateStr = locationDateStr;
           console.log(
-            `[buildRenderData] Using location timezone: ${timezone}, hour: ${currentHour}, date: ${currentDateStr}`
+            `[buildRenderData] Using location timezone: ${timezone}, hour: ${currentHour}, date: ${currentDateStr}`,
           );
         } catch (e) {
           console.warn(
             "[buildRenderData] Timezone parsing failed, using local time:",
-            e
+            e,
           );
           const now = new Date();
           currentHour = now.getHours();
@@ -2691,7 +2640,7 @@ function buildRenderData(rawData, units) {
         currentHour = now.getHours();
         currentDateStr = now.toISOString().split("T")[0];
         console.warn(
-          "[buildRenderData] No timezone provided, falling back to device time"
+          "[buildRenderData] No timezone provided, falling back to device time",
         );
       }
 
@@ -2722,7 +2671,7 @@ function buildRenderData(rawData, units) {
       rawData.openMeteo?.timezone || result.locationDetails?.timezone;
     const currentHourIdx = findCurrentHourIndex(
       result.openMeteo?.hourly,
-      locationTimezone
+      locationTimezone,
     );
     result.hourly = result.openMeteo?.hourly?.slice(currentHourIdx) || [];
 
@@ -2775,7 +2724,7 @@ function averageNumericField(entries, key) {
     .map((entry) =>
       typeof entry?.[key] === "number" && Number.isFinite(entry[key])
         ? entry[key]
-        : null
+        : null,
     )
     .filter((value) => value !== null);
   if (!values.length) return null;
@@ -2788,7 +2737,7 @@ function averageDirectionalField(entries, key) {
     .map((entry) =>
       typeof entry?.[key] === "number" && Number.isFinite(entry[key])
         ? entry[key]
-        : null
+        : null,
     )
     .filter((value) => value !== null);
   if (!values.length) return null;
@@ -2799,7 +2748,7 @@ function averageDirectionalField(entries, key) {
       acc.y += Math.sin(rad);
       return acc;
     },
-    { x: 0, y: 0 }
+    { x: 0, y: 0 },
   );
   const angle = Math.atan2(vector.y, vector.x);
   return ((angle * 180) / Math.PI + 360) % 360;
@@ -2838,7 +2787,7 @@ function aggregateHourlyEntries(entries, fallbackTime) {
   aggregated.weatherCode = entries.find(
     (entry) =>
       typeof entry?.weatherCode === "number" &&
-      Number.isFinite(entry.weatherCode)
+      Number.isFinite(entry.weatherCode),
   )?.weatherCode;
   return aggregated;
 }
@@ -2937,7 +2886,7 @@ function renderFromRenderData() {
     resetHourlySection();
     weatherDisplay.displayHourly(
       hourlyPayload.hours,
-      hourlyPayload.label || "Stundenvorhersage"
+      hourlyPayload.label || "Stundenvorhersage",
     );
 
     if (appState.renderData.openMeteo) {
@@ -3009,7 +2958,7 @@ function tryRestoreLastSnapshot() {
           {
             hour: "2-digit",
             minute: "2-digit",
-          }
+          },
         )}`;
       }
     }
@@ -3019,7 +2968,7 @@ function tryRestoreLastSnapshot() {
     resetHourlySection();
     weatherDisplay.displayHourly(
       restoredHourly.hours,
-      restoredHourly.label || "Stundenvorhersage"
+      restoredHourly.label || "Stundenvorhersage",
     );
     if (snapshot.renderData.openMeteo) {
       weatherDisplay.displayForecast(snapshot.renderData.openMeteo.daily || []);
@@ -3029,7 +2978,7 @@ function tryRestoreLastSnapshot() {
       weatherDisplay.showSourcesComparison(
         snapshot.renderData.openMeteo || null,
         snapshot.renderData.brightSky || null,
-        snapshot.sources || []
+        snapshot.sources || [],
       );
     } catch (e) {
       console.warn("Snapshot Quellenanzeige fehlgeschlagen", e);
@@ -3070,7 +3019,7 @@ async function searchLocation(city) {
     const response = await safeApiFetch(
       url,
       {},
-      API_ENDPOINTS.NOMINATIM.TIMEOUT
+      API_ENDPOINTS.NOMINATIM.TIMEOUT,
     );
     const geoData = await response.json();
 
@@ -3110,7 +3059,7 @@ async function fetchAirQualitySnapshot(lat, lon) {
     const response = await safeApiFetch(
       url,
       {},
-      API_ENDPOINTS.AIR_QUALITY.TIMEOUT || 6000
+      API_ENDPOINTS.AIR_QUALITY.TIMEOUT || 6000,
     );
     const payload = await response.json();
     if (!payload?.hourly || !Array.isArray(payload.hourly.time)) {
@@ -3221,7 +3170,7 @@ async function fetchWeatherData(lat, lon) {
         });
         const handled = notifyKeyIssue(
           "openweathermap",
-          openWeatherMapResult.error
+          openWeatherMapResult.error,
         );
         if (!handled) {
           showWarning(`OpenWeatherMap: ${openWeatherMapResult.error}`);
@@ -3267,7 +3216,7 @@ async function fetchWeatherData(lat, lon) {
         });
         const handled = notifyKeyIssue(
           "visualcrossing",
-          visualCrossingResult.error
+          visualCrossingResult.error,
         );
         if (!handled) {
           showWarning(`VisualCrossing: ${visualCrossingResult.error}`);
@@ -3294,7 +3243,7 @@ async function fetchWeatherData(lat, lon) {
       bigDataCloudResult = await bigDataCloudAPI.fetchLocationDetails(
         lat,
         lon,
-        key
+        key,
       );
       if (!bigDataCloudResult.error) {
         sources.push({
@@ -3329,7 +3278,7 @@ async function fetchWeatherData(lat, lon) {
       sunriseSunsetResult = await sunriseSunsetAPI.fetchSunEvents(
         lat,
         lon,
-        key
+        key,
       );
       if (!sunriseSunsetResult.error) {
         sources.push({
@@ -3380,7 +3329,7 @@ async function fetchWeatherData(lat, lon) {
       moonPhaseResult = await moonPhaseAPI.fetchPhase(
         new Date(),
         key,
-        moonPhaseContext
+        moonPhaseContext,
       );
       if (!moonPhaseResult.error) {
         sources.push({
@@ -3476,8 +3425,8 @@ async function fetchWeatherData(lat, lon) {
           (!src.success && src.error
             ? src.error
             : providerRequiresKey(src.id)
-            ? `🔐 Key aktiv${providerNoteSuffix(src.id)}`
-            : "");
+              ? `🔐 Key aktiv${providerNoteSuffix(src.id)}`
+              : "");
         return {
           id: src.id,
           name: src.name,
@@ -3495,7 +3444,7 @@ async function fetchWeatherData(lat, lon) {
   const hasMainData = [openMeteoResult, brightSkyResult].some((r) => !r.error);
   if (!hasMainData) {
     throw new Error(
-      "Keine Wetterdaten verfügbar - Hauptquellen fehlgeschlagen"
+      "Keine Wetterdaten verfügbar - Hauptquellen fehlgeschlagen",
     );
   }
 
@@ -3541,7 +3490,7 @@ function displayWeatherResults(location, weatherData) {
     weatherDisplay.showSourcesComparison(
       appState?.renderData?.openMeteo ? appState.renderData.openMeteo : null,
       appState?.renderData?.brightSky ? appState.renderData.brightSky : null,
-      sources
+      sources,
     );
   } catch (e) {
     // ignore
@@ -3564,7 +3513,7 @@ function displayWeatherResults(location, weatherData) {
   resetHourlySection();
   weatherDisplay.displayHourly(
     hourlyPayload.hours,
-    hourlyPayload.label || "Stundenvorhersage"
+    hourlyPayload.label || "Stundenvorhersage",
   );
 
   if (hourlyPayload.hours.length > 0) {
@@ -3648,7 +3597,7 @@ async function loadWeather(city, options = {}) {
       appState.weatherData = weatherData;
       appState.renderData = buildRenderData(
         weatherData,
-        appState.units || { temperature: "C", wind: "km/h" }
+        appState.units || { temperature: "C", wind: "km/h" },
       );
     } catch (e) {
       /* ignore */
@@ -3824,7 +3773,7 @@ async function loadWeather(city, options = {}) {
       const demoRendered =
         !restoredSnapshot &&
         renderDemoExperience(
-          "📺 Demo-Modus aktiviert – keine Live-Daten verfügbar."
+          "📺 Demo-Modus aktiviert – keine Live-Daten verfügbar.",
         );
 
       if (restoredSnapshot) {
@@ -3902,7 +3851,7 @@ async function loadWeatherByCoords(lat, lon, cityName, options = {}) {
       appState.weatherData = weatherData;
       appState.renderData = buildRenderData(
         weatherData,
-        appState.units || { temperature: "C", wind: "km/h" }
+        appState.units || { temperature: "C", wind: "km/h" },
       );
     } catch (e) {
       console.warn("buildRenderData fehlgeschlagen", e);
@@ -4066,7 +4015,7 @@ function initializeFeatureModules() {
     }
   } else {
     console.warn(
-      "WeatherMap oder MapDataInspector nicht verfügbar – Kartenansicht deaktiviert."
+      "WeatherMap oder MapDataInspector nicht verfügbar – Kartenansicht deaktiviert.",
     );
   }
 
@@ -4109,7 +4058,7 @@ function initializeFeatureModules() {
       weatherMapFeature.init(
         resolvedFallback.lat,
         resolvedFallback.lon,
-        resolvedFallback.label || fallbackSource?.city || defaultSeed.city
+        resolvedFallback.label || fallbackSource?.city || defaultSeed.city,
       );
     }
   }
@@ -4160,7 +4109,7 @@ function wireSettingsDataButtons() {
       if (!analyticsDashboard) {
         if (typeof showWarning === "function") {
           showWarning(
-            "Analytics noch nicht bereit – bitte später erneut versuchen."
+            "Analytics noch nicht bereit – bitte später erneut versuchen.",
           );
         }
         return;
@@ -4319,7 +4268,7 @@ function initApp() {
 
   setupMobileViewportWatcher();
   setupSettingsNavigation();
-  setupAppBarScrollBehavior();
+  // Scroll-basiertes Verstecken der App-Bar wurde entfernt - App-Bar bleibt fixiert
   setupPullToRefresh();
 
   // Initialisiere API Key Manager
@@ -4356,11 +4305,11 @@ function initApp() {
   searchComponent = new SearchInputComponent(
     "#cityInput",
     "#searchBtn",
-    "#recent-cities"
+    "#recent-cities",
   );
   weatherDisplay = new WeatherDisplayComponent(
     "current-weather",
-    "forecast-container"
+    "forecast-container",
   );
   registerSearchComponentInstance(searchComponent, { primary: true });
   window.weatherDisplay = weatherDisplay;
@@ -4422,7 +4371,7 @@ function initApp() {
         {
           country: meta.country,
           countryCode: meta.countryCode,
-        }
+        },
       );
       updateHomeLocationLabel();
       showSuccess(`${appState.currentCity} als Heimatort gespeichert.`);
@@ -4430,7 +4379,7 @@ function initApp() {
   }
 
   const comparisonRefreshBtn = document.getElementById(
-    "force-comparison-refresh"
+    "force-comparison-refresh",
   );
   if (comparisonRefreshBtn) {
     comparisonRefreshBtn.addEventListener("click", () => {
@@ -4479,7 +4428,7 @@ function initApp() {
     try {
       localStorage.setItem(
         "wetter_dark_mode",
-        appState.isDarkMode ? "true" : "false"
+        appState.isDarkMode ? "true" : "false",
       );
     } catch (e) {
       console.warn("localStorage fehler:", e);
@@ -4532,7 +4481,7 @@ function initApp() {
 
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
           );
           const data = await response.json();
           const cityName =
@@ -4555,7 +4504,7 @@ function initApp() {
         if (cityInputEl) cityInputEl.value = "Berlin";
         loadWeather("Berlin");
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
   } else {
     console.warn("⚠️ Geolokalisierung nicht unterstützt");
@@ -4576,7 +4525,7 @@ function initApp() {
         if (appState.weatherData) {
           appState.renderData = buildRenderData(
             appState.weatherData,
-            appState.units
+            appState.units,
           );
           renderFromRenderData();
         }
@@ -4594,7 +4543,7 @@ function initApp() {
         if (appState.weatherData) {
           appState.renderData = buildRenderData(
             appState.weatherData,
-            appState.units
+            appState.units,
           );
           renderFromRenderData();
         }
@@ -4656,7 +4605,7 @@ function initApp() {
           const ok = await subscribeToPush();
           if (ok) {
             showSuccess(
-              "Push-Benachrichtigungen aktiviert (Subscription gespeichert)"
+              "Push-Benachrichtigungen aktiviert (Subscription gespeichert)",
             );
           }
         }
@@ -4690,7 +4639,7 @@ function initApp() {
       } catch (err) {
         console.warn("Cache konnte nicht geleert werden", err);
         showWarning(
-          "Cache konnte nicht geleert werden. Bitte erneut versuchen."
+          "Cache konnte nicht geleert werden. Bitte erneut versuchen.",
         );
       }
     });
@@ -4731,7 +4680,7 @@ function initApp() {
       }
       if (!/^[A-Za-z0-9]{32,64}$/.test(trimmed)) {
         showWarning(
-          "OpenWeatherMap API-Key muss 32 Zeichen enthalten. Bitte kopiere ihn exakt aus deinem OWM-Dashboard."
+          "OpenWeatherMap API-Key muss 32 Zeichen enthalten. Bitte kopiere ihn exakt aus deinem OWM-Dashboard.",
         );
         focusAndHighlight("openweathermap-key", 200);
         return;
@@ -4745,7 +4694,7 @@ function initApp() {
 
     ["change", "blur"].forEach((evtName) => {
       owmKeyInput.addEventListener(evtName, (e) =>
-        persistOwmKey(e.target.value)
+        persistOwmKey(e.target.value),
       );
     });
 
@@ -4760,7 +4709,7 @@ function initApp() {
     vcKeyInput.addEventListener("change", (e) => {
       const success = window.apiKeyManager.setKey(
         "visualcrossing",
-        e.target.value
+        e.target.value,
       );
       if (success) {
         showSuccess("VisualCrossing API-Key gespeichert");
@@ -4827,7 +4776,7 @@ function initApp() {
         }).catch(() => null);
         if (!testRes || !testRes.ok) {
           console.info(
-            "ℹ️ Push-Server nicht verfügbar – Push-Benachrichtigungen deaktiviert"
+            "ℹ️ Push-Server nicht verfügbar – Push-Benachrichtigungen deaktiviert",
           );
           return;
         }
@@ -4929,7 +4878,7 @@ function setSearchComponentsLoadingState(isLoading) {
       } catch (err) {
         console.warn(
           "SearchInput Loading-State konnte nicht gesetzt werden",
-          err
+          err,
         );
       }
     }
@@ -4969,7 +4918,7 @@ function renderHourly(
   times,
   temps,
   weatherCodes = [],
-  useIcons = false
+  useIcons = false,
 ) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -5080,7 +5029,7 @@ async function runSmokeTest() {
 
   console.group("Smoke Test Results");
   results.forEach((r) =>
-    console[r.ok ? "log" : "error"]((r.ok ? "PASS" : "FAIL") + " - " + r.msg)
+    console[r.ok ? "log" : "error"]((r.ok ? "PASS" : "FAIL") + " - " + r.msg),
   );
   console.groupEnd();
   return results;
@@ -5101,7 +5050,7 @@ async function subscribeToPush() {
     }
     if (!stored || stored.length < 20) {
       throw new Error(
-        'Missing VAPID public key. Bitte füge in den Einstellungen deinen VAPID Public Key (Base64 URL-safe) ein oder starte den lokalen Push-Server und klicke "Fetch VAPID".'
+        'Missing VAPID public key. Bitte füge in den Einstellungen deinen VAPID Public Key (Base64 URL-safe) ein oder starte den lokalen Push-Server und klicke "Fetch VAPID".',
       );
     }
     persistVapidKey(stored);
@@ -5110,7 +5059,7 @@ async function subscribeToPush() {
       options.applicationServerKey = urlBase64ToUint8Array(stored);
     } catch (e) {
       throw new Error(
-        "Ungültiges VAPID Key Format. Bitte überprüfe den Public Key."
+        "Ungültiges VAPID Key Format. Bitte überprüfe den Public Key.",
       );
     }
 
@@ -5220,7 +5169,7 @@ function handlePushToggleError(error) {
             onClick: () => document.getElementById("fetchVapidBtn")?.click(),
           },
         ],
-      }
+      },
     );
     return;
   }
@@ -5231,7 +5180,7 @@ function handlePushToggleError(error) {
       null,
       {
         meta: "Verwende einen aktuellen Chromium- oder Firefox-Browser mit aktiviertem Service Worker Support.",
-      }
+      },
     );
     return;
   }
@@ -5301,8 +5250,8 @@ function syncPushToggleState() {
   pushBtn.title = enabled
     ? "Push-Benachrichtigungen deaktivieren"
     : hasKey
-    ? "Push-Benachrichtigungen aktivieren"
-    : "VAPID Key erforderlich";
+      ? "Push-Benachrichtigungen aktivieren"
+      : "VAPID Key erforderlich";
   pushBtn.setAttribute("aria-pressed", enabled ? "true" : "false");
   const shouldDisable = !hasKey && !enabled;
   pushBtn.disabled = shouldDisable;
@@ -5354,7 +5303,7 @@ function openSettingsSubview(targetView) {
   const overlay = document.getElementById("settings-subview-overlay");
   if (!overlay) return;
   const view = overlay.querySelector(
-    `.settings-subview[data-view="${targetView}"]`
+    `.settings-subview[data-view="${targetView}"]`,
   );
   if (!view) return;
 
@@ -5382,7 +5331,7 @@ function openSettingsSubview(targetView) {
       preferredFocus ||
       view.querySelector("[data-settings-initial-focus]") ||
       view.querySelector(
-        "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea, [tabindex]:not([tabindex='-1'])"
+        "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea, [tabindex]:not([tabindex='-1'])",
       );
     focusTarget?.focus({ preventScroll: false });
   }, 60);
@@ -5406,7 +5355,7 @@ function setupSettingsNavigation() {
   if (!panel || !overlay) return;
 
   const triggers = panel.querySelectorAll(
-    ".settings-link[data-settings-target]"
+    ".settings-link[data-settings-target]",
   );
   triggers.forEach((trigger) => {
     const target = trigger.getAttribute("data-settings-target");
@@ -5432,7 +5381,7 @@ function setupSettingsNavigation() {
   overlay
     .querySelectorAll("[data-settings-back]")
     .forEach((btn) =>
-      btn.addEventListener("click", () => closeSettingsSubview())
+      btn.addEventListener("click", () => closeSettingsSubview()),
     );
 
   document.addEventListener("keydown", (event) => {
@@ -5499,7 +5448,7 @@ function enableSmoothDragScroll(container) {
 
   // Touch
   container.addEventListener("touchstart", (e) =>
-    startDrag(e.touches[0].pageX)
+    startDrag(e.touches[0].pageX),
   );
   container.addEventListener("touchmove", (e) => moveDrag(e.touches[0].pageX));
   container.addEventListener("touchend", endDrag);

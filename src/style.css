@@ -143,8 +143,10 @@
 
 html {
   scroll-behavior: smooth;
-  height: 100%;
-  background: var(--theme-bg);
+  min-height: 100%;
+  height: auto;
+  background: var(--page-bg, #2a2030);
+  background-attachment: fixed;
 }
 
 body {
@@ -164,15 +166,20 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--theme-bg);
+  background: var(--page-bg, #2a2030);
+  background-attachment: fixed;
   color: var(--theme-text);
-  height: 100%;
+  min-height: 100%;
+  height: auto;
   display: flex;
   justify-content: center;
   align-items: stretch;
   transition: background 0.1s linear;
   line-height: 1.5;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
 }
 
 body.dark-mode input[type="submit"],
@@ -1001,7 +1008,7 @@ body.dark-mode a {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
-  background: #1a1a1a;
+  background: var(--page-bg, #2a2030);
 }
 
 /* New mobile-first app shell layout */
@@ -1009,40 +1016,35 @@ body.dark-mode a {
 .app-shell.app-shell {
   max-width: 100%;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: #1a1a1a;
+  gap: 0; /* Kein Gap - verhindert Hintergrund-Schlitze */
+  overflow: visible;
+  background: var(--page-bg, #2a2030);
 }
 
 .app-bar {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Padding statt Margin füllt den Raum mit Hintergrundfarbe */
   padding: 10px 16px;
-  /* Liquid Glass Design */
-  background: linear-gradient(
-    180deg,
-    rgba(26, 26, 26, 0.95) 0%,
-    rgba(26, 26, 26, 0.85) 50%,
-    rgba(26, 26, 26, 0.7) 75%,
-    transparent 100%
-  );
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  padding-top: calc(var(--space-m, 16px) + env(safe-area-inset-top, 0px));
+  padding-bottom: var(--space-s, 10px);
+  /* Solider Hintergrund für nahtlosen Übergang - gleiche Farbe wie page-bg */
+  background: var(--page-bg, #2a2030);
+  /* Statisches Element - scrollt mit dem Content */
+  position: relative;
   width: 100%;
   max-width: 100%;
-  z-index: 30;
-  transition: transform 0.15s linear;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 1;
+  /* Kein margin-top mehr - padding übernimmt den Platz */
+  margin-top: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 /* Kein ::after Element mehr - saubere Transparenz */
@@ -1050,36 +1052,29 @@ body.dark-mode a {
   display: none;
 }
 
-.app-bar--hidden {
-  transform: translateY(-100%);
-}
+/* .app-bar--hidden wurde entfernt - App-Bar bleibt permanent sichtbar */
 
-/* Einheitliche Pillenform Container - dezenter Kontrast */
+/* Einheitliche Pillenform Container - Ultra-Glass Effect */
 .app-bar__pill {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  max-width: 340px;
+  width: calc(100% - 32px); /* Gleiche Breite wie .card-group */
+  max-width: 100%;
   margin: 0 auto;
-  /* Liquid Glass Effect */
-  background: linear-gradient(
-    135deg,
-    rgba(18, 28, 45, 0.25) 0%,
-    rgba(8, 15, 28, 0.35) 50%,
-    rgba(18, 28, 45, 0.25) 100%
-  );
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* Ultra-Glass Effect - Extrem transparent für maximalen Hintergrund-Durchschein */
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  /* Subtile Kante - hauchdünn */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50px;
   padding: 6px 12px 6px 14px;
   transition:
     background 0.08s linear,
     border 0.08s linear;
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  /* Weiche Tiefe */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* Favoriten-Button verstecken für cleanes Design */
@@ -1151,8 +1146,7 @@ body.dark-mode a {
 
 .app-bar__location-icon {
   font-size: 1.1rem;
-  color: #fff;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
   flex-shrink: 0;
 }
 
@@ -1177,7 +1171,7 @@ body.dark-mode a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 [data-theme="light"] .app-bar__location-text {
@@ -1297,9 +1291,10 @@ body.dark-mode a {
 
 .app-main-views {
   flex: 1;
-  padding: calc(56px + var(--space-s)) 0 calc(64px + var(--space-m));
-  overflow-y: auto;
-  background: transparent;
+  /* Kein padding-top mehr nötig - App-Bar ist jetzt statisch im Dokumentenfluss */
+  padding: 0 0 calc(64px + var(--space-m));
+  overflow-y: visible;
+  background: var(--page-bg, #2a2030);
   position: relative;
 }
 
