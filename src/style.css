@@ -169,6 +169,31 @@
 }
 
 /* ===========================================
+   APP-BAR LOCATION BUTTON EXCEPTION
+   Der Button in der App-Bar soll NICHT die Card-Styles bekommen
+   =========================================== */
+
+.app-bar__location[data-bottom-sheet-target] {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  border-radius: 50px !important;
+  box-shadow: none !important;
+}
+
+.app-bar__location[data-bottom-sheet-target]:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: scale(1.02) !important;
+}
+
+.app-bar__location[data-bottom-sheet-target]:active {
+  transform: scale(0.98) !important;
+}
+
+/* ===========================================
    UNIFIED MODAL OVERLAY - EXACT COPY FROM health.css (lines 1401-1419)
    =========================================== */
 
