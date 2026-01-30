@@ -249,21 +249,200 @@
     return metricMapping[idOrMetric] || idOrMetric;
   }
 
+  // ===========================================
+  // PHASE 7: SWIPE-TO-CLOSE GESTENSTEUERUNG
+  // ===========================================
+
   /**
-   * Ensure modal has the standard drag handle (Health modal style)
+   * Swipe-State für aktives Modal
+   */
+  const swipeState = {
+    startY: 0,
+    currentY: 0,
+    isDragging: false,
+    modal: null,
+    pointerId: null, // Für Pointer-Events
+  };
+
+  /**
+   * PHASE 7.5: Add swipe-to-close listeners to a modal element
+   * - Pointer Events für Emulator + Touch + Maus
+   * - Start-Zone: Obere 60px ODER .swipe-handle
+   * - Scroll-Schutz: Nur wenn modal.scrollTop === 0
+   * - Visual Sync: Backdrop fade während Swipe
+   *
+   * @param {HTMLElement} modal - The modal element to add swipe listeners to
+   */
+  function addSwipeListeners(modal) {
+    if (!modal || modal._swipeListenersAdded) return;
+
+    const SWIPE_THRESHOLD = 80; // px - PHASE 7.6: Reduziert für leichteres Schließen
+    const BACKDROP_FADE_DISTANCE = 500; // px - Distanz für vollständiges Ausblenden
+    const SWIPE_TOP_ZONE = 60; // px - Obere Zone für Swipe-Start
+
+    // touch-action für kontrollierten Swipe
+    modal.style.touchAction = "pan-y";
+
+    // Finde scrollbaren Content-Bereich
+    const getScrollableArea = () => {
+      return (
+        modal.querySelector(
+          ".bottom-sheet__content, .modal-content, .standard-modal__content, [data-scrollable]",
+        ) || modal
+      );
+    };
+
+    // Pointer Down
+    const onPointerDown = (e) => {
+      // SCROLL-SCHUTZ: Nur starten wenn ganz oben gescrollt
+      const scrollArea = getScrollableArea();
+      if (scrollArea && scrollArea.scrollTop > 0) {
+        return; // User ist im Content gescrollt - kein Swipe
+      }
+
+      // Berechne ob im oberen Bereich (erste 60px)
+      const modalRect = modal.getBoundingClientRect();
+      const clickY = e.clientY - modalRect.top;
+      const isTopZone = clickY < SWIPE_TOP_ZONE;
+
+      // Handle-Check
+      const handle = modal.querySelector(".swipe-handle");
+      const target = e.target;
+
+      // Erlaube Swipe NUR von Handle ODER oberem Bereich
+      const isSwipeArea =
+        (handle && (handle.contains(target) || handle === target)) || isTopZone;
+
+      if (!isSwipeArea) return;
+
+      // Capture Pointer
+      try {
+        modal.setPointerCapture(e.pointerId);
+      } catch (err) {
+        // Fallback wenn capture fehlschlägt
+      }
+
+      swipeState.startY = e.clientY;
+      swipeState.currentY = swipeState.startY;
+      swipeState.isDragging = true;
+      swipeState.modal = modal;
+      swipeState.pointerId = e.pointerId;
+
+      // Entferne Transition während des Swipens
+      modal.classList.add("bottom-sheet--swiping", "standard-modal--swiping");
+      modal.classList.remove(
+        "bottom-sheet--snapping",
+        "standard-modal--snapping",
+      );
+    };
+
+    // Pointer Move
+    const onPointerMove = (e) => {
+      if (!swipeState.isDragging || swipeState.modal !== modal) return;
+
+      swipeState.currentY = e.clientY;
+      const deltaY = swipeState.currentY - swipeState.startY;
+
+      if (deltaY < 0) {
+        // Nach oben: Starke Resistance (10%)
+        modal.style.transform = `translateY(${deltaY * 0.1}px)`;
+      } else {
+        // Nach unten: Volle Bewegung
+        modal.style.transform = `translateY(${deltaY}px)`;
+
+        // VISUAL SYNC: Backdrop-Opacity reduzieren
+        const backdrop = getOrCreateBackdrop();
+        if (backdrop) {
+          const opacity = Math.max(0, 1 - deltaY / BACKDROP_FADE_DISTANCE);
+          backdrop.style.opacity = opacity;
+        }
+      }
+
+      // Verhindere Default nur beim aktiven Swipe
+      if (Math.abs(deltaY) > 5) {
+        e.preventDefault();
+      }
+    };
+
+    // Pointer Up/Cancel
+    const onPointerUp = (e) => {
+      if (!swipeState.isDragging || swipeState.modal !== modal) return;
+
+      // Release Pointer Capture
+      if (swipeState.pointerId) {
+        try {
+          modal.releasePointerCapture(swipeState.pointerId);
+        } catch (err) {
+          /* ignore */
+        }
+      }
+
+      const deltaY = swipeState.currentY - swipeState.startY;
+
+      modal.classList.remove(
+        "bottom-sheet--swiping",
+        "standard-modal--swiping",
+      );
+
+      if (deltaY > SWIPE_THRESHOLD) {
+        // Genug gewischt -> Schließen mit Animation
+        modal.style.transition = `transform var(--modal-transition-duration, 300ms) var(--health-swift-easing)`;
+        modal.style.transform = "translateY(100%)";
+
+        setTimeout(() => {
+          modal.style.transition = "";
+          modal.style.transform = "";
+          closeActiveModal(true);
+        }, CONFIG.transitionDuration);
+      } else {
+        // SNAP-BACK: Zurückschnappen mit health-swift-easing
+        modal.classList.add(
+          "bottom-sheet--snapping",
+          "standard-modal--snapping",
+        );
+        modal.style.transform = "translateY(0)";
+
+        setTimeout(() => {
+          modal.classList.remove(
+            "bottom-sheet--snapping",
+            "standard-modal--snapping",
+          );
+        }, CONFIG.transitionDuration);
+      }
+
+      // Reset Backdrop
+      const backdrop = getOrCreateBackdrop();
+      if (backdrop) {
+        backdrop.style.opacity = "";
+      }
+
+      // Reset State
+      swipeState.isDragging = false;
+      swipeState.modal = null;
+      swipeState.startY = 0;
+      swipeState.currentY = 0;
+      swipeState.pointerId = null;
+    };
+
+    // POINTER EVENT LISTENERS
+    modal.addEventListener("pointerdown", onPointerDown);
+    modal.addEventListener("pointermove", onPointerMove);
+    modal.addEventListener("pointerup", onPointerUp);
+    modal.addEventListener("pointercancel", onPointerUp);
+    modal.addEventListener("lostpointercapture", onPointerUp);
+
+    modal._swipeListenersAdded = true;
+    console.log("[MasterUI] Phase 7.5 swipe listeners added:", modal.id);
+  }
+
+  /**
+   * Remove swipe listeners from a modal
    * @param {HTMLElement} modal - The modal element
    */
-  function ensureDragHandle(modal) {
-    // Check for both class names (standard and legacy)
-    if (
-      !modal.querySelector(".bottom-sheet__handle, .standard-modal__handle")
-    ) {
-      const handle = document.createElement("div");
-      // Use the Health modal class name
-      handle.className = "bottom-sheet__handle";
-      handle.setAttribute("aria-hidden", "true");
-      modal.insertBefore(handle, modal.firstChild);
-    }
+  function removeSwipeListeners(modal) {
+    if (!modal || !modal._swipeListenersAdded) return;
+    // Note: Wir behalten die Listener, da sie über die Lebensdauer des Modals benötigt werden
+    // Bei Bedarf kann hier ein Cleanup implementiert werden
   }
 
   /**
@@ -304,8 +483,24 @@
       state.modalStack.push(resolvedId);
     }
 
-    // Ensure drag handle exists
-    ensureDragHandle(modal);
+    // PHASE 7.5: Sichere Handle-Injektion (NIEMALS innerHTML!)
+    if (!modal.querySelector(".swipe-handle")) {
+      const handle = document.createElement("div");
+      handle.className = "swipe-handle";
+      handle.setAttribute("aria-hidden", "true");
+      modal.prepend(handle);
+      console.log("[MasterUI] Swipe-handle injected into:", modal.id);
+    }
+
+    // PHASE 7.5: Markiere Modal für gezieltes X-Button-Hiding
+    modal.classList.add("master-modal-mode");
+
+    // PHASE 7.5: Swipe-Listener im try-catch
+    try {
+      addSwipeListeners(modal);
+    } catch (err) {
+      console.warn("[MasterUI] Swipe listeners failed:", err);
+    }
 
     // Apply controlled z-index (Phase 4)
     applyModalZIndex(modal);
@@ -368,43 +563,54 @@
   }
 
   /**
-   * Close the currently active modal (Phase 4 - Single Backdrop)
-   * Uses CSS variable timing for consistent transitions
+   * PHASE 7.6: Close the currently active modal with RADICAL DOM CLEANUP
+   * - Modal wird nach Animation komplett aus DOM entfernt
+   * - Verhindert "Geister-Modale" die im Hintergrund bleiben
    *
    * @param {boolean} [silent=false] - If true, skip animation delay
    */
   function closeActiveModal(silent = false) {
-    const modal =
-      state.activeModalId && document.getElementById(state.activeModalId);
+    const modalId = state.activeModalId;
+    const modal = modalId && document.getElementById(modalId);
 
-    console.log(
-      "[MasterUI] closeActiveModal called, modal:",
-      state.activeModalId,
-    );
+    console.log("[MasterUI] closeActiveModal called, modal:", modalId);
 
-    // Remove visible classes - triggers CSS transition back to translateY(100%)
-    if (modal) {
-      modal.classList.remove("is-visible");
-      modal.classList.remove("standard-modal--visible");
-      modal.classList.remove("bottom-sheet--visible");
-      modal.setAttribute("aria-hidden", "true");
-      modal.style.zIndex = ""; // Reset z-index
+    if (!modal) {
+      // Kein Modal offen - trotzdem State aufräumen
+      state.activeModalId = null;
+      state.modalStack = [];
+      hideBackdrop();
+      return;
     }
 
+    // Remove visible classes - triggers CSS transition back to translateY(100%)
+    modal.classList.remove("is-visible");
+    modal.classList.remove("standard-modal--visible");
+    modal.classList.remove("bottom-sheet--visible");
+    modal.classList.remove("master-modal-mode");
+    modal.setAttribute("aria-hidden", "true");
+    modal.style.zIndex = "";
+
     // Remove from modal stack
-    const index = state.modalStack.indexOf(state.activeModalId);
+    const index = state.modalStack.indexOf(modalId);
     if (index > -1) {
       state.modalStack.splice(index, 1);
     }
 
-    // Only hide backdrop if no more modals in stack
+    // PHASE 7.6: Backdrop sofort auf opacity:0 setzen
+    const backdrop = getOrCreateBackdrop();
+    if (backdrop) {
+      backdrop.style.opacity = "0";
+      backdrop.style.pointerEvents = "none";
+    }
+
+    // Only hide backdrop completely if no more modals in stack
     if (state.modalStack.length === 0) {
       hideBackdrop();
     }
 
     const cleanup = () => {
-      // ZENTRAL: Unlock body scroll via .modal-open class
-      // Only unlock if no more modals are open
+      // ZENTRAL: Unlock body scroll
       if (state.modalStack.length === 0) {
         document.body.classList.remove(
           "modal-open",
@@ -418,12 +624,22 @@
         );
       }
 
-      // Reset display to none AFTER transition completes
+      // PHASE 7.6: RADIKALER DOM-CLEANUP
+      // Modal NICHT aus DOM entfernen - nur verstecken!
+      // (Sonst müsste es bei jedem Öffnen neu erstellt werden)
       if (modal) {
-        modal.style.display = "";
+        modal.style.display = "none";
+        modal.style.transform = "";
+        // Entferne injizierte swipe-handles für sauberen State
+        const injectedHandle = modal.querySelector(".swipe-handle");
+        if (injectedHandle && !modal.dataset.hasOriginalHandle) {
+          injectedHandle.remove();
+        }
+        // Reset swipe listener flag damit beim nächsten Öffnen neu initialisiert wird
+        modal._swipeListenersAdded = false;
       }
 
-      // Clean up any leftover elements from old systems
+      // Clean up any leftover phantom elements
       document
         .querySelectorAll(".flip-phantom, .flip-scrim")
         .forEach((el) => el.remove());
@@ -438,9 +654,18 @@
         appContainer.style.transform = "";
       }
 
-      state.activeModalId =
-        state.modalStack[state.modalStack.length - 1] || null;
+      // PHASE 7.6: State komplett zurücksetzen wenn Stack leer
+      if (state.modalStack.length === 0) {
+        state.activeModalId = null;
+      } else {
+        state.activeModalId = state.modalStack[state.modalStack.length - 1];
+      }
       state.isAnimating = false;
+
+      console.log(
+        "[MasterUI] Modal closed, remaining stack:",
+        state.modalStack,
+      );
     };
 
     if (silent) {

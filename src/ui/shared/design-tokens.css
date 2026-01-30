@@ -61,3 +61,55 @@ body.modal-open {
   /* Verhindert iOS Safari bounce */
   overscroll-behavior: none;
 }
+
+/* ============================================
+   PHASE 7: SWIPE-TO-CLOSE GESTENSTEUERUNG
+   ============================================ */
+
+/* Swipe Handle - Standard für alle Modale */
+.bottom-sheet__handle,
+.standard-modal__handle,
+.swipe-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  margin: 8px auto 12px auto;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  pointer-events: none;
+  display: block;
+}
+
+.bottom-sheet__handle:active,
+.standard-modal__handle:active,
+.swipe-handle:active {
+  cursor: grabbing;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* PHASE 7.6: X-Button GLOBAL verstecken wenn Modal offen */
+body.modal-open .close-btn,
+body.modal-open .modal-close,
+body.modal-open .day-detail-close,
+body.modal-open #close-day-sheet,
+body.modal-open [class*="close-button"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Swipe-Animation (nur transform, kein Reflow) */
+.bottom-sheet--swiping,
+.standard-modal--swiping {
+  transition: none !important;
+  will-change: transform;
+}
+
+/* Zurückschnappen Animation */
+.bottom-sheet--snapping,
+.standard-modal--snapping {
+  transition: transform var(--modal-transition-duration)
+    var(--health-swift-easing) !important;
+}
