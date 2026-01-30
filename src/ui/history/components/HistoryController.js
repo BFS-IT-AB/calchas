@@ -472,6 +472,15 @@
 
       this.state.set("isInitialized", true);
       console.log("✅ [HistoryController] Initialized - ready for render()");
+
+      // KRITISCH: Initiales Render explizit aufrufen
+      if (
+        this._viewInstance &&
+        typeof this._viewInstance.render === "function"
+      ) {
+        console.error("INIT CALLING RENDER NOW");
+        await this._viewInstance.render();
+      }
     }
 
     /**
@@ -1259,9 +1268,25 @@
     }
 
     /**
+     * TODES-CHECK: Explizite updateView Methode
+     * MUSS this._viewInstance.render() aufrufen
+     */
+    async updateView() {
+      console.error("UPDATE VIEW CALLED"); // DEBUG-BEWEIS
+      if (this._viewInstance) {
+        // Container leeren als ERSTER Befehl
+        if (this.container) {
+          this.container.innerHTML = "";
+        }
+        await this._viewInstance.render();
+      }
+    }
+
+    /**
      * Trigger a tab reload
      */
     async reloadCurrentTab() {
+      console.error("RELOAD CURRENT TAB"); // DEBUG-BEWEIS
       if (this._viewInstance?._loadTabWithSkeleton) {
         await this._viewInstance._loadTabWithSkeleton();
       }

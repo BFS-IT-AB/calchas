@@ -507,555 +507,79 @@
 
   /**
    * Generate dynamic insights based on stats and climate normals
-   * Enhanced with record detection, severity levels, and deep comparison
+   * KASTRIERT: Gibt immer leeres Array zurück
+   * NUR NACKTE ZAHLEN - KEIN TEXT-MÜLL
    *
-   * @param {Object} stats - Current period statistics
-   * @param {Object|null} previousStats - Previous period for comparison
-   * @param {number} month - Month index (0-11)
-   * @param {Object|null} historicalData - Full historical dataset for record detection
-   * @returns {Array} Sorted insights array with severity and category
+   * @returns {Array} IMMER LEER
    */
-  function generateInsights(
-    stats,
-    previousStats = null,
-    month = 0,
-    historicalData = null,
-  ) {
-    const insights = [];
-    const monthName = CONFIG.MONTH_NAMES[month];
-    const monthLabel = CONFIG.MONTH_LABELS_DE[month];
-    const normals =
-      CONFIG.CLIMATE_NORMALS[monthName] || CONFIG.CLIMATE_NORMALS.january;
-
-    if (!stats || stats.totalDays === 0) {
-      return [];
-    }
-
-    // ========================================
-    // 1. RECORD DETECTION (Highest Priority)
-    // ========================================
-    if (historicalData && historicalData.length > 0) {
-      const records = detectRecords(stats, historicalData, monthLabel);
-      insights.push(...records);
-    }
-
-    // ========================================
-    // 2. TEMPERATURE ANOMALY ANALYSIS
-    // ========================================
-    if (stats.avgTemp !== null) {
-      const tempAnomaly = stats.avgTemp - normals.avgTemp;
-      const absAnomaly = Math.abs(tempAnomaly);
-      const isWarm = tempAnomaly > 0;
-
-      // Extreme anomaly (>3°C deviation)
-      if (absAnomaly >= 3) {
-        insights.push({
-          id: "temp-extreme-anomaly",
-          type: isWarm
-            ? "insight-card--extreme-warm"
-            : "insight-card--extreme-cold",
-          icon: isWarm ? "whatshot" : "severe_cold",
-          title: isWarm ? "Extreme Wärme" : "Extreme Kälte",
-          text: `${absAnomaly.toFixed(1)}°C ${isWarm ? "über" : "unter"} dem Klimamittel – ein ${isWarm ? "außergewöhnlich warmer" : "außergewöhnlich kalter"} ${monthLabel}.`,
-          detail: `Klimamittel: ${normals.avgTemp.toFixed(1)}°C | Gemessen: ${stats.avgTemp.toFixed(1)}°C`,
-          severity: INSIGHT_SEVERITY.EXTREME,
-          category: INSIGHT_CATEGORIES.TEMPERATURE,
-          badge: isWarm
-            ? "+" + absAnomaly.toFixed(1) + "°"
-            : "-" + absAnomaly.toFixed(1) + "°",
-        });
-      }
-      // Significant anomaly (2-3°C)
-      else if (absAnomaly >= 2) {
-        insights.push({
-          id: "temp-significant-anomaly",
-          type: isWarm ? "insight-card--warm" : "insight-card--cold",
-          icon: isWarm ? "local_fire_department" : "ac_unit",
-          title: isWarm ? "Deutlich wärmer" : "Deutlich kälter",
-          text: `Mit ${stats.avgTemp.toFixed(1)}°C war es ${absAnomaly.toFixed(1)}°C ${isWarm ? "wärmer" : "kälter"} als das Klimamittel.`,
-          detail: `Klimamittel für ${monthLabel}: ${normals.avgTemp.toFixed(1)}°C`,
-          severity: INSIGHT_SEVERITY.SIGNIFICANT,
-          category: INSIGHT_CATEGORIES.TEMPERATURE,
-        });
-      }
-      // Moderate anomaly (1.5-2°C)
-      else if (absAnomaly >= 1.5) {
-        insights.push({
-          id: "temp-moderate-anomaly",
-          type: isWarm ? "insight-card--warm" : "insight-card--cold",
-          icon: isWarm ? "device_thermostat" : "thermostat",
-          title: "Temperaturabweichung",
-          text: `${absAnomaly.toFixed(1)}°C ${isWarm ? "wärmer" : "kälter"} als üblich für ${monthLabel}.`,
-          severity: INSIGHT_SEVERITY.MODERATE,
-          category: INSIGHT_CATEGORIES.TEMPERATURE,
-        });
-      }
-    }
-
-    // Hot days / Tropical nights (summer context)
-    if (stats.hotDays > 0) {
-      insights.push({
-        id: "hot-days",
-        type: "insight-card--extreme-warm",
-        icon: "sunny",
-        title: "Hitzetage",
-        text: `${stats.hotDays} Tag${stats.hotDays > 1 ? "e" : ""} mit über 30°C${stats.tropicalNights > 0 ? ` und ${stats.tropicalNights} Tropennacht${stats.tropicalNights > 1 ? "näche" : ""} (≥20°C)` : ""}.`,
-        severity:
-          stats.hotDays > 5
-            ? INSIGHT_SEVERITY.EXTREME
-            : INSIGHT_SEVERITY.SIGNIFICANT,
-        category: INSIGHT_CATEGORIES.TEMPERATURE,
-        badge: stats.hotDays + " Tage",
-      });
-    }
-
-    // Frost analysis (winter context)
-    if (stats.frostDays > 0) {
-      const frostText =
-        stats.iceDays > 0
-          ? `${stats.frostDays} Frosttage, davon ${stats.iceDays} Eistage (ganztägig <0°C)`
-          : `${stats.frostDays} Nächte mit Frost`;
-      insights.push({
-        id: "frost-days",
-        type: "insight-card--cold",
-        icon: stats.iceDays > 0 ? "weather_snowy" : "severe_cold",
-        title: stats.iceDays > 0 ? "Eisige Kälte" : "Frostnächte",
-        text: frostText + ".",
-        severity:
-          stats.iceDays > 5
-            ? INSIGHT_SEVERITY.SIGNIFICANT
-            : INSIGHT_SEVERITY.MODERATE,
-        category: INSIGHT_CATEGORIES.TEMPERATURE,
-      });
-    }
-
-    // ========================================
-    // 3. PRECIPITATION ANOMALY ANALYSIS
-    // ========================================
-    if (stats.totalPrecip !== null && normals.precip > 0) {
-      const precipAnomaly =
-        ((stats.totalPrecip - normals.precip) / normals.precip) * 100;
-      const absPrecipAnomaly = Math.abs(precipAnomaly);
-      const isWet = precipAnomaly > 0;
-
-      // Extreme precipitation anomaly (>75%)
-      if (absPrecipAnomaly >= 75) {
-        insights.push({
-          id: "precip-extreme-anomaly",
-          type: isWet
-            ? "insight-card--extreme-rain"
-            : "insight-card--extreme-dry",
-          icon: isWet ? "flood" : "water_loss",
-          title: isWet ? "Extremer Niederschlag" : "Extreme Trockenheit",
-          text: `${absPrecipAnomaly.toFixed(0)}% ${isWet ? "mehr" : "weniger"} Niederschlag als im Klimamittel.`,
-          detail: `Erwartet: ${normals.precip.toFixed(1)} mm | Gefallen: ${stats.totalPrecip.toFixed(1)} mm`,
-          severity: INSIGHT_SEVERITY.EXTREME,
-          category: INSIGHT_CATEGORIES.PRECIPITATION,
-          badge: (isWet ? "+" : "-") + absPrecipAnomaly.toFixed(0) + "%",
-        });
-      }
-      // Significant (50-75%)
-      else if (absPrecipAnomaly >= 50) {
-        insights.push({
-          id: "precip-significant-anomaly",
-          type: isWet ? "insight-card--rain" : "insight-card--dry",
-          icon: isWet ? "rainy" : "wb_sunny",
-          title: isWet ? "Sehr nass" : "Sehr trocken",
-          text: `${stats.totalPrecip.toFixed(1)} mm Niederschlag – ${absPrecipAnomaly.toFixed(0)}% ${isWet ? "über" : "unter"} dem Durchschnitt.`,
-          severity: INSIGHT_SEVERITY.SIGNIFICANT,
-          category: INSIGHT_CATEGORIES.PRECIPITATION,
-        });
-      }
-      // Moderate (30-50%)
-      else if (absPrecipAnomaly >= 30) {
-        insights.push({
-          id: "precip-moderate-anomaly",
-          type: isWet ? "insight-card--rain" : "insight-card--dry",
-          icon: isWet ? "water_drop" : "partly_cloudy_day",
-          title: "Niederschlagsabweichung",
-          text: `${absPrecipAnomaly.toFixed(0)}% ${isWet ? "mehr" : "weniger"} Regen als üblich (${stats.totalPrecip.toFixed(1)} vs. ${normals.precip.toFixed(1)} mm).`,
-          severity: INSIGHT_SEVERITY.MODERATE,
-          category: INSIGHT_CATEGORIES.PRECIPITATION,
-        });
-      }
-    }
-
-    // Heavy rain events
-    if (stats.heavyRainDays > 0) {
-      insights.push({
-        id: "heavy-rain",
-        type: "insight-card--rain",
-        icon: "thunderstorm",
-        title: "Starkregen",
-        text: `${stats.heavyRainDays} Tag${stats.heavyRainDays > 1 ? "e" : ""} mit Starkniederschlag (≥10 mm/Tag).`,
-        detail: `Maximum: ${stats.maxPrecip?.toFixed(1) || "–"} mm an einem Tag`,
-        severity:
-          stats.heavyRainDays > 3
-            ? INSIGHT_SEVERITY.SIGNIFICANT
-            : INSIGHT_SEVERITY.NOTABLE,
-        category: INSIGHT_CATEGORIES.PRECIPITATION,
-      });
-    }
-
-    // ========================================
-    // 4. SUNSHINE ANALYSIS
-    // ========================================
-    if (stats.totalSunshine > 0 && normals.sunshine > 0) {
-      const sunAnomaly =
-        ((stats.totalSunshine - normals.sunshine) / normals.sunshine) * 100;
-      const absSunAnomaly = Math.abs(sunAnomaly);
-      const isSunny = sunAnomaly > 0;
-
-      if (absSunAnomaly >= 40) {
-        insights.push({
-          id: "sun-anomaly",
-          type: isSunny ? "insight-card--sunny" : "insight-card--cloudy",
-          icon: isSunny ? "wb_sunny" : "cloud",
-          title: isSunny ? "Sonnenverwöhnt" : "Sonnenarm",
-          text: `${absSunAnomaly.toFixed(0)}% ${isSunny ? "mehr" : "weniger"} Sonnenstunden als üblich.`,
-          detail: `${stats.totalSunshine.toFixed(0)} h (Normal: ${normals.sunshine.toFixed(0)} h)`,
-          severity:
-            absSunAnomaly >= 60
-              ? INSIGHT_SEVERITY.SIGNIFICANT
-              : INSIGHT_SEVERITY.MODERATE,
-          category: INSIGHT_CATEGORIES.SUNSHINE,
-        });
-      }
-    }
-
-    // ========================================
-    // 5. WIND ANALYSIS
-    // ========================================
-    if (stats.stormDays > 0) {
-      insights.push({
-        id: "storm-days",
-        type: "insight-card--wind",
-        icon: "storm",
-        title: "Sturmereignisse",
-        text: `${stats.stormDays} Tag${stats.stormDays > 1 ? "e" : ""} mit Sturm (≥62 km/h).`,
-        detail: `Maximale Böen: ${stats.maxWind?.toFixed(0) || "–"} km/h`,
-        severity:
-          stats.stormDays > 2
-            ? INSIGHT_SEVERITY.SIGNIFICANT
-            : INSIGHT_SEVERITY.NOTABLE,
-        category: INSIGHT_CATEGORIES.WIND,
-      });
-    }
-
-    // ========================================
-    // 6. PERIOD COMPARISON
-    // ========================================
-    if (
-      previousStats &&
-      previousStats.avgTemp !== null &&
-      stats.avgTemp !== null
-    ) {
-      const tempDiff = stats.avgTemp - previousStats.avgTemp;
-      const absTempDiff = Math.abs(tempDiff);
-
-      if (absTempDiff >= 3) {
-        insights.push({
-          id: "temp-period-change",
-          type: tempDiff > 0 ? "insight-card--warm" : "insight-card--cold",
-          icon: tempDiff > 0 ? "trending_up" : "trending_down",
-          title: "Temperatursprung",
-          text: `${absTempDiff.toFixed(1)}°C ${tempDiff > 0 ? "wärmer" : "kälter"} als im Vormonat.`,
-          severity: INSIGHT_SEVERITY.NOTABLE,
-          category: INSIGHT_CATEGORIES.COMPARISON,
-        });
-      }
-
-      // Precipitation change
-      if (previousStats.totalPrecip !== null && stats.totalPrecip !== null) {
-        const precipDiff = stats.totalPrecip - previousStats.totalPrecip;
-        const precipPct =
-          previousStats.totalPrecip > 0
-            ? (precipDiff / previousStats.totalPrecip) * 100
-            : 0;
-
-        if (Math.abs(precipPct) >= 100) {
-          insights.push({
-            id: "precip-period-change",
-            type: precipDiff > 0 ? "insight-card--rain" : "insight-card--dry",
-            icon: precipDiff > 0 ? "water_drop" : "water_loss",
-            title: precipDiff > 0 ? "Deutlich nasser" : "Deutlich trockener",
-            text: `${Math.abs(precipPct).toFixed(0)}% ${precipDiff > 0 ? "mehr" : "weniger"} Niederschlag als im Vormonat.`,
-            severity: INSIGHT_SEVERITY.NOTABLE,
-            category: INSIGHT_CATEGORIES.COMPARISON,
-          });
-        }
-      }
-    }
-
-    // Sort by severity and return top insights
-    return insights.sort((a, b) => a.severity - b.severity).slice(0, 6);
+  /**
+   * KASTRIERT: generateInsights gibt IMMER leeres Array zurück
+   * NUR NACKTE ZAHLEN - KEIN TEXT-MÜLL
+   */
+  function generateInsights(stats, previousStats, month, historicalData) {
+    return []; // KOMPLETT ELIMINIERT
   }
 
   /**
-   * Detect records from historical data
-   * @private
+   * KASTRIERT: detectRecords gibt IMMER leeres Array zurück
    */
   function detectRecords(currentStats, historicalData, monthLabel) {
-    const records = [];
-
-    // Find historical extremes from data array
-    if (!Array.isArray(historicalData) || historicalData.length < 365) {
-      return records; // Need at least 1 year of data for meaningful records
-    }
-
-    const historicalStats = {
-      maxTemp: Math.max(
-        ...historicalData
-          .filter((d) => d.temp_max !== null)
-          .map((d) => d.temp_max),
-      ),
-      minTemp: Math.min(
-        ...historicalData
-          .filter((d) => d.temp_min !== null)
-          .map((d) => d.temp_min),
-      ),
-      maxPrecip: Math.max(
-        ...historicalData.filter((d) => d.precip !== null).map((d) => d.precip),
-      ),
-    };
-
-    // Temperature record high
-    if (
-      currentStats.maxTemp !== null &&
-      currentStats.maxTemp >= historicalStats.maxTemp * 0.98
-    ) {
-      const isNewRecord = currentStats.maxTemp >= historicalStats.maxTemp;
-      records.push({
-        id: "record-high-temp",
-        type: "insight-card--record-warm",
-        icon: "emoji_events",
-        title: isNewRecord ? "🔥 Temperaturrekord!" : "Nahe am Rekord",
-        text: `Höchsttemperatur von ${currentStats.maxTemp.toFixed(1)}°C ${isNewRecord ? "– neuer Rekord" : `nähert sich dem Rekord von ${historicalStats.maxTemp.toFixed(1)}°C`}.`,
-        severity: isNewRecord
-          ? INSIGHT_SEVERITY.RECORD
-          : INSIGHT_SEVERITY.EXTREME,
-        category: INSIGHT_CATEGORIES.RECORD,
-        badge: "🏆",
-      });
-    }
-
-    // Temperature record low
-    if (
-      currentStats.minTemp !== null &&
-      currentStats.minTemp <= historicalStats.minTemp * 1.02
-    ) {
-      const isNewRecord = currentStats.minTemp <= historicalStats.minTemp;
-      records.push({
-        id: "record-low-temp",
-        type: "insight-card--record-cold",
-        icon: "emoji_events",
-        title: isNewRecord ? "❄️ Kälterekord!" : "Nahe am Kälterekord",
-        text: `Tiefsttemperatur von ${currentStats.minTemp.toFixed(1)}°C ${isNewRecord ? "– neuer Rekord" : `nähert sich dem Rekord von ${historicalStats.minTemp.toFixed(1)}°C`}.`,
-        severity: isNewRecord
-          ? INSIGHT_SEVERITY.RECORD
-          : INSIGHT_SEVERITY.EXTREME,
-        category: INSIGHT_CATEGORIES.RECORD,
-        badge: "🏆",
-      });
-    }
-
-    // Precipitation record
-    if (
-      currentStats.maxPrecip !== null &&
-      currentStats.maxPrecip >= historicalStats.maxPrecip * 0.95
-    ) {
-      const isNewRecord = currentStats.maxPrecip >= historicalStats.maxPrecip;
-      records.push({
-        id: "record-precip",
-        type: "insight-card--record-rain",
-        icon: "emoji_events",
-        title: isNewRecord ? "🌧️ Niederschlagsrekord!" : "Nahe am Regenrekord",
-        text: `${currentStats.maxPrecip.toFixed(1)} mm an einem Tag${isNewRecord ? " – neuer Rekord!" : ""}.`,
-        severity: isNewRecord
-          ? INSIGHT_SEVERITY.RECORD
-          : INSIGHT_SEVERITY.EXTREME,
-        category: INSIGHT_CATEGORIES.RECORD,
-        badge: "🏆",
-      });
-    }
-
-    return records;
+    return []; // KOMPLETT ELIMINIERT
   }
 
   // ============================================
-  // INSIGHT CARD RENDERING
+  // INSIGHT CARD RENDERING - KASTRIERT
   // ============================================
 
   /**
-   * Render a single Insight Card with glassmorphism design
-   * @param {Object} insight - Insight object from generateInsights()
-   * @param {number} index - Card index for stagger animation
-   * @returns {string} HTML string
+   * KASTRIERT: renderInsightCard gibt leeren String zurück
    */
   function renderInsightCard(insight, index = 0) {
-    const {
-      id = "",
-      type = "",
-      icon = "info",
-      title = "",
-      text = "",
-      detail = null,
-      badge = null,
-      category = "",
-    } = insight;
-
-    const badgeHTML = badge
-      ? `<span class="insight-card__badge">${badge}</span>`
-      : "";
-
-    const detailHTML = detail
-      ? `<p class="insight-card__detail">${detail}</p>`
-      : "";
-
-    const categoryAttr = category ? `data-category="${category}"` : "";
-
-    return `
-      <article
-        class="history-insight-card ${type}"
-        data-insight-id="${id}"
-        ${categoryAttr}
-        style="--stagger-index: ${index}"
-      >
-        <div class="insight-card__icon-wrap">
-          <span class="material-symbols-outlined">${icon}</span>
-        </div>
-        <div class="insight-card__content">
-          <header class="insight-card__header">
-            <h4 class="insight-card__title">${title}</h4>
-            ${badgeHTML}
-          </header>
-          <p class="insight-card__text">${text}</p>
-          ${detailHTML}
-        </div>
-      </article>
-    `;
+    return ""; // ELIMINIERT
   }
 
   /**
-   * Render the full Insights Panel with header and cards
-   * @param {Array} insights - Array of insight objects
-   * @param {string} periodLabel - e.g. "Januar 2024"
-   * @returns {string} HTML string
+   * KASTRIERT: renderInsightsPanel gibt leeren String zurück
    */
   function renderInsightsPanel(insights, periodLabel = "") {
-    if (!insights || insights.length === 0) {
-      return `
-        <section class="history-insights-panel history-insights-panel--empty">
-          <header class="insights-panel__header">
-            <span class="material-symbols-outlined">lightbulb</span>
-            <h3>Klima-Insights</h3>
-          </header>
-          <div class="insights-panel__empty">
-            <span class="material-symbols-outlined">check_circle</span>
-            <p>Keine besonderen Auffälligkeiten für ${periodLabel || "diesen Zeitraum"}.</p>
-          </div>
-        </section>
-      `;
-    }
-
-    const insightCardsHTML = insights
-      .map((insight, index) => renderInsightCard(insight, index))
-      .join("");
-
-    // Group insights by category for potential filtering
-    const categories = [
-      ...new Set(insights.map((i) => i.category).filter(Boolean)),
-    ];
-    const categoryChips =
-      categories.length > 1
-        ? `<div class="insights-panel__filters">
-          ${categories.map((cat) => `<button class="insights-filter-chip" data-filter="${cat}">${getCategoryLabel(cat)}</button>`).join("")}
-        </div>`
-        : "";
-
-    return `
-      <section class="history-insights-panel" data-insights-count="${insights.length}">
-        <header class="insights-panel__header">
-          <span class="material-symbols-outlined">lightbulb</span>
-          <h3>Klima-Insights</h3>
-          ${periodLabel ? `<span class="insights-panel__period">${periodLabel}</span>` : ""}
-        </header>
-        ${categoryChips}
-        <div class="insights-panel__cards">
-          ${insightCardsHTML}
-        </div>
-      </section>
-    `;
+    return ""; // ELIMINIERT - NUR ZAHLEN
   }
 
   /**
-   * Render skeleton placeholder for insights panel
-   * @returns {string} HTML string
+   * KASTRIERT: renderInsightsSkeleton gibt leeren String zurück
    */
   function renderInsightsSkeleton() {
-    const skeletonCards = Array(3)
-      .fill(null)
-      .map(
-        (_, i) => `
-      <div class="history-insight-card history-insight-card--skeleton" style="--stagger-index: ${i}">
-        <div class="insight-card__icon-wrap shimmer"></div>
-        <div class="insight-card__content">
-          <div class="skeleton-line skeleton-line--title shimmer"></div>
-          <div class="skeleton-line skeleton-line--text shimmer"></div>
-          <div class="skeleton-line skeleton-line--detail shimmer"></div>
-        </div>
-      </div>
-    `,
-      )
-      .join("");
-
-    return `
-      <section class="history-insights-panel history-insights-panel--loading">
-        <header class="insights-panel__header">
-          <span class="material-symbols-outlined">lightbulb</span>
-          <h3>Klima-Insights</h3>
-        </header>
-        <div class="insights-panel__cards">
-          ${skeletonCards}
-        </div>
-      </section>
-    `;
+    return ""; // ELIMINIERT
   }
 
   /**
-   * Hydrate insights container with real data (animated)
-   * @param {HTMLElement} container - Container element
-   * @param {Array} insights - Insights array
-   * @param {string} periodLabel - Period label
+   * KASTRIERT: hydrateInsights tut nichts
    */
-  function hydrateInsightsContainer(container, insights, periodLabel = "") {
-    if (!container) {
-      console.warn("[HistoryStats] No insights container provided");
-      return;
-    }
+  function hydrateInsights(insights, periodLabel) {
+    // ELIMINIERT
+  }
 
-    const panelHTML = renderInsightsPanel(insights, periodLabel);
+  /**
+   * Get human-readable label for insight category
+   * @private
+   */
+  function getCategoryLabel(category) {
+    const labels = {
+      temperature: "Temperatur",
+      precipitation: "Niederschlag",
+      sunshine: "Sonne",
+      wind: "Wind",
+      comparison: "Vergleich",
+      record: "Rekorde",
+    };
+    return labels[category] || category;
+  }
 
-    // Smooth transition
-    container.classList.add("insights-container--hydrating");
-
-    requestAnimationFrame(() => {
-      container.innerHTML = panelHTML;
-
-      requestAnimationFrame(() => {
-        container.classList.remove("insights-container--hydrating");
-        container.classList.add("insights-container--hydrated");
-
-        // Trigger staggered card animations
-        const cards = container.querySelectorAll(".history-insight-card");
-        cards.forEach((card, i) => {
-          card.style.animationDelay = `${i * 80}ms`;
-          card.classList.add("insight-card--animate-in");
-        });
-      });
-    });
-
-    console.log(`✅ [HistoryStats] ${insights.length} Insights hydrated`);
+  /**
+   * KASTRIERT: hydrateInsightsContainer tut nichts
+   */
+  function hydrateInsightsContainer(container, insights, periodLabel) {
+    // ELIMINIERT - NUR ZAHLEN
   }
 
   /**

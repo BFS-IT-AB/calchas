@@ -90,7 +90,16 @@
       }
 
       if (typeof Chart === "undefined") {
-        console.error("[HistoryCharts] Chart.js not loaded");
+        console.warn("[HistoryCharts] Chart.js not loaded - aborting");
+        return null;
+      }
+
+      // SAFETY: Leere Daten abfangen
+      if (
+        !config?.data?.datasets?.length ||
+        config.data.datasets.every((ds) => !ds.data?.length)
+      ) {
+        console.warn("[HistoryCharts] Empty data - aborting chart creation");
         return null;
       }
 
