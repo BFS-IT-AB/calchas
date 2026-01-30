@@ -67,37 +67,61 @@ body.modal-open {
    ============================================ */
 
 /* Swipe Handle - Standard für alle Modale */
+/* PHASE 7.8: Handle schwebt über Content, blockiert keine Buttons */
 .bottom-sheet__handle,
 .standard-modal__handle,
 .swipe-handle {
-  width: 36px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.3);
+  width: 60px;
+  height: 24px; /* Trefferzone */
+  background: transparent;
   border-radius: 2px;
-  margin: 8px auto 12px auto;
+  margin: 4px auto 8px auto;
   flex-shrink: 0;
   cursor: grab;
   touch-action: none;
-  pointer-events: none;
+  pointer-events: auto; /* Klickbar für Swipe */
   display: block;
+  position: relative;
+  z-index: 10;
 }
 
-.bottom-sheet__handle:active,
-.standard-modal__handle:active,
-.swipe-handle:active {
-  cursor: grabbing;
-  background: rgba(255, 255, 255, 0.5);
+/* Der sichtbare dünne Balken (4px) */
+.bottom-sheet__handle::after,
+.standard-modal__handle::after,
+.swipe-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
 }
 
-/* PHASE 7.6: X-Button GLOBAL verstecken wenn Modal offen */
-body.modal-open .close-btn,
-body.modal-open .modal-close,
-body.modal-open .day-detail-close,
-body.modal-open #close-day-sheet,
-body.modal-open [class*="close-button"] {
+.bottom-sheet__handle:active::after,
+.standard-modal__handle:active::after,
+.swipe-handle:active::after {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* PHASE 7.9: OMNI-BRECHSTANGE - Versteckt ALLES was nach Schließen aussieht */
+body.modal-open [class*="close"],
+body.modal-open [id*="close"],
+body.modal-open [aria-label*="close" i],
+body.modal-open [aria-label*="schließen" i],
+body.modal-open .x-mark,
+body.modal-open .cancel-btn,
+body.modal-open svg[class*="x"],
+body.modal-open .close-icon,
+body.modal-open .icon-close,
+body.modal-open [data-icon="close"],
+body.modal-open .material-symbols-outlined:is([class*="close"]) {
   display: none !important;
-  visibility: hidden !important;
+  opacity: 0 !important;
   pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* Swipe-Animation (nur transform, kein Reflow) */

@@ -249,6 +249,26 @@
     return metricMapping[idOrMetric] || idOrMetric;
   }
 
+  /**
+   * PHASE 7.9: Universelle Handle-Injektion
+   * Garantiert dass jedes Modal einen swipe-handle hat
+   * @param {HTMLElement} modal - Das Modal-Element
+   */
+  function ensureDragHandle(modal) {
+    if (!modal || modal.querySelector(".swipe-handle")) return;
+
+    const handle = document.createElement("div");
+    handle.className = "swipe-handle";
+    handle.setAttribute("aria-hidden", "true");
+    handle.style.cssText =
+      "width: 60px; height: 24px; margin: 4px auto 8px auto;";
+    modal.prepend(handle);
+    console.log(
+      "[MasterUI] Phase 7.9 ensureDragHandle:",
+      modal.id || modal.className,
+    );
+  }
+
   // ===========================================
   // PHASE 7: SWIPE-TO-CLOSE GESTENSTEUERUNG
   // ===========================================
@@ -276,12 +296,9 @@
   function addSwipeListeners(modal) {
     if (!modal || modal._swipeListenersAdded) return;
 
-    const SWIPE_THRESHOLD = 80; // px - PHASE 7.6: Reduziert für leichteres Schließen
+    const SWIPE_THRESHOLD = 80; // px - Mindestdistanz zum Schließen
     const BACKDROP_FADE_DISTANCE = 500; // px - Distanz für vollständiges Ausblenden
-    const SWIPE_TOP_ZONE = 60; // px - Obere Zone für Swipe-Start
-
-    // touch-action für kontrollierten Swipe
-    modal.style.touchAction = "pan-y";
+    const SWIPE_TOP_ZONE = 40; // px - PHASE 7.8: Reduziert um Buttons nicht zu blockieren
 
     // Finde scrollbaren Content-Bereich
     const getScrollableArea = () => {
@@ -292,15 +309,32 @@
       );
     };
 
+    // PHASE 7.8: touch-action immer pan-y - Browser soll nicht komplett blockiert werden
+    modal.style.touchAction = "pan-y";
+
     // Pointer Down
     const onPointerDown = (e) => {
+      // PHASE 7.8: INTERAKTIONS-RETTUNG
+      // Wenn das Ziel ein interaktives Element ist, Swipe NICHT starten!
+      // Damit Klicks auf Buttons, Toggles etc. durchgehen
+      const interactiveElement = e.target.closest(
+        "button, input, select, textarea, a, label, " +
+          ".toggle-zone, .interactive, .clickable, " +
+          '[role="button"], [role="switch"], [role="checkbox"], ' +
+          ".aqi-toggle, .unit-toggle, .setting-toggle, " +
+          "[data-clickable], [onclick]",
+      );
+      if (interactiveElement) {
+        return; // Klick zum Button durchlassen, kein Swipe
+      }
+
       // SCROLL-SCHUTZ: Nur starten wenn ganz oben gescrollt
       const scrollArea = getScrollableArea();
       if (scrollArea && scrollArea.scrollTop > 0) {
         return; // User ist im Content gescrollt - kein Swipe
       }
 
-      // Berechne ob im oberen Bereich (erste 60px)
+      // Berechne ob im oberen Bereich (erste 40px)
       const modalRect = modal.getBoundingClientRect();
       const clickY = e.clientY - modalRect.top;
       const isTopZone = clickY < SWIPE_TOP_ZONE;
@@ -483,17 +517,12 @@
       state.modalStack.push(resolvedId);
     }
 
-    // PHASE 7.5: Sichere Handle-Injektion (NIEMALS innerHTML!)
-    if (!modal.querySelector(".swipe-handle")) {
-      const handle = document.createElement("div");
-      handle.className = "swipe-handle";
-      handle.setAttribute("aria-hidden", "true");
-      modal.prepend(handle);
-      console.log("[MasterUI] Swipe-handle injected into:", modal.id);
-    }
+    // PHASE 7.9: Universelle Handle-Garantie
+    ensureDragHandle(modal);
 
-    // PHASE 7.5: Markiere Modal für gezieltes X-Button-Hiding
+    // Markiere Modal als vom Controller verwaltet
     modal.classList.add("master-modal-mode");
+    modal._masterControlled = true;
 
     // PHASE 7.5: Swipe-Listener im try-catch
     try {
@@ -738,6 +767,76 @@
 
     // Initialize single backdrop element
     getOrCreateBackdrop();
+
+    // ===========================================
+    // PHASE 7.9: GLOBAL MUTATION OBSERVER
+    // Fängt Modale ein, die den Controller umgehen
+    // ===========================================
+    const modalObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+          // Prüfe ob das Element selbst ein Modal ist
+          const isModal =
+            node.matches &&
+            node.matches(
+              ".modal, .sheet, .bottom-sheet, .standard-modal, " +
+                "[class*='modal'], [class*='sheet'], [id*='sheet']",
+            );
+
+          // Oder suche verschachtelte Modale
+          const modals = isModal
+            ? [node]
+            : node.querySelectorAll
+              ? Array.from(
+                  node.querySelectorAll(
+                    ".modal, .sheet, .bottom-sheet, .standard-modal, " +
+                      "[class*='modal'], [class*='sheet'], [id*='sheet']",
+                  ),
+                )
+              : [];
+
+          modals.forEach((modal) => {
+            // Nur wenn sichtbar und noch nicht verarbeitet
+            const isVisible =
+              modal.classList.contains("is-visible") ||
+              modal.classList.contains("visible") ||
+              modal.style.display === "flex" ||
+              modal.style.display === "block";
+
+            if (isVisible && !modal._masterControlled) {
+              console.log(
+                "[MasterUI] Observer caught modal:",
+                modal.id || modal.className,
+              );
+
+              // Nachrüsten
+              ensureDragHandle(modal);
+              modal.classList.add("master-modal-mode");
+
+              try {
+                addSwipeListeners(modal);
+              } catch (err) {
+                console.warn("[MasterUI] Observer swipe setup failed:", err);
+              }
+
+              modal._masterControlled = true;
+            }
+          });
+        });
+      });
+    });
+
+    // Observer starten
+    modalObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "style"],
+    });
+
+    console.log("[MasterUI] Global MutationObserver active");
 
     // ===========================================
     // CLICK DELEGATION
