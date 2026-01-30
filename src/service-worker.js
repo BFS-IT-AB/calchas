@@ -1,7 +1,7 @@
 // Service Worker für Calchas
 // Ermöglicht Offline-Funktionalität, Caching und Push-Notifications
 
-const CACHE_NAME = "calchas-v9"; // Version erhöht für Health Deep Update
+const CACHE_NAME = "calchas-v10"; // Version erhöht für Struktur-Bereinigung Phase 5
 const HEALTH_CACHE_NAME = "calchas-health-data"; // Separate cache for health data
 const urlsToCache = [
   "/",
@@ -30,6 +30,11 @@ const urlsToCache = [
   "/src/ui/health/health.css",
   "/src/ui/history/HistoryViewBrowser.js",
   "/src/ui/settings/SettingsHome.js",
+  // Phase 5: Verschobene Dateien
+  "/src/ui/day-detail/day-detail.js",
+  "/src/ui/day-detail/day-detail.css",
+  "/src/ui/day-detail/day-detail.html",
+  "/src/ui/shared/features.js",
   "/manifest.json",
 ];
 

@@ -18,137 +18,200 @@
   "use strict";
 
   // ===========================================
-  // CONFIGURATION - Extracted from Health-page
+  // CONFIGURATION - Uses Design Tokens (Phase 4)
   // ===========================================
   const CONFIG = {
-    // Timing - EXACT from health.css
-    transitionFast: 150, // --health-transition-fast
-    transitionNormal: 250, // --health-transition-normal
-    transitionSlow: 400, // --health-transition-slow
-
-    // Easing - EXACT cubic-bezier from health.css
-    easingDefault: "ease",
-    easingSlow: "cubic-bezier(0.4, 0, 0.2, 1)",
+    // Timing - read from CSS variables at runtime
+    transitionDuration: 300, // --modal-transition-duration fallback
 
     // Selectors
     cardSelector: ".standard-card",
-    modalOverlayId: "master-scrim",
+    backdropId: "master-backdrop", // Single backdrop element
     sheetClass: "standard-modal",
-
-    // Z-indices
-    scrimZIndex: 99998,
-    modalZIndex: 99999,
   };
 
   // ===========================================
-  // STATE
+  // STATE - Single Backdrop Principle
   // ===========================================
   let state = {
     activeModalId: null,
+    modalStack: [], // Track stacked modals for z-index management
     isAnimating: false,
-    scrimElement: null,
+    backdropElement: null,
+    currentZIndex: 1000, // Start from --z-modal-base
   };
 
   // ===========================================
-  // SCRIM MANAGEMENT - Single global scrim
+  // SINGLE BACKDROP MANAGEMENT (Phase 4)
+  // Global nur EIN Backdrop-Element
   // ===========================================
 
   /**
-   * Get or create the global scrim element
-   * @returns {HTMLElement} The scrim element
+   * Get or create the SINGLE global backdrop element.
+   * Implements the Single-Backdrop-Principle from Phase 4.
+   * Uses CSS variables from design-tokens.css.
+   *
+   * @returns {HTMLElement} The single backdrop element
    */
-  function getOrCreateScrim() {
-    if (state.scrimElement && document.body.contains(state.scrimElement)) {
-      return state.scrimElement;
+  function getOrCreateBackdrop() {
+    // Return existing backdrop if it's still in DOM
+    if (
+      state.backdropElement &&
+      document.body.contains(state.backdropElement)
+    ) {
+      return state.backdropElement;
     }
 
-    // FIXED: Use the EXISTING #bottom-sheet-overlay from index.html
-    // The modals are children of this element, so we MUST use it as the scrim
-    let scrim = document.getElementById("bottom-sheet-overlay");
+    // PRIORITY 1: Use existing #bottom-sheet-overlay (existing modal system)
+    let backdrop = document.getElementById("bottom-sheet-overlay");
 
-    if (!scrim) {
-      // Fallback: create new scrim if overlay doesn't exist (shouldn't happen)
-      console.warn(
-        "[MasterUI] #bottom-sheet-overlay not found, creating fallback",
-      );
-      scrim = document.createElement("div");
-      scrim.id = "bottom-sheet-overlay";
-      scrim.className = "bottom-sheet-overlay";
-      document.body.appendChild(scrim);
+    // PRIORITY 2: Check for #master-backdrop
+    if (!backdrop) {
+      backdrop = document.getElementById(CONFIG.backdropId);
     }
 
-    scrim.setAttribute("aria-hidden", "true");
+    // PRIORITY 3: Create new backdrop with design-token styles
+    if (!backdrop) {
+      console.log("[MasterUI] Creating single backdrop element");
+      backdrop = document.createElement("div");
+      backdrop.id = CONFIG.backdropId;
+      backdrop.className = "master-backdrop";
 
-    // Remove any orphaned scrims from old systems (but NOT our overlay)
+      // Apply design-token styles inline for guaranteed consistency
+      Object.assign(backdrop.style, {
+        position: "fixed",
+        inset: "0",
+        background: "var(--modal-backdrop-bg, rgba(22, 22, 24, 0.96))",
+        backdropFilter:
+          "var(--modal-backdrop-blur, blur(20px)) var(--modal-backdrop-saturate, saturate(180%))",
+        WebkitBackdropFilter:
+          "var(--modal-backdrop-blur, blur(20px)) var(--modal-backdrop-saturate, saturate(180%))",
+        zIndex: "var(--z-backdrop, 999)",
+        opacity: "0",
+        visibility: "hidden",
+        transition:
+          "opacity var(--modal-transition-duration, 300ms) var(--modal-transition-easing, cubic-bezier(0.05, 0.7, 0.1, 1)), visibility var(--modal-transition-duration, 300ms)",
+        pointerEvents: "none",
+      });
+
+      document.body.appendChild(backdrop);
+    }
+
+    backdrop.setAttribute("aria-hidden", "true");
+
+    // Clean up legacy/orphaned backdrop elements (NICHT das existierende overlay)
     document
-      .querySelectorAll("#master-scrim, #modal-scrim, .flip-scrim")
-      .forEach((el) => el.remove());
+      .querySelectorAll(
+        "#modal-scrim, .flip-scrim, .health-modal-overlay:not(.health-modal-overlay--visible)",
+      )
+      .forEach((el) => {
+        if (el !== backdrop) {
+          el.remove();
+        }
+      });
 
-    // Click on scrim (but not on modal content) closes modal
-    if (!scrim._masterUIClickHandler) {
-      scrim._masterUIClickHandler = true;
-      scrim.addEventListener("click", (e) => {
-        // Only close if clicking directly on the overlay, not on modal content
+    // Single click handler for backdrop
+    if (!backdrop._masterUIClickHandler) {
+      backdrop._masterUIClickHandler = true;
+      backdrop.addEventListener("click", (e) => {
+        // Only close if clicking directly on backdrop, not on modal content
         if (
-          e.target === scrim ||
-          e.target.classList.contains("bottom-sheet-overlay")
+          e.target === backdrop ||
+          e.target.classList.contains("bottom-sheet-overlay") ||
+          e.target.classList.contains("master-backdrop")
         ) {
           closeActiveModal();
         }
       });
     }
 
-    state.scrimElement = scrim;
-    return scrim;
+    state.backdropElement = backdrop;
+    return backdrop;
   }
 
   /**
-   * Show the scrim with animation
+   * Show the single backdrop (no duplicate creation!)
    */
-  function showScrim() {
-    const scrim = getOrCreateScrim();
+  function showBackdrop() {
+    const backdrop = getOrCreateBackdrop();
 
-    // Force reflow before adding class (ensures CSS transition triggers)
-    void scrim.offsetHeight;
+    // Force reflow before adding visible state
+    void backdrop.offsetHeight;
 
-    // FIXED: Add the correct class for the existing overlay structure
-    scrim.classList.add("is-open");
-    scrim.classList.add("is-visible"); // Keep for backwards compatibility
-    scrim.setAttribute("aria-hidden", "false");
+    // Apply visible state
+    backdrop.classList.add("is-open", "is-visible");
+    Object.assign(backdrop.style, {
+      opacity: "1",
+      visibility: "visible",
+      pointerEvents: "auto",
+    });
+    backdrop.setAttribute("aria-hidden", "false");
 
-    console.log(
-      "[MasterUI] Scrim shown:",
-      scrim.id,
-      scrim.classList.toString(),
-    );
+    console.log("[MasterUI] Backdrop shown (single element)");
   }
 
   /**
-   * Hide the scrim with animation
+   * Hide the single backdrop
    */
-  function hideScrim() {
-    const scrim = state.scrimElement;
-    if (scrim) {
-      scrim.classList.remove("is-open");
-      scrim.classList.remove("is-visible");
-      scrim.setAttribute("aria-hidden", "true");
+  function hideBackdrop() {
+    const backdrop = state.backdropElement;
+    if (backdrop) {
+      backdrop.classList.remove("is-open", "is-visible");
+      Object.assign(backdrop.style, {
+        opacity: "0",
+        visibility: "hidden",
+        pointerEvents: "none",
+      });
+      backdrop.setAttribute("aria-hidden", "true");
     }
   }
 
   /**
-   * Completely remove the scrim (cleanup)
+   * Completely remove the backdrop (cleanup)
    */
-  function destroyScrim() {
-    if (state.scrimElement) {
-      state.scrimElement.remove();
-      state.scrimElement = null;
+  function destroyBackdrop() {
+    // Don't destroy #bottom-sheet-overlay - it's part of index.html
+    const backdrop = state.backdropElement;
+    if (backdrop && backdrop.id === CONFIG.backdropId) {
+      backdrop.remove();
     }
-    // Also clean up any legacy scrims
+    state.backdropElement = null;
+
+    // Clean up any legacy elements
     document
-      .querySelectorAll(
-        "#master-scrim, #modal-scrim, .flip-scrim, .flip-phantom",
-      )
+      .querySelectorAll("#modal-scrim, .flip-scrim, .flip-phantom")
       .forEach((el) => el.remove());
+  }
+
+  // ===========================================
+  // Z-INDEX MANAGEMENT (Phase 4)
+  // Kontrollierte Stapelung über CSS Variables
+  // ===========================================
+
+  /**
+   * Get the next z-index for stacked modals
+   * Uses CSS variable as base, increments by 1 for each stacked modal
+   *
+   * @returns {number} The z-index value to use
+   */
+  function getNextZIndex() {
+    const baseZIndex = parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "--z-modal-base",
+      ) || "1000",
+      10,
+    );
+    return baseZIndex + state.modalStack.length;
+  }
+
+  /**
+   * Apply z-index to a modal element
+   * @param {HTMLElement} modal - The modal element
+   */
+  function applyModalZIndex(modal) {
+    const zIndex = getNextZIndex();
+    modal.style.zIndex = zIndex;
+    console.log(`[MasterUI] Modal z-index set to ${zIndex}`);
   }
 
   // ===========================================
@@ -228,7 +291,7 @@
       return;
     }
 
-    // Close any currently open modal first
+    // Close any currently open modal first (but keep backdrop if stacking)
     if (state.activeModalId && state.activeModalId !== resolvedId) {
       closeActiveModal(true); // silent close (no animation wait)
     }
@@ -236,15 +299,23 @@
     state.isAnimating = true;
     state.activeModalId = resolvedId;
 
+    // Track modal in stack for z-index management
+    if (!state.modalStack.includes(resolvedId)) {
+      state.modalStack.push(resolvedId);
+    }
+
     // Ensure drag handle exists
     ensureDragHandle(modal);
 
-    // Lock body scroll
+    // Apply controlled z-index (Phase 4)
+    applyModalZIndex(modal);
+
+    // ZENTRAL: Lock body scroll via .modal-open class
     document.body.classList.add("modal-open");
     document.documentElement.classList.add("modal-open");
 
-    // Show scrim (this now shows the existing #bottom-sheet-overlay)
-    showScrim();
+    // Show backdrop (SINGLE element, no duplicates)
+    showBackdrop();
 
     // Render content if applicable (use ModalContentRenderer or legacy ModalController)
     const contentRenderer =
@@ -292,13 +363,13 @@
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     if (firstFocusable) {
-      setTimeout(() => firstFocusable.focus(), CONFIG.transitionSlow);
+      setTimeout(() => firstFocusable.focus(), CONFIG.transitionDuration);
     }
   }
 
   /**
-   * Close the currently active modal
-   * Uses EXACT same 400ms delay as Health-page modal transition
+   * Close the currently active modal (Phase 4 - Single Backdrop)
+   * Uses CSS variable timing for consistent transitions
    *
    * @param {boolean} [silent=false] - If true, skip animation delay
    */
@@ -311,25 +382,41 @@
       state.activeModalId,
     );
 
-    // Remove visible classes - this triggers the CSS transition back to translateY(100%)
+    // Remove visible classes - triggers CSS transition back to translateY(100%)
     if (modal) {
       modal.classList.remove("is-visible");
       modal.classList.remove("standard-modal--visible");
       modal.classList.remove("bottom-sheet--visible");
       modal.setAttribute("aria-hidden", "true");
+      modal.style.zIndex = ""; // Reset z-index
     }
 
-    // Hide scrim (250ms transition)
-    hideScrim();
+    // Remove from modal stack
+    const index = state.modalStack.indexOf(state.activeModalId);
+    if (index > -1) {
+      state.modalStack.splice(index, 1);
+    }
+
+    // Only hide backdrop if no more modals in stack
+    if (state.modalStack.length === 0) {
+      hideBackdrop();
+    }
 
     const cleanup = () => {
-      // Unlock body scroll
-      document.body.classList.remove("modal-open", "bg-dimmed", "scrim-active");
-      document.documentElement.classList.remove(
-        "modal-open",
-        "bg-dimmed",
-        "scrim-active",
-      );
+      // ZENTRAL: Unlock body scroll via .modal-open class
+      // Only unlock if no more modals are open
+      if (state.modalStack.length === 0) {
+        document.body.classList.remove(
+          "modal-open",
+          "bg-dimmed",
+          "scrim-active",
+        );
+        document.documentElement.classList.remove(
+          "modal-open",
+          "bg-dimmed",
+          "scrim-active",
+        );
+      }
 
       // Reset display to none AFTER transition completes
       if (modal) {
@@ -351,24 +438,36 @@
         appContainer.style.transform = "";
       }
 
-      state.activeModalId = null;
+      state.activeModalId =
+        state.modalStack[state.modalStack.length - 1] || null;
       state.isAnimating = false;
     };
 
     if (silent) {
       cleanup();
     } else {
-      // EXACT from health.css: 400ms = var(--ui-transition-slow) for modal slide-down
-      // Wait for full transition before hiding display
-      setTimeout(cleanup, CONFIG.transitionSlow);
+      // Use CSS variable timing from design-tokens
+      setTimeout(cleanup, CONFIG.transitionDuration);
     }
   }
 
   /**
-   * Close all modals (alias for closeActiveModal)
+   * Close all modals (clears entire stack)
    */
   function closeAll() {
-    closeActiveModal();
+    // Close all modals in reverse order
+    while (state.modalStack.length > 0) {
+      closeActiveModal(true); // silent close
+    }
+    // Final cleanup
+    hideBackdrop();
+    document.body.classList.remove("modal-open", "bg-dimmed", "scrim-active");
+    document.documentElement.classList.remove(
+      "modal-open",
+      "bg-dimmed",
+      "scrim-active",
+    );
+    state.isAnimating = false;
   }
 
   // ===========================================
@@ -410,10 +509,10 @@
       return;
     }
 
-    console.log("[MasterUI] Initializing Master UI Controller");
+    console.log("[MasterUI] Initializing Master UI Controller (Phase 4)");
 
-    // Create scrim element
-    getOrCreateScrim();
+    // Initialize single backdrop element
+    getOrCreateBackdrop();
 
     // ===========================================
     // CLICK DELEGATION
@@ -533,14 +632,15 @@
     });
 
     // ===========================================
-    // SCRIM CLICK
+    // BACKDROP CLICK - Already handled in getOrCreateBackdrop()
     // ===========================================
-    // Already handled in getOrCreateScrim()
 
     // Mark as initialized
     global.MasterUIController._initialized = true;
 
-    console.log("[MasterUI] Initialization complete");
+    console.log(
+      "[MasterUI] Initialization complete (Phase 4 - Single Backdrop)",
+    );
   }
 
   // ===========================================
@@ -573,14 +673,14 @@
   // ===========================================
 
   /**
-   * Completely destroy the controller and clean up
+   * Completely destroy the controller and clean up (Phase 4)
    */
   function destroy() {
-    // Close any open modals
-    closeActiveModal(true);
+    // Close all open modals
+    closeAll();
 
-    // Remove scrim
-    destroyScrim();
+    // Remove backdrop
+    destroyBackdrop();
 
     // Remove body classes
     document.body.classList.remove("modal-open", "bg-dimmed", "scrim-active");
@@ -593,15 +693,17 @@
     // Reset state
     state = {
       activeModalId: null,
+      modalStack: [],
       isAnimating: false,
-      scrimElement: null,
+      backdropElement: null,
+      currentZIndex: 1000,
     };
 
     global.MasterUIController._initialized = false;
   }
 
   // ===========================================
-  // EXPORT
+  // EXPORT (Phase 4 - Extended API)
   // ===========================================
   global.MasterUIController = {
     // Main API
@@ -620,6 +722,7 @@
     // State accessors
     isModalOpen: () => !!state.activeModalId,
     getActiveModalId: () => state.activeModalId,
+    getModalStack: () => [...state.modalStack],
 
     // Internal flag
     _initialized: false,

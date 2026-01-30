@@ -165,12 +165,12 @@
 
     // Check if new modules are available
     if (!HealthEngine || !HealthComponent) {
-      console.warn(
-        "[HealthSafetyView] HealthEngine or HealthComponent not loaded, using fallback",
+      console.error(
+        "[HealthSafetyView] HealthEngine or HealthComponent not loaded",
       );
-      const fallbackHtml = renderFallbackHealth(appState, healthState);
-      insertIntoContainer(fallbackHtml);
-      return fallbackHtml;
+      const errorHtml = renderErrorState();
+      insertIntoContainer(errorHtml);
+      return errorHtml;
     }
 
     // Initialize engine and component
@@ -182,9 +182,9 @@
       component = getComponent(language);
     } catch (initError) {
       console.error("[HealthSafetyView] Init error:", initError);
-      const fallbackHtml = renderFallbackHealth(appState, healthState);
-      insertIntoContainer(fallbackHtml);
-      return fallbackHtml;
+      const errorHtml = renderErrorState();
+      insertIntoContainer(errorHtml);
+      return errorHtml;
     }
 
     // Run complete analysis
@@ -211,9 +211,9 @@
       healthHtml = component.render(currentAnalysis);
     } catch (renderError) {
       console.error("[HealthSafetyView] Component render error:", renderError);
-      const fallbackHtml = renderFallbackHealth(appState, healthState);
-      insertIntoContainer(fallbackHtml);
-      return fallbackHtml;
+      const errorHtml = renderErrorState();
+      insertIntoContainer(errorHtml);
+      return errorHtml;
     }
 
     // NOTE: Weather alerts section removed to avoid duplicate rendering
@@ -295,91 +295,6 @@
         </div>
       </div>
     `;
-  }
-
-  /**
-   * Fallback render when new modules are not available
-   * Uses the old healthSafetyEngine if available
-   */
-  function renderFallbackHealth(appState, healthState) {
-    // Try to use old healthSafetyEngine
-    const engine = global.healthSafetyEngine;
-    const data = healthState || (engine ? engine(appState) : null);
-
-    if (!data) {
-      return renderEmptyState();
-    }
-
-    // Simple fallback UI
-    const outdoorScore =
-      data.outdoorQuality?.score || data.overall?.score || 70;
-    const scoreColor = getScoreColor(outdoorScore);
-    const scoreLabel = labelForScore(outdoorScore);
-
-    return `
-      <div class="health-view" data-health-view>
-        <section class="health-card health-card--outdoor">
-          <div class="health-card__header">
-            <span class="health-card__icon">🌤️</span>
-            <span class="health-card__title">Outdoor-Qualität</span>
-          </div>
-          <div class="health-card__score" style="text-align: center; padding: 20px;">
-            <span class="score-number" style="font-size: 48px; font-weight: bold; color: ${scoreColor};">${outdoorScore}</span>
-            <span class="score-label" style="display: block; color: ${scoreColor};">${scoreLabel}</span>
-          </div>
-        </section>
-
-        <section class="quick-check-section">
-          <h3 class="health-section__header">Quick-Checks</h3>
-          <div class="quick-check-grid">
-            ${renderFallbackQuickChecks(data)}
-          </div>
-        </section>
-      </div>
-    `;
-  }
-
-  function renderFallbackQuickChecks(data) {
-    const checks = [
-      {
-        key: "umbrella",
-        icon: "☂️",
-        label: "Regenschirm",
-        answer: data.umbrella?.needed ? "Ja" : "Nein",
-      },
-      {
-        key: "uv",
-        icon: "☀️",
-        label: "UV-Schutz",
-        answer: data.uv?.level || "Niedrig",
-      },
-      {
-        key: "jacket",
-        icon: "🧥",
-        label: "Jacke",
-        answer: data.jacket?.type || "Leicht",
-      },
-      {
-        key: "sleep",
-        icon: "😴",
-        label: "Schlafqualität",
-        answer: data.sleep?.quality || "Gut",
-      },
-    ];
-
-    return checks
-      .map(
-        (c) => `
-      <div class="quick-check-card health-card" data-card-type="${c.key}" data-detail-type="${c.key}">
-        <span class="quick-check-card__icon">${c.icon}</span>
-        <div class="quick-check-card__content">
-          <span class="quick-check-card__label">${c.label}</span>
-          <span class="quick-check-card__answer">${c.answer}</span>
-        </div>
-      </div>
-    `,
-      )
-      .join("");
   }
 
   // ========================================
@@ -755,78 +670,93 @@
   }
 
   // ========================================
-  // MODAL SYSTEM
+  // MODAL SYSTEM (Phase 4 - MasterUIController Delegation)
   // ========================================
 
   /**
    * Open health modal with detailed information
+   * PHASE 4: Delegates to MasterUIController for backdrop/scroll management
    */
   function openHealthModal(cardType, appState, healthState) {
     const modalContent = getModalContent(cardType, appState, healthState);
 
-    // Use existing modal system if available
-    if (global.ModalController?.openBottomSheet) {
+    // PHASE 4: Use MasterUIController as primary, ModalController as fallback
+    if (global.MasterUIController?.openModal) {
+      // Create/update a temporary modal sheet for health content
+      showHealthContentInMasterModal(modalContent);
+    } else if (global.ModalController?.openBottomSheet) {
       global.ModalController.openBottomSheet(modalContent, {
         allowSwipeClose: true,
       });
     } else if (global.showBottomSheet) {
       global.showBottomSheet(modalContent);
     } else {
-      // Fallback: create modal
+      // LEGACY FALLBACK: Create modal using MasterUIController backdrop
       showFallbackModal(modalContent);
     }
   }
 
+  /**
+   * Show health content using MasterUIController's single backdrop
+   * PHASE 4: No duplicate overlays created
+   */
+  function showHealthContentInMasterModal(content) {
+    // Find or create a dedicated health modal container
+    let healthSheet = document.getElementById("sheet-health-detail");
+
+    if (!healthSheet) {
+      healthSheet = document.createElement("div");
+      healthSheet.id = "sheet-health-detail";
+      healthSheet.className = "bottom-sheet health-modal-sheet";
+      healthSheet.setAttribute("aria-modal", "true");
+      healthSheet.setAttribute("role", "dialog");
+      healthSheet.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 90vh;
+        background: var(--modal-backdrop-bg, rgba(22, 22, 24, 0.96));
+        backdrop-filter: var(--modal-backdrop-blur, blur(20px)) var(--modal-backdrop-saturate, saturate(180%));
+        -webkit-backdrop-filter: var(--modal-backdrop-blur, blur(20px)) var(--modal-backdrop-saturate, saturate(180%));
+        border-radius: var(--health-border-radius, 12px) var(--health-border-radius, 12px) 0 0;
+        transform: translateY(100%);
+        transition: transform var(--modal-transition-duration, 300ms) var(--modal-transition-easing, cubic-bezier(0.05, 0.7, 0.1, 1));
+        z-index: var(--z-modal-base, 1000);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+      `;
+
+      // Add to overlay or body
+      const overlay =
+        document.getElementById("bottom-sheet-overlay") ||
+        document.getElementById("master-backdrop");
+      if (overlay) {
+        overlay.appendChild(healthSheet);
+      } else {
+        document.body.appendChild(healthSheet);
+      }
+    }
+
+    // Update content
+    healthSheet.innerHTML = content;
+
+    // Open via MasterUIController (handles backdrop, scroll lock, z-index)
+    global.MasterUIController.openModal("sheet-health-detail");
+  }
+
+  /**
+   * Fallback modal - DELEGATES to MasterUIController's backdrop
+   * PHASE 4: Does NOT create its own overlay!
+   */
   function showFallbackModal(content) {
-    const existing = document.querySelector(".health-modal-overlay");
-    if (existing) existing.remove();
+    // Remove any legacy standalone overlays
+    document
+      .querySelectorAll(".health-modal-overlay")
+      .forEach((el) => el.remove());
 
-    const overlay = document.createElement("div");
-    overlay.className = "health-modal-overlay";
-    overlay.innerHTML = `
-      <div class="health-modal-sheet">
-        ${content}
-      </div>
-    `;
-
-    // Close modal function
-    const closeModal = () => {
-      overlay.classList.remove("health-modal-overlay--visible");
-      setTimeout(() => overlay.remove(), 300);
-    };
-
-    // Click on overlay backdrop to close
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeModal();
-    });
-
-    // Close button click handler (event delegation)
-    overlay.addEventListener("click", (e) => {
-      const closeBtn = e.target.closest(
-        "[data-close-sheet], .bottom-sheet__close, .modal-close",
-      );
-      if (closeBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeModal();
-      }
-    });
-
-    // ESC key to close
-    const handleEsc = (e) => {
-      if (e.key === "Escape") {
-        closeModal();
-        document.removeEventListener("keydown", handleEsc);
-      }
-    };
-    document.addEventListener("keydown", handleEsc);
-
-    document.body.appendChild(overlay);
-
-    // Animate in
-    requestAnimationFrame(() => {
-      overlay.classList.add("health-modal-overlay--visible");
-    });
+    // Use showHealthContentInMasterModal instead
+    showHealthContentInMasterModal(content);
   }
 
   /**

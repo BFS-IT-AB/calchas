@@ -261,6 +261,79 @@ const API_PROVIDERS = [
 
 const DEMO_CITY_FALLBACK = "Aschaffenburg";
 
+/**
+ * Generate health state using the modern HealthEngine
+ * This replaces the legacy healthSafetyEngine function
+ * @param {object} appState - Application state with weather data
+ * @returns {object} Health state compatible with UI components
+ */
+function generateHealthState(appState) {
+  if (!window.HealthEngine) {
+    console.warn("[app.js] HealthEngine not loaded");
+    return {};
+  }
+
+  try {
+    const current = appState.current || {};
+    const daily = (appState.daily && appState.daily[0]) || {};
+    const aqi = appState.aqi || {};
+    const language = appState.locale === "en-US" ? "en" : "de";
+
+    const engine = new window.HealthEngine({ language });
+
+    // Calculate outdoor score
+    const scoreResult = engine.calculateOutdoorScore({
+      temp: current.temperature,
+      feels:
+        current.apparentTemperature || current.feelsLike || current.temperature,
+      windSpeed: current.windSpeed || 0,
+      precipProb: current.precipProb || daily.precipProbMax || 0,
+      humidity: current.humidity || 50,
+      uvIndex: current.uvIndex || daily.uvIndexMax || 0,
+      visibility: current.visibility || 10,
+      aqiValue: aqi.europeanAqi || aqi.usAqi || 0,
+      pollenLevel: 0,
+    });
+
+    // Generate AQI label (used by HomeCards)
+    let aqiLabel = null;
+    const aqiValue = aqi.europeanAqi || aqi.usAqi || null;
+    if (aqiValue != null) {
+      const labelMap = {
+        Good: "gut",
+        Fair: "akzeptabel",
+        Moderate: "mäßig",
+        Poor: "schlecht",
+        "Very Poor": "sehr schlecht",
+      };
+      const rawLabel = aqi.label || "";
+      const translated =
+        labelMap[rawLabel] ||
+        (aqiValue <= 25 ? "gut" : aqiValue <= 50 ? "mäßig" : "schlecht");
+      aqiLabel = `Die Luftqualität ist ${translated} (AQI ${Math.round(aqiValue)}).`;
+    }
+
+    return {
+      currentOutdoorScore: scoreResult.score,
+      currentScoreFactors: scoreResult.factors,
+      outdoorQuality: scoreResult,
+      aqiLabel,
+      raw: {
+        temp: current.temperature,
+        feels: current.apparentTemperature || current.temperature,
+        precipProb: current.precipProb || daily.precipProbMax || 0,
+        wind: current.windSpeed || 0,
+        humidity: current.humidity || 50,
+        uvIndex: current.uvIndex || daily.uvIndexMax || 0,
+        aqiValue: aqiValue || 0,
+      },
+    };
+  } catch (e) {
+    console.error("[app.js] generateHealthState error:", e);
+    return {};
+  }
+}
+
 let activeSettingsSubview = null;
 
 const SETTINGS_NAV_MAP = {
@@ -1150,10 +1223,7 @@ async function initAppShell(appState) {
         moonPhase: appState.renderData?.moonPhase || {},
       };
 
-      const healthState =
-        typeof window.healthSafetyEngine === "function"
-          ? window.healthSafetyEngine(homeState)
-          : {};
+      const healthState = generateHealthState(homeState);
 
       if (window.WeatherHero && window.WeatherHero.renderWeatherHero) {
         window.WeatherHero.renderWeatherHero(homeState, {
@@ -1464,10 +1534,7 @@ function renderDemoExperience(reason = "") {
       moonPhase: demoData.moonPhase || {},
     };
 
-    const healthState =
-      typeof window.healthSafetyEngine === "function"
-        ? window.healthSafetyEngine(homeState)
-        : {};
+    const healthState = generateHealthState(homeState);
 
     // Render Hero Section
     if (window.WeatherHero && window.WeatherHero.renderWeatherHero) {
@@ -3675,10 +3742,7 @@ async function loadWeather(city, options = {}) {
         moonPhase: appState.renderData?.moonPhase || {},
       };
 
-      const healthState =
-        typeof window.healthSafetyEngine === "function"
-          ? window.healthSafetyEngine(homeState)
-          : {};
+      const healthState = generateHealthState(homeState);
 
       if (window.WeatherHero && window.WeatherHero.renderWeatherHero) {
         window.WeatherHero.renderWeatherHero(homeState, {
@@ -3909,10 +3973,7 @@ async function loadWeatherByCoords(lat, lon, cityName, options = {}) {
         moonPhase: appState.renderData?.moonPhase || {},
       };
 
-      const healthState =
-        typeof window.healthSafetyEngine === "function"
-          ? window.healthSafetyEngine(homeState)
-          : {};
+      const healthState = generateHealthState(homeState);
 
       if (window.WeatherHero?.renderWeatherHero) {
         window.WeatherHero.renderWeatherHero(homeState, {
@@ -4215,10 +4276,7 @@ function syncExtendedPanels(locationLike) {
           // Use stored homeState/healthState if available, otherwise build from appState
           const homeState = window._currentHomeState || window.appState || {};
           const healthState =
-            window._currentHealthState ||
-            (window.healthSafetyEngine
-              ? window.healthSafetyEngine(homeState)
-              : {});
+            window._currentHealthState || generateHealthState(homeState);
           window.HealthSafetyView.render(homeState, healthState);
         }
       })

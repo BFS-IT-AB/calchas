@@ -1,0 +1,135 @@
+# Calchas Architektur-Manifest
+# Etabliert: Januar 2026 (Phase 6 Finalisierung)
+# Diese Regeln sind VERBINDLICH für alle zukünftigen Änderungen.
+
+## ═══════════════════════════════════════════════════════════════════════════════
+## 1. UI-GESETZ: Modal & Overlay Management
+## ═══════════════════════════════════════════════════════════════════════════════
+
+Modale, Overlays und Backdrops werden AUSSCHLIESSLICH über den `MasterUIController` gesteuert.
+
+- Datei: `src/ui/MasterUIController.js`
+- Methoden: `showOverlay()`, `hideOverlay()`, `toggleModal()`
+- NIEMALS: Eigene Backdrops in Komponenten erstellen
+- NIEMALS: Direkte `document.body.classList.add('modal-open')` Manipulation
+
+Beispiel (RICHTIG):
+```javascript
+window.MasterUIController?.showOverlay('health-overlay', 'slide-up');
+```
+
+Beispiel (FALSCH):
+```javascript
+// ❌ Eigenen Backdrop erstellen
+const backdrop = document.createElement('div');
+backdrop.classList.add('backdrop');
+document.body.appendChild(backdrop);
+```
+
+## ═══════════════════════════════════════════════════════════════════════════════
+## 2. DESIGN-GESETZ: CSS Design Tokens
+## ═══════════════════════════════════════════════════════════════════════════════
+
+Alle visuellen Eigenschaften (Farben, Blur, Easings, Radien, Schatten) werden
+AUSSCHLIESSLICH über CSS Custom Properties aus `design-tokens.css` bezogen.
+
+- Datei: `src/ui/shared/design-tokens.css`
+- MUSS als ERSTES Stylesheet in `index.html` geladen werden
+- NIEMALS: Hardcoded Farbwerte in Komponenten-CSS
+- NIEMALS: Eigene Animationswerte ohne Token-Referenz
+
+Verfügbare Token-Kategorien:
+- `--color-*` : Farbpalette
+- `--blur-*` : Backdrop-Filter
+- `--ease-*` : Timing-Functions
+- `--radius-*` : Border-Radius
+- `--shadow-*` : Box-Shadows
+- `--z-*` : Z-Index Hierarchie
+- `--modal-*` : Modal-spezifische Werte
+
+Beispiel (RICHTIG):
+```css
+.my-card {
+  background: var(--glass-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+```
+
+Beispiel (FALSCH):
+```css
+/* ❌ Hardcoded Werte */
+.my-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+```
+
+## ═══════════════════════════════════════════════════════════════════════════════
+## 3. STRUKTUR-GESETZ: Ordner-Organisation
+## ═══════════════════════════════════════════════════════════════════════════════
+
+Neue UI-Komponenten werden IMMER in einem eigenen Unterordner unter `src/ui/` angelegt.
+
+Ordnerstruktur:
+```
+src/ui/
+├── shared/              # Geteilte Utilities (design-tokens, features, BottomNav)
+├── home/                # Startseite-Komponenten
+├── health/              # Gesundheits-View
+├── history/             # Verlaufs-View
+├── settings/            # Einstellungen
+├── day-detail/          # Tagesdetail-Seite
+├── map/                 # Karten-Komponenten
+├── modals/              # Modal-Definitionen
+└── components/          # Wiederverwendbare UI-Elemente
+```
+
+Namenskonvention:
+- Ordnername: `kebab-case` (z.B. `day-detail/`)
+- Hauptdatei: `KomponentenName.js` (PascalCase)
+- Styles: `komponent-name.css` (kebab-case)
+
+## ═══════════════════════════════════════════════════════════════════════════════
+## 4. PFAD-GESETZ: Synchronisationspflicht
+## ═══════════════════════════════════════════════════════════════════════════════
+
+Bei JEDER Datei-Verschiebung oder -Umbenennung MÜSSEN folgende Dateien
+SOFORT synchronisiert werden:
+
+1. `src/index.html` - Script/Link-Tags aktualisieren
+2. `src/service-worker.js` - `urlsToCache` Array aktualisieren
+3. Cache-Version erhöhen (z.B. `calchas-v10` → `calchas-v11`)
+
+Checkliste bei Dateibewegungen:
+- [ ] Alle `<script src="...">` Pfade in index.html geprüft
+- [ ] Alle `<link href="...">` Pfade in index.html geprüft
+- [ ] `urlsToCache` in service-worker.js aktualisiert
+- [ ] `CACHE_NAME` Version inkrementiert
+- [ ] Relative Imports in verschobenen Dateien angepasst
+
+## ═══════════════════════════════════════════════════════════════════════════════
+## ZUSÄTZLICHE KONVENTIONEN
+## ═══════════════════════════════════════════════════════════════════════════════
+
+### Gesundheitslogik
+- Zentrale Engine: `src/logic/HealthEngine.js`
+- KEINE Legacy-Imports von `healthSafetyEngine.js` (gelöscht)
+
+### Scrollbar-Stabilität
+- Bei Modal-Open: `scrollbar-gutter: stable;` via `.modal-open` Klasse
+- Definiert in `design-tokens.css`
+
+### Z-Index Hierarchie
+```
+--z-base: 1
+--z-dropdown: 100
+--z-modal-base: 1000
+--z-overlay: 1100
+--z-toast: 1200
+--z-critical: 9999
+```
+
+---
+Letzte Aktualisierung: Januar 2026
+Verantwortlich: BFS-IT-AB/calchas Team

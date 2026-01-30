@@ -1,0 +1,63 @@
+/**
+ * design-tokens.css - Goldene Regel Design Tokens
+ * Zentrale Stelle für kritische Design-Werte.
+ * Diese Datei schützt das visuelle Design vor versehentlichen Änderungen.
+ *
+ * Commit: f877395 (stabiler Stand)
+ * @module ui/shared/design-tokens
+ */
+
+:root {
+  /* ============================================
+     GOLDENE REGEL - Health Glassmorphism Tokens
+     ============================================ */
+
+  /* Glass Effect - Modal/Sheet Background */
+  --health-glass-blur: blur(20px);
+  --health-glass-saturate: saturate(180%);
+  --health-glass-bg: rgba(22, 22, 24, 0.96);
+
+  /* Animation Easing - Swift iOS-style */
+  --health-swift-easing: cubic-bezier(0.05, 0.7, 0.1, 1);
+
+  /* Border Radius - Consistent Corners */
+  --health-border-radius: 12px;
+
+  /* Z-Index - Modal Layer */
+  --health-z-modal: 1000;
+
+  /* ============================================
+     MODAL & BACKDROP TOKENS (Phase 4)
+     Zentrale Steuerung für alle Overlays
+     ============================================ */
+
+  /* Backdrop/Scrim Styling */
+  --modal-backdrop-bg: var(--health-glass-bg);
+  --modal-backdrop-blur: var(--health-glass-blur);
+  --modal-backdrop-saturate: var(--health-glass-saturate);
+
+  /* Z-Index Hierarchie - kontrollierte Stapelung */
+  --z-backdrop: 999;
+  --z-modal-base: 1000;
+  --z-modal-stacked: 1001; /* Für gestapelte Modale */
+
+  /* Transition Timing */
+  --modal-transition-duration: 300ms;
+  --modal-transition-easing: var(--health-swift-easing);
+}
+
+/* ============================================
+   SCROLL STABILITÄT
+   Verhindert Layout-Sprung beim Öffnen von Modalen
+   ============================================ */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Body-State wenn Modal offen */
+html.modal-open,
+body.modal-open {
+  overflow: hidden;
+  /* Verhindert iOS Safari bounce */
+  overscroll-behavior: none;
+}

@@ -372,13 +372,11 @@
    BODY STATES
    ============================================ */
 
-html {
-  scrollbar-gutter: stable;
-}
+/* PHASE 4: scrollbar-gutter now in design-tokens.css for single source of truth */
+/* html { scrollbar-gutter: stable; } - MOVED to design-tokens.css */
 
-body.modal-open {
-  overflow: hidden;
-}
+/* PHASE 4: modal-open now in design-tokens.css with enhanced settings */
+/* body.modal-open { overflow: hidden; } - MOVED to design-tokens.css */
 
 /* Hard reset for leftover dimming */
 body:not(.modal-open):not(.bg-dimmed) #app-container,

@@ -547,7 +547,19 @@
    * @param {string} idOrMetric - Sheet ID or metric name
    * @param {Element} sourceElement - Optional source element for future use
    */
+  /**
+   * Open a bottom sheet by ID or metric name
+   * PHASE 4: Delegates to MasterUIController for unified backdrop/scroll management
+   */
   function openSheet(idOrMetric, sourceElement) {
+    // PHASE 4: Prefer MasterUIController
+    if (global.MasterUIController?.openModal) {
+      const resolvedId = resolveSheetId(idOrMetric);
+      renderSheetContent(resolvedId);
+      return global.MasterUIController.openModal(resolvedId, sourceElement);
+    }
+
+    // Fallback: Legacy implementation
     const overlay = document.getElementById("bottom-sheet-overlay");
     const resolvedId = resolveSheetId(idOrMetric);
     const sheet = resolvedId && document.getElementById(resolvedId);
@@ -569,12 +581,12 @@
     overlay.removeAttribute("hidden");
     overlay.setAttribute("aria-hidden", "false");
 
-    // Lock body scroll
+    // PHASE 4: Use CSS class for scroll lock (handled by design-tokens.css)
     document.body.classList.add("modal-open");
+    document.documentElement.classList.add("modal-open");
 
     // EXACT SAME AS HEALTH: Use requestAnimationFrame to trigger visible class
     // This ensures the browser has painted the initial state before animating
-    // (Mirrors HealthSafetyView.js lines 827-828)
     requestAnimationFrame(() => {
       overlay.classList.add("is-open");
       sheet.classList.add("bottom-sheet--visible");
@@ -620,7 +632,7 @@
 
   /**
    * Complete cleanup after modal closes - fixes "Persistent Darkness" bug
-   * Ensures screen returns to 100% brightness with no leftover overlays
+   * PHASE 4: Delegates body-scroll to MasterUIController via CSS classes
    */
   function finalizeClose(overlay, sheet) {
     // Reset sheet state
@@ -634,10 +646,17 @@
     activeSheetId = null;
 
     // ===========================================
-    // HARD RESET: Guarantee no persistent dimming
+    // PHASE 4: Let MasterUIController handle body-scroll
+    // Only clean up legacy elements here
     // ===========================================
 
-    // 1. Remove ALL body classes that could cause dimming
+    // 1. DELEGATE to MasterUIController if available
+    if (global.MasterUIController?.closeAll) {
+      // MasterUIController handles modal-open class removal
+      return;
+    }
+
+    // 2. Fallback: Remove body classes if MasterUIController unavailable
     document.body.classList.remove(
       "modal-open",
       "bg-dimmed",
@@ -651,7 +670,7 @@
       "modal-active",
     );
 
-    // 2. Force remove any leftover scrim/phantom elements from old systems
+    // 3. Force remove any leftover scrim/phantom elements from old systems
     document
       .querySelectorAll(
         "#modal-scrim, .flip-phantom, .flip-scrim, .health-modal-overlay",
@@ -663,7 +682,7 @@
         }
       });
 
-    // 3. Reset any inline filter/transform styles on app container
+    // 4. Reset any inline filter/transform styles on app container
     const appContainer =
       document.getElementById("app-container") ||
       document.getElementById("app") ||
@@ -674,8 +693,8 @@
       appContainer.style.transition = "";
     }
 
-    // 4. Reset body overflow
-    document.body.style.overflow = "";
+    // 5. REMOVED: document.body.style.overflow = "";
+    // PHASE 4: Scroll lock is now handled via .modal-open CSS class in design-tokens.css
   }
 
   function initModalController() {
