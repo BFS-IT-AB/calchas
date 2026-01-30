@@ -1098,65 +1098,24 @@ async function initAppShell(appState) {
     console.warn("Radar / Karten-Initialisierung fehlgeschlagen", e);
   }
 
-  // History View - Browser-kompatible Version (Redesigned)
-  if (window.HistoryView) {
+  // History Controller - Central orchestrator for History page (new architecture)
+  if (window.HistoryController) {
     try {
-      const historyView = new window.HistoryView({
+      const lat = appState?.currentCoordinates?.lat ?? 52.52;
+      const lon = appState?.currentCoordinates?.lon ?? 13.405;
+
+      // Initialize via HistoryController - handles all data loading internally
+      await window.HistoryController.init({
         containerId: "history-container",
+        location: { lat, lon },
       });
-      let historyData = [];
 
-      // Load 12-month history data for climate statistics
-      if (
-        window.weatherDataService &&
-        typeof window.weatherDataService.loadHistory === "function"
-      ) {
-        try {
-          const today = new Date();
-          // Load past 365 days for complete climate overview
-          const oneYearAgo = new Date(
-            today.getTime() - 365 * 24 * 60 * 60 * 1000,
-          );
-          const lat = appState?.currentCoordinates?.lat ?? 52.52;
-          const lon = appState?.currentCoordinates?.lon ?? 13.405;
-          const startDate = oneYearAgo.toISOString().split("T")[0];
-          const endDate = today.toISOString().split("T")[0];
+      // Store reference for external access
+      window.HISTORY_CONTROLLER = window.HistoryController;
 
-          console.log(
-            "[History] Loading historical data from",
-            startDate,
-            "to",
-            endDate,
-          );
-
-          historyData =
-            (await window.weatherDataService.loadHistory(
-              lat,
-              lon,
-              startDate,
-              endDate,
-            )) || [];
-
-          if (appState) {
-            appState.history = historyData;
-            // Store coordinates for history refresh
-            appState.historyCoordinates = { lat, lon };
-          }
-
-          console.log(
-            "[History] Loaded",
-            historyData.length,
-            "days of historical data",
-          );
-        } catch (loadErr) {
-          console.warn("History data loading failed:", loadErr);
-        }
-      }
-
-      await historyView.render(historyData);
-      window.HISTORY_VIEW = historyView;
+      console.log("[History] HistoryController initialized successfully");
     } catch (e) {
-      console.warn("History View konnte nicht initialisiert werden", e);
+      console.warn("[History] HistoryController initialization failed:", e);
     }
   }
 

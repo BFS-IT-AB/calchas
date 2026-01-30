@@ -72,6 +72,17 @@
     if (scrollContainer && typeof scrollContainer.scrollTo === "function") {
       scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
     }
+
+    // CRITICAL: Trigger History render when switching to history tab
+    if (viewId === "history" && global.HistoryController) {
+      console.log("[BottomNav] History-Tab aktiviert → Starte Render");
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        global.HistoryController.render().catch((err) => {
+          console.warn("[BottomNav] History render failed:", err);
+        });
+      }, 50);
+    }
   }
 
   function handleDocumentNavClick(event) {

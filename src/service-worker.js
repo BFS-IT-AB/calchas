@@ -1,7 +1,7 @@
 // Service Worker für Calchas
 // Ermöglicht Offline-Funktionalität, Caching und Push-Notifications
 
-const CACHE_NAME = "calchas-v10"; // Version erhöht für Struktur-Bereinigung Phase 5
+const CACHE_NAME = "calchas-v11"; // Version erhöht für History Architecture Consolidation
 const HEALTH_CACHE_NAME = "calchas-health-data"; // Separate cache for health data
 const urlsToCache = [
   "/",
@@ -28,7 +28,12 @@ const urlsToCache = [
   "/src/ui/home/FrogHeroPlayer.js",
   "/src/ui/health/HealthSafetyView.js",
   "/src/ui/health/health.css",
+  // History Architecture (consolidated)
   "/src/ui/history/HistoryViewBrowser.js",
+  "/src/ui/history/history.css",
+  "/src/ui/history/components/HistoryCharts.js",
+  "/src/ui/history/components/HistoryStats.js",
+  "/src/ui/history/components/HistoryController.js",
   "/src/ui/settings/SettingsHome.js",
   // Phase 5: Verschobene Dateien
   "/src/ui/day-detail/day-detail.js",
