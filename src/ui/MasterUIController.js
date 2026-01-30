@@ -167,6 +167,41 @@
   }
 
   /**
+   * NOTFALL: Erzwingt das Verstecken ALLER Overlays
+   * Wird beim Öffnen der Historie aufgerufen um Geister-Modals zu killen
+   */
+  function forceClearOverlays() {
+    console.warn("[MasterUI] FORCE CLEAR OVERLAYS - Killing all ghosts");
+
+    // Alle möglichen Overlay-Klassen
+    const overlaySelectors = [
+      ".modal-backdrop",
+      ".backdrop",
+      ".modal.is-active",
+      ".bottom-sheet-overlay.is-open",
+      "#master-backdrop.is-visible",
+      ".health-modal-overlay--visible",
+      '[class*="overlay"].is-visible',
+      '[class*="backdrop"].is-visible',
+    ];
+
+    overlaySelectors.forEach((selector) => {
+      document.querySelectorAll(selector).forEach((el) => {
+        console.warn("[MasterUI] Hiding ghost overlay:", el);
+        el.style.display = "none";
+        el.style.visibility = "hidden";
+        el.style.opacity = "0";
+        el.style.pointerEvents = "none";
+        el.classList.remove("is-active", "is-visible", "is-open");
+      });
+    });
+
+    // Reset state
+    state.activeModalId = null;
+    state.modalStack = [];
+  }
+
+  /**
    * Completely remove the backdrop (cleanup)
    */
   function destroyBackdrop() {
@@ -1042,6 +1077,9 @@
     closeSheet,
     initModalController,
     open: openModal,
+
+    // NOTFALL: Overlay-Killer
+    forceClearOverlays,
 
     // State accessors
     isModalOpen: () => !!state.activeModalId,

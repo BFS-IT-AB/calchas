@@ -559,6 +559,22 @@
     async render(historyData = []) {
       console.log("🎬 [HistoryController] Render-Zyklus gestartet");
 
+      // NOTFALL-DEBUG: DOM-Check
+      console.error(
+        "TARGET CONTAINER EXISTS:",
+        !!document.getElementById("history-container"),
+      );
+      console.error("CONTAINER ELEMENT:", this.container);
+      console.error(
+        "CONTAINER IN DOM:",
+        this.container ? document.body.contains(this.container) : false,
+      );
+
+      // NOTFALL: Geister-Overlays killen bevor wir rendern
+      if (window.MasterUIController?.forceClearOverlays) {
+        window.MasterUIController.forceClearOverlays();
+      }
+
       // Step 1: Ensure initialization
       if (!this.state.get("isInitialized")) {
         await this.init();
