@@ -30,9 +30,10 @@
   const CHANGELOG = [
     {
       version: "0.7.0-alpha",
-      date: "01.02.2026",
+      date: "02.02.2026",
       isLatest: true,
-      title: "🚧 Alpha-Release: Die Basis steht!",
+      title:
+        "🚧 Alpha-Release: Die Basis steht! - Erster offizieller Release von Calchas - BFS-IT OpenDay 2026 🎉",
       changes: [
         {
           emoji: "🚀",
