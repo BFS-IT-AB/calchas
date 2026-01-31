@@ -673,49 +673,196 @@
   // ============================================
 
   /**
+   * External HTML Tooltip (Map-Popup-Style)
+   * Entspricht dem "Wetter an Position" Popup-Design
+   */
+  function getOrCreateTooltip(chart) {
+    let tooltipEl = chart.canvas.parentNode.querySelector(
+      ".chart-popup-tooltip",
+    );
+
+    if (!tooltipEl) {
+      tooltipEl = document.createElement("div");
+      tooltipEl.className = "chart-popup-tooltip";
+      chart.canvas.parentNode.appendChild(tooltipEl);
+    }
+
+    return tooltipEl;
+  }
+
+  /**
+   * External Tooltip Handler (Wie Map-Popup "Wetter an Position")
+   */
+  function externalTooltipHandler(context, metricType = "temperature") {
+    const { chart, tooltip } = context;
+    const tooltipEl = getOrCreateTooltip(chart);
+
+    // Hide if no tooltip
+    if (tooltip.opacity === 0) {
+      tooltipEl.style.opacity = "0";
+      tooltipEl.style.pointerEvents = "none";
+      return;
+    }
+
+    // Set content
+    if (tooltip.body) {
+      const titleLines = tooltip.title || [];
+
+      let innerHtml = '<div class="weather-popup-content">';
+
+      // Header (wie popup-header bei Map)
+      if (titleLines.length > 0) {
+        innerHtml += `<div class="popup-header"><strong>${titleLines[0]}</strong></div>`;
+      }
+
+      // Grid (wie popup-grid bei Map)
+      innerHtml += '<div class="popup-grid">';
+
+      tooltip.dataPoints.forEach((dataPoint) => {
+        const label = dataPoint.dataset.label || "";
+        const rawValue = dataPoint.raw;
+
+        // Format value based on metric type
+        let formattedValue = "";
+        if (typeof rawValue === "number") {
+          if (
+            metricType === "temperature" ||
+            metricType === "comparison" ||
+            metricType === "daydetail" ||
+            metricType === "extreme"
+          ) {
+            formattedValue = rawValue.toFixed(1) + "°C";
+          } else if (metricType === "precipitation") {
+            formattedValue = rawValue.toFixed(1) + " mm";
+          } else if (metricType === "wind") {
+            formattedValue = rawValue.toFixed(0) + " km/h";
+          } else if (metricType === "humidity") {
+            formattedValue = rawValue.toFixed(0) + "%";
+          } else if (metricType === "sunshine") {
+            formattedValue = rawValue.toFixed(1) + " h";
+          } else {
+            formattedValue = rawValue.toFixed(1);
+          }
+        } else {
+          formattedValue = String(rawValue);
+        }
+
+        innerHtml += `
+          <div class="popup-item">
+            <span class="popup-label">${label}</span>
+            <span class="popup-value">${formattedValue}</span>
+          </div>
+        `;
+      });
+
+      innerHtml += "</div>";
+
+      // Footer (Additional info from afterBody callback)
+      if (tooltip.afterBody && tooltip.afterBody.length > 0) {
+        const footerText = tooltip.afterBody.join("").trim();
+        if (footerText) {
+          innerHtml += `<div class="popup-footer">${footerText}</div>`;
+        }
+      }
+
+      innerHtml += "</div>";
+
+      tooltipEl.innerHTML = innerHtml;
+    }
+
+    // Position tooltip
+    const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+    const tooltipX = positionX + tooltip.caretX;
+    const tooltipY = positionY + tooltip.caretY;
+
+    tooltipEl.style.opacity = "1";
+    tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.left = tooltipX + "px";
+    tooltipEl.style.top = tooltipY + "px";
+  }
+
+  /**
    * Get base chart options with consistent styling
+   * Chart-Style wie Vergleichs-Tab mit Map-Popup-Tooltips
    */
   function getBaseOptions(metric = "temperature") {
     return {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { intersect: false, mode: "index" },
+      interaction: {
+        intersect: false,
+        mode: "index",
+        axis: "x",
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "var(--health-glass-bg, rgba(15, 20, 30, 0.95))",
-          titleColor: "#fff",
-          bodyColor: "#a7b1c6",
-          borderColor: "rgba(138, 180, 255, 0.3)",
-          borderWidth: 1,
-          padding: 14,
-          cornerRadius: 12,
-          displayColors: true,
+          enabled: false, // Disable default tooltip
+          external: (context) => externalTooltipHandler(context, metric),
+          callbacks: {
+            title: function (context) {
+              return context[0].label || "";
+            },
+            label: function (context) {
+              let label = context.dataset.label || "";
+              if (context.parsed.y !== null) {
+                if (metric === "temperature") {
+                  return `${label}: ${context.parsed.y.toFixed(1)}°C`;
+                } else if (metric === "precipitation") {
+                  return `${label}: ${context.parsed.y.toFixed(1)} mm`;
+                } else if (metric === "wind") {
+                  return `${label}: ${context.parsed.y.toFixed(0)} km/h`;
+                } else if (metric === "humidity") {
+                  return `${label}: ${context.parsed.y.toFixed(0)}%`;
+                } else if (metric === "sunshine") {
+                  return `${label}: ${context.parsed.y.toFixed(1)} h`;
+                }
+              }
+              return `${label}: ${context.parsed.y?.toFixed(1) || 0}`;
+            },
+          },
         },
       },
       scales: {
         x: {
-          grid: { color: "rgba(255,255,255,0.04)", drawBorder: false },
+          grid: {
+            color: "rgba(255,255,255,0.03)",
+            drawBorder: false,
+            lineWidth: 1,
+          },
           ticks: {
             color: "#6b7280",
             font: { size: 11, weight: 500 },
             maxTicksLimit: 10,
             maxRotation: 0,
+            padding: 8,
           },
         },
         y: {
-          grid: { color: "rgba(255,255,255,0.04)", drawBorder: false },
+          grid: {
+            color: "rgba(255,255,255,0.03)",
+            drawBorder: false,
+            lineWidth: 1,
+          },
           ticks: {
             color: "#6b7280",
             font: { size: 11 },
-            callback: (val) => (metric === "temperature" ? val + "°" : val),
+            padding: 8,
+            callback: (val) => {
+              if (metric === "temperature") return val + "°";
+              if (metric === "precipitation") return val + "mm";
+              if (metric === "wind") return val + "km/h";
+              if (metric === "humidity") return val + "%";
+              if (metric === "sunshine") return val + "h";
+              return val;
+            },
           },
         },
       },
-      // Use CSS variable for animation
+      // Smooth animations
       animation: {
-        duration: 350,
-        easing: "easeOutQuart", // Approximates --health-swift-easing
+        duration: 400,
+        easing: "easeOutQuart",
       },
     };
   }
@@ -810,14 +957,44 @@
         plugins: {
           ...baseOptions.plugins,
           tooltip: {
-            ...baseOptions.plugins.tooltip,
+            enabled: false,
+            external: (context) =>
+              externalTooltipHandler(context, "temperature"),
             callbacks: {
-              title: (items) => `Tag ${items[0].label}`,
+              title: (items) => {
+                const date = items[0].label;
+                return date;
+              },
               label: (item) => {
-                if (item.dataset.label === "Klimamittel") {
-                  return ` ${item.dataset.label}: ${climateAvg.toFixed(1)}°C (Referenz)`;
+                const value =
+                  typeof item.raw === "number" ? item.raw.toFixed(1) : item.raw;
+                const label = item.dataset.label;
+
+                if (label === "Klimamittel") {
+                  return `${label}: ${value}°C`;
+                } else if (label === "Max") {
+                  return `Maximum: ${value}°C`;
+                } else if (label === "Min") {
+                  return `Minimum: ${value}°C`;
+                } else if (label === "Durchschnitt") {
+                  return `${label}: ${value}°C`;
                 }
-                return ` ${item.dataset.label}: ${typeof item.raw === "number" ? item.raw.toFixed(1) : item.raw}°C`;
+                return `${label}: ${value}°C`;
+              },
+              afterBody: (items) => {
+                // Berechne Tagesspanne
+                const maxItem = items.find((i) => i.dataset.label === "Max");
+                const minItem = items.find((i) => i.dataset.label === "Min");
+                if (
+                  maxItem &&
+                  minItem &&
+                  maxItem.raw != null &&
+                  minItem.raw != null
+                ) {
+                  const span = (maxItem.raw - minItem.raw).toFixed(1);
+                  return `Spanne: ${span}°C`;
+                }
+                return "";
               },
             },
           },
@@ -830,6 +1007,7 @@
    * Generate precipitation chart config
    */
   function getPrecipitationChartConfig(data, labels) {
+    const baseOptions = getBaseOptions("precipitation");
     return {
       type: "bar",
       data: {
@@ -846,7 +1024,38 @@
           },
         ],
       },
-      options: getBaseOptions("precipitation"),
+      options: {
+        ...baseOptions,
+        plugins: {
+          ...baseOptions.plugins,
+          tooltip: {
+            enabled: false,
+            external: (context) =>
+              externalTooltipHandler(context, "precipitation"),
+            callbacks: {
+              title: (items) => {
+                return items[0].label;
+              },
+              label: (item) => {
+                const value =
+                  typeof item.raw === "number" ? item.raw.toFixed(1) : item.raw;
+                return `Niederschlag: ${value} mm`;
+              },
+              afterBody: (items) => {
+                // Berechne Gesamtsumme
+                if (items && items.length > 0) {
+                  const total = data.reduce(
+                    (sum, d) => sum + (d.precip || 0),
+                    0,
+                  );
+                  return `Gesamt: ${total.toFixed(1)} mm`;
+                }
+                return "";
+              },
+            },
+          },
+        },
+      },
     };
   }
 
@@ -854,6 +1063,7 @@
    * Generate wind chart config
    */
   function getWindChartConfig(data, labels) {
+    const baseOptions = getBaseOptions("wind");
     return {
       type: "line",
       data: {
@@ -872,7 +1082,38 @@
           },
         ],
       },
-      options: getBaseOptions("wind"),
+      options: {
+        ...baseOptions,
+        plugins: {
+          ...baseOptions.plugins,
+          tooltip: {
+            enabled: false,
+            external: (context) => externalTooltipHandler(context, "wind"),
+            callbacks: {
+              title: (items) => {
+                return items[0].label;
+              },
+              label: (item) => {
+                const value =
+                  typeof item.raw === "number" ? item.raw.toFixed(1) : item.raw;
+                return `Wind: ${value} km/h`;
+              },
+              afterBody: (items) => {
+                const value = items[0]?.raw;
+                if (value != null) {
+                  let desc = "";
+                  if (value < 12) desc = "Leichte Brise";
+                  else if (value < 30) desc = "Mäßiger Wind";
+                  else if (value < 50) desc = "Starker Wind";
+                  else desc = "Sturm";
+                  return desc;
+                }
+                return "";
+              },
+            },
+          },
+        },
+      },
     };
   }
 
@@ -880,6 +1121,7 @@
    * Generate humidity chart config
    */
   function getHumidityChartConfig(data, labels) {
+    const baseOptions = getBaseOptions("humidity");
     return {
       type: "line",
       data: {
@@ -897,7 +1139,38 @@
           },
         ],
       },
-      options: getBaseOptions("humidity"),
+      options: {
+        ...baseOptions,
+        plugins: {
+          ...baseOptions.plugins,
+          tooltip: {
+            enabled: false,
+            external: (context) => externalTooltipHandler(context, "humidity"),
+            callbacks: {
+              title: (items) => {
+                return items[0].label;
+              },
+              label: (item) => {
+                const value =
+                  typeof item.raw === "number" ? item.raw.toFixed(0) : item.raw;
+                return `Feuchtigkeit: ${value}%`;
+              },
+              afterBody: (items) => {
+                const value = items[0]?.raw;
+                if (value != null) {
+                  let desc = "";
+                  if (value < 30) desc = "Sehr trocken";
+                  else if (value < 60) desc = "Angenehm";
+                  else if (value < 80) desc = "Feucht";
+                  else desc = "Sehr feucht";
+                  return desc;
+                }
+                return "";
+              },
+            },
+          },
+        },
+      },
     };
   }
 
@@ -905,6 +1178,7 @@
    * Generate sunshine chart config
    */
   function getSunshineChartConfig(data, labels) {
+    const baseOptions = getBaseOptions("sunshine");
     return {
       type: "bar",
       data: {
@@ -920,7 +1194,35 @@
           },
         ],
       },
-      options: getBaseOptions("sunshine"),
+      options: {
+        ...baseOptions,
+        plugins: {
+          ...baseOptions.plugins,
+          tooltip: {
+            enabled: false,
+            external: (context) => externalTooltipHandler(context, "sunshine"),
+            callbacks: {
+              title: (items) => {
+                return items[0].label;
+              },
+              label: (item) => {
+                const value =
+                  typeof item.raw === "number" ? item.raw.toFixed(1) : item.raw;
+                return `Sonne: ${value} h`;
+              },
+              afterBody: (items) => {
+                // Berechne Prozent vom Tag (24h)
+                const value = items[0]?.raw;
+                if (value != null) {
+                  const percent = ((value / 24) * 100).toFixed(0);
+                  return `${percent}% des Tages`;
+                }
+                return "";
+              },
+            },
+          },
+        },
+      },
     };
   }
 
@@ -1048,19 +1350,21 @@
             },
           },
           tooltip: {
-            ...getBaseOptions("temperature").plugins.tooltip,
+            enabled: false,
+            external: (context) =>
+              externalTooltipHandler(context, "comparison"),
             callbacks: {
               title: (items) => `Tag ${items[0].label}`,
               afterBody: (items) => {
                 if (items.length >= 2) {
                   const diff = (items[1].raw - items[0].raw).toFixed(1);
                   const sign = diff > 0 ? "+" : "";
-                  return `\nAbweichung: ${sign}${diff}°C`;
+                  return `Abweichung: ${sign}${diff}°C`;
                 }
                 return "";
               },
               label: (item) =>
-                ` ${item.dataset.label}: ${item.raw.toFixed(1)}°C`,
+                `${item.dataset.label}: ${item.raw.toFixed(1)}°C`,
             },
           },
         },
@@ -1174,19 +1478,15 @@
             },
           },
           tooltip: {
-            backgroundColor: "var(--health-glass-bg, rgba(15, 20, 30, 0.95))",
-            titleColor: "#fff",
-            bodyColor: "#a7b1c6",
-            borderColor: "rgba(138, 180, 255, 0.3)",
-            borderWidth: 1,
-            padding: 12,
-            cornerRadius: 10,
+            enabled: false,
+            external: (context) => externalTooltipHandler(context, "daydetail"),
             callbacks: {
+              title: (items) => `⏰ ${items[0].label}`,
               label: (item) => {
                 if (item.dataset.label === "Temperatur") {
-                  return ` ${item.raw.toFixed(1)}°C`;
+                  return `Temperatur: ${item.raw.toFixed(1)}°C`;
                 }
-                return ` ${item.raw.toFixed(1)} mm`;
+                return `Niederschlag: ${item.raw.toFixed(1)} mm`;
               },
             },
           },
@@ -1281,13 +1581,11 @@
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: "var(--health-glass-bg, rgba(15, 20, 30, 0.95))",
-            titleColor: "#fff",
-            bodyColor: "#a7b1c6",
-            padding: 10,
-            cornerRadius: 8,
+            enabled: false,
+            external: (context) => externalTooltipHandler(context, "extreme"),
             callbacks: {
-              label: (item) => ` ${item.raw.toFixed(1)}°C`,
+              title: (items) => `⏰ ${items[0].label}`,
+              label: (item) => `Temperatur: ${item.raw.toFixed(1)}°C`,
             },
           },
         },
