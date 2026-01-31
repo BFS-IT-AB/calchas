@@ -1056,7 +1056,7 @@ body.dark-mode a {
 
 /* .app-bar--hidden wurde entfernt - App-Bar bleibt permanent sichtbar */
 
-/* Einheitliche Pillenform Container - Ultra-Glass Effect */
+/* Einheitliche Pillenform Container - Ultra-Glass Effect - MATCH WITH WEATHER HERO WIDGET */
 .app-bar__pill {
   display: flex;
   align-items: center;
@@ -1064,19 +1064,30 @@ body.dark-mode a {
   width: calc(100% - 32px); /* Gleiche Breite wie .card-group */
   max-width: 100%;
   margin: 0 auto;
-  /* Ultra-Glass Effect - Extrem transparent für maximalen Hintergrund-Durchschein */
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  /* Subtile Kante - hauchdünn */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50px;
+
+  /* Match Weather Hero Widget Style */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px; /* Keep pill shape */
   padding: 6px 12px 6px 14px;
   transition:
     background 0.08s linear,
     border 0.08s linear;
-  /* Weiche Tiefe */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  /* Match Weather Hero Shadow */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+
+  color: #ffffff;
 }
 
 /* Favoriten-Button verstecken für cleanes Design */
@@ -1152,10 +1163,10 @@ body.dark-mode a {
   flex-shrink: 0;
 }
 
-/* Light Theme: Standort-Symbol schwarz */
+/* Light Theme: Standort-Symbol auch weiß für Match mit Header Card */
 [data-theme="light"] .app-bar__location-icon {
-  color: #1a1a2e;
-  opacity: 0.7;
+  color: rgba(255, 255, 255, 0.85); /* Match dark mode / header card */
+  opacity: 1;
 }
 .app-bar__location-meta {
   display: flex;
@@ -1177,7 +1188,7 @@ body.dark-mode a {
 }
 
 [data-theme="light"] .app-bar__location-text {
-  color: #1a1a2e;
+  color: rgba(255, 255, 255, 0.9); /* Match header card text style */
 }
 
 .app-bar__updated {
@@ -6278,10 +6289,68 @@ body.mobile-app #legacy-content {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-lg);
-  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(40px) saturate(220%);
+  -webkit-backdrop-filter: blur(40px) saturate(220%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 12px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  margin: 2px;
+}
+
+.search-input-group::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 100%
+  );
+  border-radius: 999px 999px 0 0;
+  pointer-events: none;
+}
+
+.search-input-group:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.35),
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.search-input-group:focus-within {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.27) 100%
+  );
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 4px rgba(255, 255, 255, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
 }
 
 .search-input-group input {
