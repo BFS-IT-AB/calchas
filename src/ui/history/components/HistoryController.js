@@ -1707,6 +1707,15 @@
       // Helper function to extract period data and call onSelect
       const handlePeriodSelection = async (element) => {
         const periodId = element.dataset.periodId;
+
+        console.log("[HistoryController] Period selected:", {
+          periodId,
+          startDate: element.dataset.startDate,
+          endDate: element.dataset.endDate,
+          granularity: element.dataset.granularity,
+          hasOnSelect: !!data.onSelect,
+        });
+
         if (data.onSelect) {
           const periodData = {
             id: periodId,
@@ -1715,6 +1724,8 @@
             granularity: element.dataset.granularity,
           };
           await data.onSelect(periodId, periodData);
+        } else {
+          console.warn("[HistoryController] No onSelect callback provided");
         }
         this.closeModal();
       };
@@ -1781,6 +1792,9 @@
         });
       });
 
+      // Navigation buttons for calendars (prev/next month/year)
+      this._attachNavigationHandlers(modalElement, data);
+
       // Preset buttons (if any)
       modalElement.querySelectorAll(".period-preset-btn").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -1817,6 +1831,118 @@
     }
 
     /**
+     * Attach navigation handlers for calendar views (prev/next month/year)
+     */
+    _attachNavigationHandlers(modalElement, data) {
+      // Initialize current view state if not exists
+      if (!this._calendarViewState) {
+        this._calendarViewState = {
+          currentYear: new Date().getFullYear(),
+          currentMonth: new Date().getMonth(),
+        };
+      }
+
+      // Day Calendar: prev/next month
+      const dayPrevBtn = modalElement.querySelector(
+        '.day-calendar__nav[data-action="prev-month"]',
+      );
+      const dayNextBtn = modalElement.querySelector(
+        '.day-calendar__nav[data-action="next-month"]',
+      );
+
+      if (dayPrevBtn) {
+        dayPrevBtn.addEventListener("click", () => {
+          this._calendarViewState.currentMonth--;
+          if (this._calendarViewState.currentMonth < 0) {
+            this._calendarViewState.currentMonth = 11;
+            this._calendarViewState.currentYear--;
+          }
+          this._reloadPeriodModalWithDate(modalElement, data);
+        });
+      }
+
+      if (dayNextBtn) {
+        dayNextBtn.addEventListener("click", () => {
+          this._calendarViewState.currentMonth++;
+          if (this._calendarViewState.currentMonth > 11) {
+            this._calendarViewState.currentMonth = 0;
+            this._calendarViewState.currentYear++;
+          }
+          this._reloadPeriodModalWithDate(modalElement, data);
+        });
+      }
+
+      // Week Calendar: prev/next month
+      const weekPrevBtn = modalElement.querySelector(
+        '.week-calendar__nav[data-action="prev-month"]',
+      );
+      const weekNextBtn = modalElement.querySelector(
+        '.week-calendar__nav[data-action="next-month"]',
+      );
+
+      if (weekPrevBtn) {
+        weekPrevBtn.addEventListener("click", () => {
+          this._calendarViewState.currentMonth--;
+          if (this._calendarViewState.currentMonth < 0) {
+            this._calendarViewState.currentMonth = 11;
+            this._calendarViewState.currentYear--;
+          }
+          this._reloadPeriodModalWithDate(modalElement, data);
+        });
+      }
+
+      if (weekNextBtn) {
+        weekNextBtn.addEventListener("click", () => {
+          this._calendarViewState.currentMonth++;
+          if (this._calendarViewState.currentMonth > 11) {
+            this._calendarViewState.currentMonth = 0;
+            this._calendarViewState.currentYear++;
+          }
+          this._reloadPeriodModalWithDate(modalElement, data);
+        });
+      }
+
+      // Month Grid: prev/next year
+      const monthPrevBtn = modalElement.querySelector(
+        '.month-grid__nav[data-action="prev-year"]',
+      );
+      const monthNextBtn = modalElement.querySelector(
+        '.month-grid__nav[data-action="next-year"]',
+      );
+
+      if (monthPrevBtn) {
+        monthPrevBtn.addEventListener("click", () => {
+          this._calendarViewState.currentYear--;
+          this._reloadPeriodModalWithDate(modalElement, data);
+        });
+      }
+
+      if (monthNextBtn) {
+        monthNextBtn.addEventListener("click", () => {
+          this._calendarViewState.currentYear++;
+          this._reloadPeriodModalWithDate(modalElement, data);
+        });
+      }
+    }
+
+    /**
+     * Reload modal with updated calendar date
+     */
+    _reloadPeriodModalWithDate(modalElement, data) {
+      // Update availableDataRange to reflect current view
+      const viewDate = new Date(
+        this._calendarViewState.currentYear,
+        this._calendarViewState.currentMonth,
+        1,
+      );
+      const updatedData = {
+        ...data,
+        currentViewDate: viewDate.toISOString(),
+      };
+      this._reloadPeriodModal(modalElement, updatedData);
+    }
+
+    /**
      * Reload period modal content without closing
      * Verwendet beim Wechsel der Granularität
      */
@@ -1829,6 +1955,7 @@
 
       const granularity = data.granularity || "month";
       const lockedGranularity = data.lockedGranularity || null;
+      const currentViewDate = data.currentViewDate || null;
 
       // Render new content
       const newContent =
@@ -1838,6 +1965,7 @@
           granularity,
           data.periods,
           lockedGranularity,
+          currentViewDate,
         ) ||
         stats.renderPeriodSelectorModal?.(
           data.periods,

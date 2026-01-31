@@ -17,18 +17,36 @@
   /**
    * Render Hour Picker (Scrollrad-Style)
    */
-  function renderHourPicker(currentPeriod, periodType) {
+  function renderHourPicker(
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
     const TRS = window.TimeRangeSystem;
     if (!TRS) return "";
 
     const now = new Date();
     const hours = [];
 
-    // Letzte 48 Stunden generieren
-    for (let i = 0; i < 48; i++) {
-      const date = new Date(now);
+    // Verwende availableDataRange falls vorhanden, sonst letzte 48 Stunden
+    const startLimit = availableDataRange?.startDate
+      ? new Date(availableDataRange.startDate)
+      : new Date(now.getTime() - 48 * 3600000);
+    const endLimit = availableDataRange?.endDate
+      ? new Date(availableDataRange.endDate)
+      : now;
+
+    // Generiere Stunden-Liste innerhalb verfügbarer Daten (max 48 Stunden)
+    const hoursDiff = Math.min(
+      48,
+      Math.floor((endLimit - startLimit) / 3600000),
+    );
+    for (let i = 0; i < hoursDiff; i++) {
+      const date = new Date(endLimit);
       date.setHours(date.getHours() - i);
-      hours.push(date);
+      if (date >= startLimit) {
+        hours.push(date);
+      }
     }
 
     return `
@@ -67,17 +85,27 @@
   /**
    * Render Day Calendar (Mini-Kalender)
    */
-  function renderDayCalendar(currentPeriod, periodType) {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+  function renderDayCalendar(
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
+    // Bestimme aktuellen Monat basierend auf verfügbaren Daten oder jetzt
+    // Verwende currentViewDate falls vorhanden (für Navigation)
+    const viewDate = availableDataRange?.currentViewDate
+      ? new Date(availableDataRange.currentViewDate)
+      : availableDataRange?.endDate
+        ? new Date(availableDataRange.endDate)
+        : new Date();
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Mo=0, So=6
 
     const weekDays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-    const monthName = now.toLocaleDateString("de-DE", {
+    const monthName = viewDate.toLocaleDateString("de-DE", {
       month: "long",
       year: "numeric",
     });
@@ -118,7 +146,10 @@
               }
 
               const date = new Date(year, month, day);
-              const isToday = day === now.getDate() && month === now.getMonth();
+              const isToday =
+                day === new Date().getDate() &&
+                month === new Date().getMonth() &&
+                year === new Date().getFullYear();
               const endDate = new Date(date);
               endDate.setHours(23, 59, 59, 999);
 
@@ -142,20 +173,30 @@
   /**
    * Render Week Calendar (Kalender mit Wochen-Hervorhebung)
    */
-  function renderWeekCalendar(currentPeriod, periodType) {
+  function renderWeekCalendar(
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
     const TRS = window.TimeRangeSystem;
     if (!TRS) return "";
 
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    // Verwende verfügbare Daten-Range oder aktuelles Datum
+    // Verwende currentViewDate falls vorhanden (für Navigation)
+    const viewDate = availableDataRange?.currentViewDate
+      ? new Date(availableDataRange.currentViewDate)
+      : availableDataRange?.endDate
+        ? new Date(availableDataRange.endDate)
+        : new Date();
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
     const weekDays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-    const monthName = now.toLocaleDateString("de-DE", {
+    const monthName = viewDate.toLocaleDateString("de-DE", {
       month: "long",
       year: "numeric",
     });
@@ -250,10 +291,20 @@
   /**
    * Render Month Grid (12 Monate)
    */
-  function renderMonthGrid(currentPeriod, periodType) {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+  function renderMonthGrid(
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
+    // Verwende letztes verfügbares Jahr oder aktuelles Jahr
+    // Verwende currentViewDate falls vorhanden (für Navigation)
+    const viewDate = availableDataRange?.currentViewDate
+      ? new Date(availableDataRange.currentViewDate)
+      : availableDataRange?.endDate
+        ? new Date(availableDataRange.endDate)
+        : new Date();
+    const currentYear = viewDate.getFullYear();
+    const currentMonth = viewDate.getMonth();
 
     const months = [
       "Januar",
@@ -286,7 +337,8 @@
           ${months
             .map((monthName, index) => {
               const isCurrent =
-                index === currentMonth && currentYear === now.getFullYear();
+                index === currentMonth &&
+                currentYear === new Date().getFullYear();
               const monthStart = new Date(currentYear, index, 1);
               const monthEnd = new Date(
                 currentYear,
@@ -319,13 +371,26 @@
   /**
    * Render Year Picker (Scrollrad mit Jahren)
    */
-  function renderYearPicker(currentPeriod, periodType) {
+  function renderYearPicker(
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
     const currentYear = new Date().getFullYear();
     const years = [];
 
-    // 50 Jahre: 25 zurück, aktuelles Jahr, 24 voraus
-    for (let i = -25; i <= 24; i++) {
-      years.push(currentYear + i);
+    // Bestimme Jahr-Range basierend auf verfügbaren Daten
+    // Open-Meteo Archive API hat Daten ab 1940
+    const startYear = availableDataRange?.startDate
+      ? new Date(availableDataRange.startDate).getFullYear()
+      : 1940;
+    const endYear = availableDataRange?.endDate
+      ? new Date(availableDataRange.endDate).getFullYear()
+      : currentYear;
+
+    // Generiere Jahr-Liste von endYear bis startYear
+    for (let y = endYear; y >= startYear; y--) {
+      years.push(y);
     }
 
     return `
@@ -450,23 +515,36 @@
 
   /**
    * Get selector for granularity
+   * @param {string} granularity - hour/day/week/month/year/decade/century
+   * @param {string} currentPeriod - Currently selected period ID
+   * @param {string} periodType - 'A' or 'B'
+   * @param {Object} availableDataRange - {startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD'}
    */
-  function getSelectorForGranularity(granularity, currentPeriod, periodType) {
+  function getSelectorForGranularity(
+    granularity,
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
     switch (granularity) {
       case "hour":
-        return renderHourPicker(currentPeriod, periodType);
+        return renderHourPicker(currentPeriod, periodType, availableDataRange);
       case "day":
-        return renderDayCalendar(currentPeriod, periodType);
+        return renderDayCalendar(currentPeriod, periodType, availableDataRange);
       case "week":
-        return renderWeekCalendar(currentPeriod, periodType);
+        return renderWeekCalendar(
+          currentPeriod,
+          periodType,
+          availableDataRange,
+        );
       case "month":
-        return renderMonthGrid(currentPeriod, periodType);
+        return renderMonthGrid(currentPeriod, periodType, availableDataRange);
       case "year":
-        return renderYearPicker(currentPeriod, periodType);
+        return renderYearPicker(currentPeriod, periodType, availableDataRange);
       case "decade":
-        return renderDecadeList(currentPeriod, periodType);
+        return renderDecadeList(currentPeriod, periodType, availableDataRange);
       case "century":
-        return renderCenturyList(currentPeriod, periodType);
+        return renderCenturyList(currentPeriod, periodType, availableDataRange);
       default:
         return "";
     }

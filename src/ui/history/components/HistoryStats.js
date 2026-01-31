@@ -3045,6 +3045,7 @@
     selectedGranularity = "month",
     periods = [],
     lockedGranularity = null,
+    currentViewDate = null,
   ) {
     const TRS = window.TimeRangeSystem;
     const Selectors = window.TimeRangeSelectors;
@@ -3069,11 +3070,19 @@
       : "";
 
     // Hole granularitäts-spezifischen Selector
+    // Übergebe verfügbare Daten-Range (Open-Meteo Archive API: 1940 - heute)
+    const availableDataRange = {
+      startDate: "1940-01-01",
+      endDate: new Date().toISOString().split("T")[0], // Heute
+      currentViewDate: currentViewDate, // Navigation state
+    };
+
     const selectorHTML = Selectors
       ? Selectors.getSelectorForGranularity(
           selectedGranularity,
           currentPeriod,
           periodType,
+          availableDataRange,
         )
       : "";
 
