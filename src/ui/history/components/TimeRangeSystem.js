@@ -311,10 +311,32 @@
    * Aggregiert Daten basierend auf Granularität
    */
   function aggregateDataByGranularity(data, granularity) {
-    if (!data || data.length === 0) return [];
+    if (!data || data.length === 0) {
+      console.warn("[TimeRangeSystem] No data to aggregate");
+      return [];
+    }
 
     const config = GRANULARITY_CONFIG[granularity];
-    if (!config) return data;
+    if (!config) {
+      console.warn(
+        "[TimeRangeSystem] Unknown granularity:",
+        granularity,
+        "- returning original data",
+      );
+      return data;
+    }
+
+    console.log("[TimeRangeSystem] Aggregating data:", {
+      granularity,
+      inputLength: data.length,
+      firstDate: data[0]?.date,
+      lastDate: data[data.length - 1]?.date,
+    });
+
+    // Für day-Granularität: keine Aggregation nötig
+    if (granularity === GRANULARITY.DAY) {
+      return data;
+    }
 
     // Gruppierung nach Zeiteinheit
     const groups = new Map();
@@ -355,6 +377,10 @@
       groups.get(key).push(item);
     });
 
+    console.log(
+      `[TimeRangeSystem] Grouped into ${groups.size} ${granularity} periods`,
+    );
+
     // Aggregation der Gruppen
     const aggregated = [];
     groups.forEach((items, key) => {
@@ -382,7 +408,17 @@
       aggregated.push(aggregatedItem);
     });
 
-    return aggregated.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted = aggregated.sort(
+      (a, b) => new Date(a.date) - new Date(b.date),
+    );
+
+    console.log("[TimeRangeSystem] Aggregation result:", {
+      outputLength: sorted.length,
+      firstItem: sorted[0],
+      lastItem: sorted[sorted.length - 1],
+    });
+
+    return sorted;
   }
 
   function average(values) {

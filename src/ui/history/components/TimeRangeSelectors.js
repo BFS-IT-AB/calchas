@@ -110,7 +110,21 @@
       year: "numeric",
     });
 
+    // Aktuell ausgewählten Tag bestimmen
+    const selectedPeriodData = availableDataRange?.currentPeriodData;
+    const selectedStartDate = selectedPeriodData?.startDate
+      ? new Date(selectedPeriodData.startDate)
+      : null;
+
     const calendar = [];
+
+    // Hilfsfunktion für API-Datumsformat (YYYY-MM-DD)
+    const formatDateForAPI = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
 
     // Padding für erste Woche
     for (let i = 0; i < startDayOfWeek; i++) {
@@ -146,20 +160,34 @@
               }
 
               const date = new Date(year, month, day);
+              const today = new Date();
               const isToday =
-                day === new Date().getDate() &&
-                month === new Date().getMonth() &&
-                year === new Date().getFullYear();
+                day === today.getDate() &&
+                month === today.getMonth() &&
+                year === today.getFullYear();
+
+              // Prüfe ob dieser Tag ausgewählt ist
+              const isSelected =
+                selectedStartDate &&
+                day === selectedStartDate.getDate() &&
+                month === selectedStartDate.getMonth() &&
+                year === selectedStartDate.getFullYear();
+
+              // Prüfe ob Datum verfügbar ist (1940-01-01 bis heute)
+              const minDate = new Date(1940, 0, 1);
+              const isAvailable = date >= minDate && date <= today;
+
               const endDate = new Date(date);
               endDate.setHours(23, 59, 59, 999);
 
               return `
-              <button class="day-calendar__cell ${isToday ? "day-calendar__cell--today" : ""}"
+              <button class="day-calendar__cell ${isToday ? "day-calendar__cell--today" : ""} ${isSelected ? "day-calendar__cell--selected" : ""}"
                       data-period-id="day-${year}-${month + 1}-${day}"
                       data-period-type="${periodType}"
-                      data-start-date="${date.toISOString()}"
-                      data-end-date="${endDate.toISOString()}"
-                      data-granularity="day">
+                      data-start-date="${formatDateForAPI(date)}"
+                      data-end-date="${formatDateForAPI(endDate)}"
+                      data-granularity="day"
+                      ${!isAvailable ? "disabled" : ""}>
                 <span class="day-calendar__number">${day}</span>
               </button>
             `;
@@ -200,6 +228,15 @@
       month: "long",
       year: "numeric",
     });
+
+    // Aktuell ausgewählte Woche bestimmen
+    const selectedPeriodData = availableDataRange?.currentPeriodData;
+    const selectedWeekNumber = selectedPeriodData?.startDate
+      ? TRS.getWeekNumber(new Date(selectedPeriodData.startDate))
+      : null;
+    const selectedYear = selectedPeriodData?.startDate
+      ? new Date(selectedPeriodData.startDate).getFullYear()
+      : null;
 
     // Gruppiere Tage nach Wochen
     const weeks = [];
@@ -262,13 +299,30 @@
 
               const today = new Date();
 
+              // Prüfe ob diese Woche ausgewählt ist
+              const isSelected =
+                selectedWeekNumber === weekNumber && selectedYear === year;
+
+              // Prüfe ob Woche verfügbar ist (1940 bis heute)
+              const minDate = new Date(1940, 0, 1);
+              const isAvailable = weekStart >= minDate && weekStart <= today;
+
+              // Hilfsfunktion für API-Datumsformat (YYYY-MM-DD)
+              const formatDateForAPI = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+              };
+
               return `
-              <div class="week-calendar__week"
+              <div class="week-calendar__week ${isSelected ? "week-calendar__week--selected" : ""}"
                    data-period-id="week-${weekNumber}-${year}"
                    data-period-type="${periodType}"
-                   data-start-date="${weekStart.toISOString()}"
-                   data-end-date="${weekEnd.toISOString()}"
-                   data-granularity="week">
+                   data-start-date="${formatDateForAPI(weekStart)}"
+                   data-end-date="${formatDateForAPI(weekEnd)}"
+                   data-granularity="week"
+                   ${!isAvailable ? 'style="opacity: 0.5; pointer-events: none;"' : ""}>
                 <div class="week-calendar__week-number">KW ${weekNumber}</div>
                 <div class="week-calendar__days">
                   ${week
@@ -367,13 +421,27 @@
                 999,
               );
 
+              // Prüfe ob Monat verfügbar ist (1940-01-01 bis heute)
+              const today = new Date();
+              const minDate = new Date(1940, 0, 1);
+              const isAvailable = monthStart >= minDate && monthStart <= today;
+
+              // Formatiere Datums für API (nur YYYY-MM-DD, keine Zeitzone)
+              const formatDateForAPI = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+              };
+
               return `
               <button class="month-grid__item ${isCurrent ? "month-grid__item--current" : ""} ${isSelected ? "month-grid__item--selected" : ""}"
                       data-period-id="month-${currentYear}-${index + 1}"
                       data-period-type="${periodType}"
-                      data-start-date="${monthStart.toISOString()}"
-                      data-end-date="${monthEnd.toISOString()}"
-                      data-granularity="month">
+                      data-start-date="${formatDateForAPI(monthStart)}"
+                      data-end-date="${formatDateForAPI(monthEnd)}"
+                      data-granularity="month"
+                      ${!isAvailable ? "disabled" : ""}>
                 <span class="month-grid__name">${monthName}</span>
                 <span class="month-grid__number">${index + 1}</span>
               </button>
@@ -410,21 +478,36 @@
       years.push(y);
     }
 
+    // Aktuell ausgewähltes Jahr bestimmen
+    const selectedPeriodData = availableDataRange?.currentPeriodData;
+    const selectedYear = selectedPeriodData?.startDate
+      ? new Date(selectedPeriodData.startDate).getFullYear()
+      : null;
+
+    // Hilfsfunktion für API-Datumsformat (YYYY-MM-DD)
+    const formatDateForAPI = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
     return `
       <div class="year-picker">
         <div class="year-picker__container">
           ${years
             .map((year, index) => {
               const isCurrent = year === currentYear;
+              const isSelected = year === selectedYear;
               const yearStart = new Date(year, 0, 1);
               const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
 
               return `
-              <button class="year-picker__item ${isCurrent ? "year-picker__item--current" : ""}"
+              <button class="year-picker__item ${isCurrent ? "year-picker__item--current" : ""} ${isSelected ? "year-picker__item--selected" : ""}"
                       data-period-id="year-${year}"
                       data-period-type="${periodType}"
-                      data-start-date="${yearStart.toISOString()}"
-                      data-end-date="${yearEnd.toISOString()}"
+                      data-start-date="${formatDateForAPI(yearStart)}"
+                      data-end-date="${formatDateForAPI(yearEnd)}"
                       data-granularity="year">
                 ${year}
               </button>
@@ -439,15 +522,40 @@
   /**
    * Render Decade List
    */
-  function renderDecadeList(currentPeriod, periodType) {
+  function renderDecadeList(
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
     const currentYear = new Date().getFullYear();
     const currentDecade = Math.floor(currentYear / 10) * 10;
     const decades = [];
 
-    // 20 Jahrzehnte: 10 zurück, aktuelles, 9 voraus
-    for (let i = -10; i <= 9; i++) {
-      decades.push(currentDecade + i * 10);
+    // Verfügbarer Bereich: 1940er bis aktuelles Jahrzehnt
+    const startYear = 1940;
+    const endYear = currentYear;
+    const startDecade = Math.floor(startYear / 10) * 10;
+    const endDecade = Math.floor(endYear / 10) * 10;
+
+    // Generiere Jahrzehnte
+    for (let decade = endDecade; decade >= startDecade; decade -= 10) {
+      decades.push(decade);
     }
+
+    // Aktuell ausgewähltes Jahrzehnt bestimmen
+    const selectedPeriodData = availableDataRange?.currentPeriodData;
+    const selectedDecade = selectedPeriodData?.startDate
+      ? Math.floor(new Date(selectedPeriodData.startDate).getFullYear() / 10) *
+        10
+      : null;
+
+    // Hilfsfunktion für API-Datumsformat (YYYY-MM-DD)
+    const formatDateForAPI = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
 
     return `
       <div class="decade-list">
@@ -456,15 +564,16 @@
           ${decades
             .map((decade) => {
               const isCurrent = decade === currentDecade;
+              const isSelected = decade === selectedDecade;
               const decadeStart = new Date(decade, 0, 1);
               const decadeEnd = new Date(decade + 9, 11, 31, 23, 59, 59, 999);
 
               return `
-              <button class="decade-list__item ${isCurrent ? "decade-list__item--current" : ""}"
+              <button class="decade-list__item ${isCurrent ? "decade-list__item--current" : ""} ${isSelected ? "decade-list__item--selected" : ""}"
                       data-period-id="decade-${decade}"
                       data-period-type="${periodType}"
-                      data-start-date="${decadeStart.toISOString()}"
-                      data-end-date="${decadeEnd.toISOString()}"
+                      data-start-date="${formatDateForAPI(decadeStart)}"
+                      data-end-date="${formatDateForAPI(decadeEnd)}"
                       data-granularity="decade">
                 <span class="decade-list__label">${decade}er</span>
                 <span class="decade-list__range">${decade} - ${decade + 9}</span>
@@ -480,15 +589,38 @@
   /**
    * Render Century List
    */
-  function renderCenturyList(currentPeriod, periodType) {
+  function renderCenturyList(
+    currentPeriod,
+    periodType,
+    availableDataRange = null,
+  ) {
     const currentYear = new Date().getFullYear();
     const currentCentury = Math.floor(currentYear / 100) * 100;
     const centuries = [];
 
-    // 10 Jahrhunderte: 5 zurück, aktuelles, 4 voraus
-    for (let i = -5; i <= 4; i++) {
-      centuries.push(currentCentury + i * 100);
+    // Verfügbarer Bereich: 1900 (beinhaltet 1940) bis aktuelles Jahrhundert
+    const startCentury = 1900;
+    const endCentury = currentCentury;
+
+    // Generiere Jahrhunderte
+    for (let century = endCentury; century >= startCentury; century -= 100) {
+      centuries.push(century);
     }
+
+    // Aktuell ausgewähltes Jahrhundert bestimmen
+    const selectedPeriodData = availableDataRange?.currentPeriodData;
+    const selectedCentury = selectedPeriodData?.startDate
+      ? Math.floor(new Date(selectedPeriodData.startDate).getFullYear() / 100) *
+        100
+      : null;
+
+    // Hilfsfunktion für API-Datumsformat (YYYY-MM-DD)
+    const formatDateForAPI = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
 
     return `
       <div class="century-list">
@@ -497,6 +629,7 @@
           ${centuries
             .map((century) => {
               const isCurrent = century === currentCentury;
+              const isSelected = century === selectedCentury;
               const centuryStart = new Date(century, 0, 1);
               const centuryEnd = new Date(
                 century + 99,
@@ -507,17 +640,14 @@
                 59,
                 999,
               );
-              const centuryLabel =
-                century < 0
-                  ? `${Math.abs(century)} v. Chr.`
-                  : `${century + 1}. Jahrhundert`;
+              const centuryLabel = `${century + 1}. Jahrhundert`;
 
               return `
-              <button class="century-list__item ${isCurrent ? "century-list__item--current" : ""}"
+              <button class="century-list__item ${isCurrent ? "century-list__item--current" : ""} ${isSelected ? "century-list__item--selected" : ""}"
                       data-period-id="century-${century}"
                       data-period-type="${periodType}"
-                      data-start-date="${centuryStart.toISOString()}"
-                      data-end-date="${centuryEnd.toISOString()}"
+                      data-start-date="${formatDateForAPI(centuryStart)}"
+                      data-end-date="${formatDateForAPI(centuryEnd)}"
                       data-granularity="century">
                 <span class="century-list__label">${centuryLabel}</span>
                 <span class="century-list__range">${century} - ${century + 99}</span>

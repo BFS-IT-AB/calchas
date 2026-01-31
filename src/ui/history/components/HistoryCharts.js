@@ -824,21 +824,29 @@
    * Entspricht dem "Wetter an Position" Popup-Design
    */
   function getOrCreateTooltip(chart) {
-    let tooltipEl = chart.canvas.parentNode.querySelector(
-      ".chart-popup-tooltip",
+    // Store tooltip ID on chart to track which tooltip belongs to which chart
+    if (!chart.$tooltipId) {
+      chart.$tooltipId =
+        "chart-tooltip-" + Math.random().toString(36).substr(2, 9);
+    }
+
+    let tooltipEl = document.body.querySelector(
+      `.chart-popup-tooltip[data-chart-id="${chart.$tooltipId}"]`,
     );
 
     if (!tooltipEl) {
       tooltipEl = document.createElement("div");
       tooltipEl.className = "chart-popup-tooltip";
-      chart.canvas.parentNode.appendChild(tooltipEl);
+      tooltipEl.setAttribute("data-chart-id", chart.$tooltipId);
+      document.body.appendChild(tooltipEl);
     }
 
     return tooltipEl;
   }
 
   /**
-   * External Tooltip Handler (Wie Map-Popup "Wetter an Position")
+   * External Tooltip Handler (1:1 wie Map-Popup "Wetter an Position")
+   * Zeigt ALLE verfügbaren Wetter-Metriken für den Datenpunkt
    */
   function externalTooltipHandler(context, metricType = "temperature") {
     const { chart, tooltip } = context;
@@ -854,6 +862,14 @@
     // Set content
     if (tooltip.body) {
       const titleLines = tooltip.title || [];
+      const dataIndex = tooltip.dataPoints[0]?.dataIndex;
+
+      // Hole die vollständigen Daten für diesen Punkt
+      const fullData =
+        chart.$comparisonDataA?.[dataIndex] ||
+        chart.$dayData ||
+        chart.$extremeData ||
+        chart.data.datasets[0]?.data?.[dataIndex];
 
       let innerHtml = `
               <div class="weather-popup-content">`;
@@ -866,45 +882,73 @@
                 </div>`;
       }
 
-      // Grid (exakt wie Map-Popup)
+      // Grid mit ALLEN Metriken (exakt wie Map-Popup)
       innerHtml += `
                 <div class="popup-grid">`;
 
-      tooltip.dataPoints.forEach((dataPoint) => {
-        const label = dataPoint.dataset.label || "";
-        const rawValue = dataPoint.raw;
-
-        // Format value based on metric type with <small> tags like map popup
-        let formattedValue = "";
-        if (typeof rawValue === "number") {
-          if (
-            metricType === "temperature" ||
-            metricType === "comparison" ||
-            metricType === "daydetail" ||
-            metricType === "extreme"
-          ) {
-            formattedValue = rawValue.toFixed(1) + "°C";
-          } else if (metricType === "precipitation") {
-            formattedValue = rawValue.toFixed(1) + " mm";
-          } else if (metricType === "wind") {
-            formattedValue = rawValue.toFixed(0) + " <small>km/h</small>";
-          } else if (metricType === "humidity") {
-            formattedValue = rawValue.toFixed(0) + "%";
-          } else if (metricType === "sunshine") {
-            formattedValue = rawValue.toFixed(1) + " h";
-          } else {
-            formattedValue = rawValue.toFixed(1);
-          }
-        } else {
-          formattedValue = String(rawValue);
-        }
-
+      // Temperatur
+      if (
+        fullData &&
+        typeof fullData === "object" &&
+        fullData.temp_avg != null
+      ) {
         innerHtml += `
                   <div class="popup-item">
-                    <span class="popup-label">${label}</span>
-                    <span class="popup-value">${formattedValue}</span>
+                    <span class="popup-label">TEMP</span>
+                    <span class="popup-value">${fullData.temp_avg.toFixed(1)}°C</span>
                   </div>`;
-      });
+      } else if (tooltip.dataPoints[0]?.raw != null) {
+        innerHtml += `
+                  <div class="popup-item">
+                    <span class="popup-label">TEMP</span>
+                    <span class="popup-value">${tooltip.dataPoints[0].raw.toFixed(1)}°C</span>
+                  </div>`;
+      }
+
+      // Wind (mit Richtungspfeil wenn verfügbar)
+      if (fullData?.wind_speed != null) {
+        innerHtml += `
+                  <div class="popup-item">
+                    <span class="popup-label">WIND</span>
+                    <span class="popup-value">${fullData.wind_speed.toFixed(1)} <small>km/h</small></span>
+                  </div>`;
+      }
+
+      // Niederschlag
+      if (fullData?.precip != null) {
+        innerHtml += `
+                  <div class="popup-item">
+                    <span class="popup-label">REGEN</span>
+                    <span class="popup-value">${fullData.precip.toFixed(1)} mm</span>
+                  </div>`;
+      }
+
+      // Luftfeuchtigkeit
+      if (fullData?.humidity != null) {
+        innerHtml += `
+                  <div class="popup-item">
+                    <span class="popup-label">FEUCHTIGKEIT</span>
+                    <span class="popup-value">${fullData.humidity.toFixed(0)}%</span>
+                  </div>`;
+      }
+
+      // Sonnenschein
+      if (fullData?.sunshine != null) {
+        innerHtml += `
+                  <div class="popup-item">
+                    <span class="popup-label">SONNENSCHEIN</span>
+                    <span class="popup-value">${fullData.sunshine.toFixed(1)} h</span>
+                  </div>`;
+      }
+
+      // Temperatur Min/Max (wenn vorhanden)
+      if (fullData?.temp_min != null && fullData?.temp_max != null) {
+        innerHtml += `
+                  <div class="popup-item">
+                    <span class="popup-label">MIN/MAX</span>
+                    <span class="popup-value">${fullData.temp_min.toFixed(1)}° / ${fullData.temp_max.toFixed(1)}°</span>
+                  </div>`;
+      }
 
       innerHtml += `
                 </div>`;
@@ -927,15 +971,89 @@
       tooltipEl.innerHTML = innerHtml;
     }
 
-    // Position tooltip
-    const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-    const tooltipX = positionX + tooltip.caretX;
-    const tooltipY = positionY + tooltip.caretY;
+    // Position tooltip with intelligent collision detection
+    const canvasRect = chart.canvas.getBoundingClientRect();
 
+    // Get tooltip dimensions (must be visible to measure)
+    tooltipEl.style.opacity = "0";
+    tooltipEl.style.display = "block";
+    tooltipEl.style.visibility = "hidden";
+    const tooltipWidth = tooltipEl.offsetWidth;
+    const tooltipHeight = tooltipEl.offsetHeight;
+    tooltipEl.style.visibility = "visible";
+
+    // Calculate absolute cursor position in viewport
+    const cursorX = canvasRect.left + tooltip.caretX;
+    const cursorY = canvasRect.top + tooltip.caretY;
+
+    // Simple viewport boundaries
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const padding = 15;
+
+    // --- VERTICAL POSITIONING ---
+    let tooltipY;
+    const spaceBelow = viewportHeight - cursorY;
+    const spaceAbove = cursorY;
+
+    if (spaceBelow >= tooltipHeight + 30) {
+      // Enough space below
+      tooltipY = cursorY + 15;
+      tooltipEl.classList.remove("chart-popup-tooltip--above");
+    } else if (spaceAbove >= tooltipHeight + 30) {
+      // Not enough below, but enough above
+      tooltipY = cursorY - tooltipHeight - 15;
+      tooltipEl.classList.add("chart-popup-tooltip--above");
+    } else {
+      // Very tight vertically - position below and clamp
+      tooltipY = cursorY + 15;
+      tooltipEl.classList.remove("chart-popup-tooltip--above");
+    }
+
+    // --- HORIZONTAL POSITIONING ---
+    let tooltipX;
+    let arrowOffset = 50; // Default: centered arrow
+
+    // Try to center tooltip under cursor
+    tooltipX = cursorX - tooltipWidth / 2;
+
+    // Check if tooltip would overflow left
+    if (tooltipX < padding) {
+      tooltipX = Math.max(padding, cursorX - tooltipWidth + 20);
+      if (tooltipX < padding) tooltipX = padding;
+      // Calculate arrow offset to point at cursor
+      arrowOffset = ((cursorX - tooltipX) / tooltipWidth) * 100;
+      arrowOffset = Math.max(10, Math.min(90, arrowOffset));
+    }
+
+    // Check if tooltip would overflow right
+    else if (tooltipX + tooltipWidth > viewportWidth - padding) {
+      tooltipX = Math.min(viewportWidth - tooltipWidth - padding, cursorX - 20);
+      if (tooltipX + tooltipWidth > viewportWidth - padding) {
+        tooltipX = viewportWidth - tooltipWidth - padding;
+      }
+      // Calculate arrow offset to point at cursor
+      arrowOffset = ((cursorX - tooltipX) / tooltipWidth) * 100;
+      arrowOffset = Math.max(10, Math.min(90, arrowOffset));
+    }
+
+    // Final clamp for safety
+    tooltipX = Math.max(
+      padding,
+      Math.min(tooltipX, viewportWidth - tooltipWidth - padding),
+    );
+    tooltipY = Math.max(
+      padding,
+      Math.min(tooltipY, viewportHeight - tooltipHeight - padding),
+    );
+
+    // Apply final position and arrow offset
     tooltipEl.style.opacity = "1";
     tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.position = "fixed";
     tooltipEl.style.left = tooltipX + "px";
     tooltipEl.style.top = tooltipY + "px";
+    tooltipEl.style.setProperty("--arrow-offset", `${arrowOffset}%`);
   }
 
   /**
@@ -963,6 +1081,44 @@
       const month = monthNames[date.getMonth()];
       const year = date.getFullYear();
       return `${day}. ${month} ${year}`;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  /**
+   * Compact date format for comparison tooltips: "03. 2025: Di, 20."
+   */
+  function formatCompactDate(dateStr) {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      const day = date.getDate();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      const weekdayShort = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][
+        date.getDay()
+      ];
+      return `${month}. ${year}: ${weekdayShort}, ${day}.`;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  /**
+   * Compact date format for comparison tooltips: "03. 2025: Di, 20."
+   */
+  function formatCompactDate(dateStr) {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      const day = date.getDate();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      const weekdayShort = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][
+        date.getDay()
+      ];
+      return `${month}. ${year}: ${weekdayShort}, ${day}.`;
     } catch (e) {
       return dateStr;
     }
@@ -1484,24 +1640,123 @@
   ) {
     const TRS = window.TimeRangeSystem;
 
-    // Aggregiere Daten wenn TimeRangeSystem verfügbar
-    let processedDataA = dataA;
-    let processedDataB = dataB;
+    let processedDataA = dataA || [];
+    let processedDataB = dataB || [];
 
-    if (TRS && granularity !== "day") {
-      processedDataA = TRS.aggregateDataByGranularity(dataA, granularity);
-      processedDataB = TRS.aggregateDataByGranularity(dataB, granularity);
+    console.log("[HistoryCharts] Comparison config input:", {
+      granularity,
+      rawDataALength: dataA?.length,
+      rawDataBLength: dataB?.length,
+      firstDateA: dataA?.[0]?.date,
+      lastDateA: dataA?.[dataA?.length - 1]?.date,
+      firstDateB: dataB?.[0]?.date,
+      lastDateB: dataB?.[dataB?.length - 1]?.date,
+    });
+
+    // Intelligente Aggregation basierend auf Datenmenge
+    let aggregationGranularity = null;
+    let labelConfig = null;
+
+    if (TRS) {
+      const dataLength = Math.max(dataA?.length || 0, dataB?.length || 0);
+
+      // Entscheide über Aggregation basierend auf Datenmenge:
+      // Jahrhundert (36500 Tage) → Aggregiere zu Dekaden (10 Punkte)
+      // Jahrzehnt (3650 Tage) → Aggregiere zu Jahren (10 Punkte)
+      // Mehrere Jahre (730+ Tage) → Aggregiere zu Monaten (~24-120 Punkte)
+      // Jahr (365 Tage) → Aggregiere zu Wochen (~52 Punkte)
+      // Monat/Wochen (7-60 Tage) → Zeige Tage
+      // Einzelner Tag (1 Tag) → Zeige als Tag (stündliche Daten nicht verfügbar in API)
+
+      if (dataLength > 10000) {
+        // Jahrhundert → Aggregiere zu Dekaden
+        aggregationGranularity = "decade";
+        labelConfig = TRS.GRANULARITY_CONFIG["decade"];
+        console.log(
+          `[HistoryCharts] Very large dataset (${dataLength} days) - aggregating to decades`,
+        );
+      } else if (dataLength > 2000) {
+        // Mehrere Jahrzehnte → Aggregiere zu Jahren
+        aggregationGranularity = "year";
+        labelConfig = TRS.GRANULARITY_CONFIG["year"];
+        console.log(
+          `[HistoryCharts] Large dataset (${dataLength} days) - aggregating to years`,
+        );
+      } else if (dataLength > 730) {
+        // Mehrere Jahre → Aggregiere zu Monaten
+        aggregationGranularity = "month";
+        labelConfig = TRS.GRANULARITY_CONFIG["month"];
+        console.log(
+          `[HistoryCharts] Medium-large dataset (${dataLength} days) - aggregating to months`,
+        );
+      } else if (dataLength >= 180) {
+        // Halbes Jahr+ → Aggregiere zu Wochen
+        aggregationGranularity = "week";
+        labelConfig = TRS.GRANULARITY_CONFIG["week"];
+        console.log(
+          `[HistoryCharts] Medium dataset (${dataLength} days) - aggregating to weeks`,
+        );
+      } else if (dataLength >= 2) {
+        // Monat/Wochen/mehrere Tage → Zeige Tage
+        aggregationGranularity = null; // Keine Aggregation
+        labelConfig = TRS.GRANULARITY_CONFIG["day"];
+        console.log(
+          `[HistoryCharts] Small dataset (${dataLength} days) - showing daily data`,
+        );
+      } else if (dataLength === 1) {
+        // Einzelner Tag → Zeige als Tag (keine stündlichen Daten verfügbar)
+        aggregationGranularity = null;
+        labelConfig = TRS.GRANULARITY_CONFIG["day"];
+        console.log(
+          "[HistoryCharts] Single day - showing as daily data (hourly not available from API)",
+        );
+      } else {
+        // Kein Datenpunkt
+        labelConfig = TRS.GRANULARITY_CONFIG["day"];
+      }
+
+      // Führe Aggregation durch falls nötig
+      if (aggregationGranularity && dataLength > 0) {
+        processedDataA = TRS.aggregateDataByGranularity(
+          dataA,
+          aggregationGranularity,
+        );
+        processedDataB = TRS.aggregateDataByGranularity(
+          dataB,
+          aggregationGranularity,
+        );
+      }
+    } else {
+      labelConfig = { formatLabel: (d) => d.toLocaleDateString("de-DE") };
     }
 
-    const config = TRS?.GRANULARITY_CONFIG[granularity];
-    const maxLen = Math.max(processedDataA.length, processedDataB.length);
+    console.log("[HistoryCharts] Processed data:", {
+      processedALength: processedDataA.length,
+      processedBLength: processedDataB.length,
+      aggregationUsed: aggregationGranularity || "none",
+    });
 
-    // Labels basierend auf Granularität
-    const labels = processedDataA.map((d, i) => {
-      if (config && d.date) {
-        return config.formatLabel(new Date(d.date));
+    // Labels: Verwende GENERISCHE Labels für Vergleiche
+    // Statt "1. Jan" vs "15. Jun" → "Tag 1", "Tag 2" etc.
+    // Damit beide Zeiträume vergleichbar sind
+    const maxLength = Math.max(processedDataA.length, processedDataB.length);
+
+    const labels = Array.from({ length: maxLength }, (_, i) => {
+      const index = i + 1;
+
+      // Generische Labels basierend auf Aggregation
+      if (aggregationGranularity === "decade") {
+        return `Dekade ${index}`;
+      } else if (aggregationGranularity === "year") {
+        return `Jahr ${index}`;
+      } else if (aggregationGranularity === "month") {
+        return `Monat ${index}`;
+      } else if (aggregationGranularity === "week") {
+        return `Woche ${index}`;
+      } else {
+        // Tage
+        return `Tag ${index}`;
       }
-      return i + 1;
     });
 
     // Custom plugin for deviation area shading
@@ -1606,18 +1861,24 @@
               externalTooltipHandler(context, "comparison"),
             callbacks: {
               title: (items) => {
-                // Comparison chart: Show granularity-specific label
+                // Vergleichschart: Zeige BEIDE Datumsangaben kompakt
                 const chart = items[0].chart;
                 const index = items[0].dataIndex;
                 const dataA = chart.$comparisonDataA || processedDataA;
                 const dataB = chart.$comparisonDataB || processedDataB;
 
-                // Try to get date from either dataset
-                const dayData = dataA[index] || dataB[index];
-                if (dayData?.date && config) {
-                  return config.formatFull(new Date(dayData.date));
+                // Baue kompakten Titel: "03. 2025: Di, 20. | 03. 2024: Mi, 20."
+                const parts = [];
+
+                if (dataA[index]?.date) {
+                  parts.push(formatCompactDate(dataA[index].date));
                 }
-                return `${config?.singular || "Tag"} ${items[0].label}`;
+
+                if (dataB[index]?.date) {
+                  parts.push(formatCompactDate(dataB[index].date));
+                }
+
+                return parts.length > 0 ? parts.join(" | ") : items[0].label;
               },
               afterBody: (items) => {
                 if (items.length >= 2) {
@@ -1628,7 +1889,7 @@
                 return "";
               },
               label: (item) =>
-                `${item.dataset.label}: ${item.raw.toFixed(1)}°C`,
+                `${item.dataset.label}: ${item.raw?.toFixed(1) || "N/A"}°C`,
             },
           },
         },
@@ -1660,7 +1921,7 @@
                 labelA: labelA,
                 labelB: labelB,
                 metric: metric,
-                granularity: granularity,
+                granularity: aggregationGranularity || granularity,
               });
             }
           }

@@ -1221,12 +1221,26 @@
         typeof periodData === "object" &&
         periodData.startDate
       ) {
-        console.log("[HistoryController] Loading date range:", periodData);
-        return await this.dataPipeline.loadDateRange(
+        console.log("[HistoryController] Loading date range:", {
+          startDate: periodData.startDate,
+          endDate: periodData.endDate,
+          granularity: periodData.granularity,
+        });
+
+        const data = await this.dataPipeline.loadDateRange(
           periodData.startDate,
           periodData.endDate || periodData.startDate,
           location,
         );
+
+        console.log("[HistoryController] Loaded data:", {
+          length: data?.length,
+          firstDate: data?.[0]?.date,
+          lastDate: data?.[data.length - 1]?.date,
+          firstTemp: data?.[0]?.temp_avg,
+        });
+
+        return data;
       }
 
       // Legacy format: period string like "januar2025"
