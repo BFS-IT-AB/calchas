@@ -581,16 +581,145 @@
 
     /**
      * Handle Extreme-Card Klick
+     * OPTIMIERT: Instant Feedback mit Skeleton, dann progressive Hydration
      * @private
      */
     async _handleExtremeCardClick(extremeInfo) {
       const { id, type, date } = extremeInfo;
 
+      // 1. SOFORT: Modal mit Skeleton öffnen (Instant Feedback)
+      this._openExtremeModalWithSkeleton(type);
+
+      // 2. PARALLEL: Daten laden
+      const extremeData = await this._loadExtremeData(id, type, date);
+
+      if (!extremeData) {
+        console.warn(
+          "[HistoryController] Extreme data not found for:",
+          extremeInfo,
+        );
+        // Modal schließen bei Fehler
+        this.closeModal();
+        return;
+      }
+
+      // 3. State für selectedExtreme setzen
+      this.state.set("selectedExtreme", {
+        id,
+        type,
+        date,
+        data: extremeData,
+      });
+
+      // 4. PROGRESSIVE HYDRATION: Skeleton durch echte Daten ersetzen
+      await this._hydrateExtremeModal(extremeData, type, date);
+    }
+
+    /**
+     * Öffnet das Extreme-Modal sofort mit Skeleton-Loader
+     * @private
+     */
+    _openExtremeModalWithSkeleton(type) {
+      const typeIcons = {
+        hot: "local_fire_department",
+        cold: "ac_unit",
+        rain: "rainy",
+        wind: "storm",
+      };
+      const typeTitles = {
+        hot: "Heißester Tag",
+        cold: "Kältester Tag",
+        rain: "Nassester Tag",
+        wind: "Stürmischster Tag",
+      };
+
+      const skeletonContent = `
+        <div class="history-modal__content history-modal__content--extreme history-modal__content--loading">
+          <div class="swipe-handle"></div>
+          <button class="history-modal__close" data-action="close" aria-label="Schließen">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+
+          <!-- Header mit echtem Icon (bekannt durch type) -->
+          <div class="extreme-detail__header extreme-detail__header--${type}">
+            <div class="extreme-detail__icon">
+              <span class="material-symbols-outlined">${typeIcons[type] || "thermostat"}</span>
+            </div>
+            <div class="extreme-detail__title-group">
+              <h3>${typeTitles[type] || "Extremwert"}</h3>
+              <span class="extreme-detail__value skeleton skeleton--text" style="width: 80px; height: 24px;"></span>
+            </div>
+          </div>
+
+          <!-- Info Skeleton -->
+          <div class="extreme-detail__info">
+            <div class="extreme-detail__row">
+              <span class="material-symbols-outlined">calendar_today</span>
+              <span class="skeleton skeleton--text" style="width: 120px;"></span>
+            </div>
+            <div class="extreme-detail__row">
+              <span class="material-symbols-outlined">location_on</span>
+              <span class="skeleton skeleton--text" style="width: 100px;"></span>
+            </div>
+          </div>
+
+          <!-- Chart Skeleton -->
+          <div class="extreme-detail__chart extreme-detail__chart--skeleton">
+            <div class="skeleton skeleton--chart" style="width: 100%; height: 120px; border-radius: 8px;"></div>
+          </div>
+
+          <!-- Metrics Skeleton Grid -->
+          <div class="extreme-detail__metrics">
+            ${this._renderMetricSkeleton()}
+            ${this._renderMetricSkeleton()}
+            ${this._renderMetricSkeleton()}
+            ${this._renderMetricSkeleton()}
+            ${this._renderMetricSkeleton()}
+          </div>
+
+          <!-- Loading Indicator -->
+          <div class="extreme-detail__loading">
+            <div class="loading-spinner"></div>
+            <span>Daten werden geladen...</span>
+          </div>
+        </div>
+      `;
+
+      // Modal-Element erstellen/aktualisieren
+      const modalId = "history-modal-extreme";
+      const modalElement = this._createOrGetModal(modalId, skeletonContent);
+
+      // Modal sofort öffnen
+      this.toggleModal(modalId, true);
+
+      console.log("[HistoryController] Extreme modal opened with skeleton");
+    }
+
+    /**
+     * Rendert einen einzelnen Metric-Skeleton
+     * @private
+     */
+    _renderMetricSkeleton() {
+      return `
+        <div class="extreme-detail__metric extreme-detail__metric--skeleton">
+          <span class="material-symbols-outlined" style="opacity: 0.3;">hourglass_empty</span>
+          <div class="extreme-detail__metric-data">
+            <span class="skeleton skeleton--text" style="width: 60px; height: 12px;"></span>
+            <span class="skeleton skeleton--text" style="width: 50px; height: 16px; margin-top: 4px;"></span>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Lädt Extreme-Daten aus State oder berechnet sie
+     * @private
+     */
+    async _loadExtremeData(id, type, date) {
       // Extreme-Daten aus State holen
       const extremes = this.state.get("extremes");
       const currentData = this.state.get("currentData") || [];
 
-      // Finde das passende Extreme
       let extremeData = null;
 
       if (extremes) {
@@ -609,28 +738,179 @@
         extremeData = currentData.find((d) => d.date === date) || null;
       }
 
-      if (!extremeData) {
-        console.warn(
-          "[HistoryController] Extreme data not found for:",
-          extremeInfo,
-        );
-        return;
+      // Falls keine Daten: Versuche async zu laden
+      if (!extremeData && currentData.length > 0) {
+        const stats = getStatsManager();
+        if (stats?.findExtremes) {
+          const freshExtremes = stats.findExtremes(currentData);
+          this.state.set("extremes", freshExtremes);
+
+          const typeMap = {
+            hot: "hottestDay",
+            cold: "coldestDay",
+            rain: "wettestDay",
+            wind: "windiestDay",
+          };
+          extremeData = freshExtremes?.[typeMap[type]] || null;
+        }
       }
 
-      // State für selectedExtreme setzen
-      this.state.set("selectedExtreme", {
-        id,
-        type,
-        date,
-        data: extremeData,
-      });
+      return extremeData;
+    }
 
-      // Modal öffnen
-      this.openModal("extreme", {
-        extreme: extremeData,
+    /**
+     * Hydratisiert das Extreme-Modal mit echten Daten
+     * Ersetzt Skeleton durch echte Werte mit Animation
+     * @private
+     */
+    async _hydrateExtremeModal(extremeData, type, date) {
+      const modalElement = document.getElementById("history-modal-extreme");
+      if (!modalElement) return;
+
+      const stats = getStatsManager();
+      const location = this.state.get("currentLocation");
+
+      // Extreme-Objekt für Template aufbauen
+      const typeIcons = {
+        hot: "local_fire_department",
+        cold: "ac_unit",
+        rain: "rainy",
+        wind: "storm",
+      };
+      const typeTitles = {
+        hot: "Heißester Tag",
+        cold: "Kältester Tag",
+        rain: "Nassester Tag",
+        wind: "Stürmischster Tag",
+      };
+      const typeValues = {
+        hot: `${extremeData.temp_max?.toFixed(1) ?? "–"}°C`,
+        cold: `${extremeData.temp_min?.toFixed(1) ?? "–"}°C`,
+        rain: `${extremeData.precip?.toFixed(1) ?? "0"} mm`,
+        wind: `${extremeData.wind_speed?.toFixed(0) ?? "–"} km/h`,
+      };
+
+      const extreme = {
         type,
-        date,
-      });
+        icon: typeIcons[type],
+        title: typeTitles[type],
+        value: typeValues[type],
+        dateFormatted: new Date(extremeData.date).toLocaleDateString("de-DE", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+        data: extremeData,
+      };
+
+      // Vollständiges Modal-Content rendern
+      const fullContent = stats?.renderExtremeDetailModal
+        ? stats.renderExtremeDetailModal(extreme, location)
+        : this._renderFallbackExtremeContent(extreme, location);
+
+      // SMOOTH TRANSITION: Fade out skeleton, fade in content
+      const contentContainer = modalElement.querySelector(
+        ".history-modal__content",
+      );
+      if (contentContainer) {
+        contentContainer.classList.add("history-modal__content--hydrating");
+
+        // Kurze Verzögerung für Animation
+        await new Promise((r) => setTimeout(r, 150));
+
+        // Content ersetzen
+        modalElement.innerHTML = fullContent;
+
+        // Fade in
+        const newContent = modalElement.querySelector(
+          ".history-modal__content",
+        );
+        if (newContent) {
+          newContent.classList.add("history-modal__content--hydrated");
+        }
+      } else {
+        modalElement.innerHTML = fullContent;
+      }
+
+      // Event-Bindings für neues Content
+      this._bindModalEvents("extreme", modalElement, { extreme, location });
+
+      // Mini-Chart zeichnen (wenn Chart-Manager verfügbar)
+      const charts = getChartManager();
+      if (charts?.drawExtremeMiniChart && extremeData) {
+        requestAnimationFrame(() => {
+          const canvas = modalElement.querySelector(
+            "#history-extreme-mini-chart",
+          );
+          if (canvas) {
+            charts.drawExtremeMiniChart(canvas, extremeData, type);
+          }
+        });
+      }
+
+      console.log("[HistoryController] Extreme modal hydrated with real data");
+    }
+
+    /**
+     * Fallback-Rendering wenn HistoryStats nicht verfügbar
+     * @private
+     */
+    _renderFallbackExtremeContent(extreme, location) {
+      const data = extreme.data || {};
+      return `
+        <div class="history-modal__content history-modal__content--extreme">
+          <div class="swipe-handle"></div>
+          <button class="history-modal__close" data-action="close" aria-label="Schließen">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+
+          <div class="extreme-detail__header extreme-detail__header--${extreme.type}">
+            <div class="extreme-detail__icon">
+              <span class="material-symbols-outlined">${extreme.icon}</span>
+            </div>
+            <div class="extreme-detail__title-group">
+              <h3>${extreme.title}</h3>
+              <span class="extreme-detail__value">${extreme.value}</span>
+            </div>
+          </div>
+
+          <div class="extreme-detail__info">
+            <div class="extreme-detail__row">
+              <span class="material-symbols-outlined">calendar_today</span>
+              <span>${extreme.dateFormatted}</span>
+            </div>
+            <div class="extreme-detail__row">
+              <span class="material-symbols-outlined">location_on</span>
+              <span>${location?.name || "Berlin"}</span>
+            </div>
+          </div>
+
+          <div class="extreme-detail__metrics">
+            <div class="extreme-detail__metric">
+              <span class="material-symbols-outlined">device_thermostat</span>
+              <div class="extreme-detail__metric-data">
+                <span class="extreme-detail__metric-label">Temperatur</span>
+                <span class="extreme-detail__metric-value">${data.temp_min?.toFixed(1) ?? "–"}° / ${data.temp_max?.toFixed(1) ?? "–"}°C</span>
+              </div>
+            </div>
+            <div class="extreme-detail__metric">
+              <span class="material-symbols-outlined">water_drop</span>
+              <div class="extreme-detail__metric-data">
+                <span class="extreme-detail__metric-label">Niederschlag</span>
+                <span class="extreme-detail__metric-value">${data.precip?.toFixed(1) ?? "0"} mm</span>
+              </div>
+            </div>
+            <div class="extreme-detail__metric">
+              <span class="material-symbols-outlined">air</span>
+              <div class="extreme-detail__metric-data">
+                <span class="extreme-detail__metric-label">Wind</span>
+                <span class="extreme-detail__metric-value">${data.wind_speed?.toFixed(0) ?? "–"} km/h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     /**
