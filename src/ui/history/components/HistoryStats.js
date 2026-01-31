@@ -1840,20 +1840,19 @@
 
     return `
       <div class="history-modal__content history-modal__content--day-detail history-modal__content--${metric}">
-        <div class="swipe-handle"></div>
         <button class="history-modal__close" data-action="close" aria-label="Schließen">
           <span class="material-symbols-outlined">close</span>
         </button>
 
-        <!-- Metrik-spezifischer Header -->
+        <!-- Optimierter Header: Von ganz oben, alle Ecken abgerundet -->
         <header class="day-detail__header day-detail__header--${metric}">
-          <div class="day-detail__date-badge">
-            <span class="day-detail__weekday">${weekday}</span>
-            <span class="day-detail__date">${formattedDate}</span>
-          </div>
-          <div class="day-detail__primary">
+          <div class="swipe-handle"></div>
+          <div class="day-detail__header-top">
             <span class="material-symbols-outlined day-detail__icon">${config.icon}</span>
-            <span class="day-detail__primary-value">${getPrimaryValue()}</span>
+            <div class="day-detail__date-info">
+              <span class="day-detail__weekday">${weekday}</span>
+              <span class="day-detail__date">${formattedDate}</span>
+            </div>
           </div>
           <div class="day-detail__context day-detail__context--${contextInfo.type}">
             <span class="material-symbols-outlined">${contextInfo.icon}</span>
