@@ -1119,6 +1119,7 @@
     /**
      * Toggle modal state with body scroll lock.
      * ZENTRALE METHODE für alle Modal-Interaktionen.
+     * Nutzt .is-visible Klasse für Animation (opacity/pointer-events)
      *
      * @param {string} id - Modal ID (z.B. 'history-modal-extreme')
      * @param {boolean} isOpen - true = öffnen, false = schließen
@@ -1133,6 +1134,9 @@
       }
 
       const modalElement = document.getElementById(id);
+      const overlay = document.querySelector(
+        ".modal-overlay, .glass-modal-overlay",
+      );
       const masterUI = getMasterUI();
 
       if (isOpen) {
@@ -1144,12 +1148,17 @@
           document.body.classList.add("modal-open");
         }
 
+        // Overlay sichtbar machen (is-visible Klasse)
+        if (overlay) {
+          overlay.classList.add("is-visible");
+        }
+
         // Modal via MasterUI oder direkt öffnen
         if (masterUI?.openModal) {
           masterUI.openModal(id);
         } else if (modalElement) {
-          modalElement.style.display = "flex";
-          modalElement.classList.add("modal--open");
+          // Nutze is-visible für Animation
+          modalElement.classList.add("is-visible", "modal--open");
         }
 
         console.log("[HistoryController] Modal opened:", id);
@@ -1160,12 +1169,16 @@
         // Body-Scroll IMMER wiederherstellen beim Schließen
         document.body.classList.remove("modal-open");
 
+        // Overlay verstecken
+        if (overlay) {
+          overlay.classList.remove("is-visible");
+        }
+
         // Modal schließen
         if (masterUI?.closeActiveModal) {
           masterUI.closeActiveModal();
         } else if (modalElement) {
-          modalElement.style.display = "none";
-          modalElement.classList.remove("modal--open");
+          modalElement.classList.remove("is-visible", "modal--open");
         }
 
         console.log("[HistoryController] Modal closed:", id);
