@@ -1,13 +1,14 @@
 module.exports = {
-  testEnvironment: 'jsdom',
-  roots: ['<rootDir>/tests'],
-  testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+  testEnvironment: "jsdom",
+  roots: ["<rootDir>/dev/tests"],
+  testMatch: ["**/__tests__/**/*.js", "**/?(*.)+(spec|test).js"],
   collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/service-worker.js',
-    '!src/app.js',
+    "js/**/*.js",
+    "!js/vendor/**",
+    "!service-worker.js",
+    "!app.js",
   ],
-  moduleFileExtensions: ['js', 'json'],
+  moduleFileExtensions: ["js", "json"],
   transform: {},
   testTimeout: 10000,
 };

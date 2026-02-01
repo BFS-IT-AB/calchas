@@ -1,0 +1,35 @@
+# Cloudflare Pages Ignore File
+# Dateien und Ordner, die nicht deployed werden sollen
+
+# Development-Ordner
+dev/
+src/
+
+# Dependencies
+node_modules/
+
+# Dokumentation und Textdateien
+*.md
+*.txt
+
+# Git-Verzeichnis
+.git/
+.github/
+.gitignore
+
+# IDE und Editor-Konfigurationen
+.vscode/
+.cursorrules
+
+# Build- und Test-Artefakte
+__tests__/
+__mocks__/
+
+# Config-Dateien
+.eslintrc.json
+jest.config.js
+package-lock.json
+
+# Temporäre und Debug-Dateien
+debug-*.html
+*.log

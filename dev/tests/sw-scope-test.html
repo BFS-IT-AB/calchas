@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SW Scope Test</title>
+  </head>
+  <body>
+    <h1>Service Worker Scope Test</h1>
+    <div id="output"></div>
+    <script>
+      const output = document.getElementById("output");
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/service-worker.js")
+          .then((reg) => {
+            output.innerHTML += `✅ Registriert<br>`;
+            output.innerHTML += `Scope: ${reg.scope}<br>`;
+            output.innerHTML += `Expected: ${window.location.origin}/<br>`;
+
+            if (reg.scope === window.location.origin + "/") {
+              output.innerHTML += `✅ Scope korrekt (Root)<br>`;
+            } else {
+              output.innerHTML += `❌ Scope falsch!<br>`;
+            }
+          })
+          .catch((err) => {
+            output.innerHTML += `❌ Fehler: ${err}<br>`;
+          });
+      }
+    </script>
+  </body>
+</html>

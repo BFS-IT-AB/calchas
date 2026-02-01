@@ -11,16 +11,28 @@
   "categories": ["weather", "utilities"],
   "screenshots": [
     {
-      "src": "/src/assets/screenshots/screenshot-narrow.svg",
-      "sizes": "540x720",
-      "type": "image/svg+xml",
+      "src": "/assets/screenshots/iPhone-13-PRO-127.0.0.1 (4).png",
+      "sizes": "390x844",
+      "type": "image/png",
       "form_factor": "narrow"
     },
     {
-      "src": "/src/assets/screenshots/screenshot-wide.svg",
-      "sizes": "1280x720",
-      "type": "image/svg+xml",
-      "form_factor": "wide"
+      "src": "/assets/screenshots/iPhone-13-PRO-127.0.0.1 (5).png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/assets/screenshots/iPhone-13-PRO-127.0.0.1 (6).png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/assets/screenshots/iPhone-13-PRO-127.0.0.1 (7).png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ],
   "icons": [
